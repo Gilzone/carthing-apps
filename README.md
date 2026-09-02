@@ -187,5 +187,35 @@ python add_project.py --list
 
 ---
 
+## 🙏 Credits & Acknowledgements
+
+This project stands on the shoulders of the incredible open-source and retro-tech communities who fought to keep the Spotify Car Thing alive:
+
+- **Hardware & Flashing Pioneers:**
+  - **[frederic](https://github.com/frederic/superbird-bulkcmd)** — Groundbreaking reverse engineering work, u-boot commands, and memory dumps for the Spotify Car Thing (`superbird`).
+  - **[bishopdynamics (superbird-tool)](https://github.com/bishopdynamics/superbird-tool)** — The cross-platform Python hacking toolkit that made communicating with the Amlogic bootloader accessible.
+  - **[superna9999 (pyamlboot)](https://github.com/superna9999/pyamlboot)** — Open-source Amlogic USB boot protocol implementation.
+  - **[willsturgeon & Car Thing Community (flashthing-cli)](https://github.com/willsturgeon)** — Easy-to-use flashing utilities for community firmware images.
+  - **[Pete Batard / Akeo (Zadig)](https://zadig.akeo.ie/)** — WinUSB and libusb driver installer for Windows bootloader interfacing.
+
+- **Operating System & Runtime:**
+  - **[Nocturne OS Team & meraz9000](https://github.com/meraz9000)** — The custom embedded Linux kernel (`7.0.2-superbird`), Weston Wayland integration, and Chromium kiosk environment that gave Car Thing a true second life.
+  - **[ALSA Project](https://www.alsa-project.org/)** — Advanced Linux Sound Architecture enabling dual-link capture routing.
+  - **[Weston / Wayland](https://wayland.freedesktop.org/)** & **[Chromium Project](https://www.chromium.org/)** — Lightweight GPU-accelerated embedded display stack.
+
+- **Virtualization & Emulation:**
+  - **[Fabian Hemmer / copy (v86)](https://github.com/copy/v86)** — High-performance x86 PC hardware emulator written in WebAssembly and JavaScript.
+  - **[KolibriOS Project](https://kolibrios.org/)** — The astonishing 32-bit x86 graphical operating system written entirely in assembly language.
+  - **[SeaBIOS](https://www.seabios.org/)** & **VGABIOS** — Standard open-source x86 BIOS.
+  - **[Ruffle Team](https://ruffle.rs/)** — Open-source Flash Player emulator in Rust / WebAssembly.
+
+- **Game Developers & Preservationists:**
+  - **[Innersloth](https://www.innersloth.com/)** — Creators of the original *Among Us* (and the web preservation community for making touch-friendly portable ports).
+  - **[Gabriele Cirulli](https://github.com/gabrielecirulli/2048)** — Creator of the legendary open-source puzzle game *2048*.
+  - **[3kh0](https://github.com/3kh0)** & the Web Game preservation community — For curating and maintaining lightweight HTML5 game archives.
+  - All respective original creators of *Retro Bowl (New Star Games)*, *Crossy Road (Hipster Whale)*, *Chrome Dino (Google)*, *Fruit Ninja (Halfbrick)*, and *Doodle Jump (Lima Sky)*.
+
+---
+
 ## 📜 License
-This project is open-source under the **MIT License**. Created with passion for keeping discontinued hardware alive and out of landfills.
+This project is open-source under the **MIT License**. Created with passion for keeping discontinued hardware alive and out of landfills. All trademarks and copyrighted game assets remain property of their respective creators.
