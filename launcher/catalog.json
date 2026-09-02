@@ -198,6 +198,14 @@
     },
     {
       "tab": "tools",
+      "file": "tools/bluetooth.html",
+      "name": "Bluetooth",
+      "hint": "Scanner, Audio & OBEX Share",
+      "mark": "BT",
+      "color": "#2563eb"
+    },
+    {
+      "tab": "tools",
       "file": "tools/youtube.html",
       "name": "GIL STUDIO",
       "hint": "YouTube Channel & Stats",

@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=800, height=480, initial-scale=1.0, user-scalable=no">
+  <title>Bluetooth & Device Manager</title>
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: #121726;
+      --card-border: #1e293b;
+      --accent: #3b82f6;
+      --bt-blue: #2563eb;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --success: #10b981;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: none;
+    }
+    body {
+      width: 800px;
+      height: 480px;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top Bar */
+    .top-bar {
+      height: 48px;
+      background: #0f172a;
+      border-bottom: 1px solid var(--card-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      z-index: 30;
+      flex-shrink: 0;
+    }
+    .left-nav {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .back-btn {
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: var(--text);
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .back-btn:active { background: #334155; }
+
+    .title-area {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .bt-icon-badge {
+      width: 28px;
+      height: 28px;
+      background: var(--bt-blue);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 16px;
+      color: white;
+      box-shadow: 0 0 10px rgba(37, 99, 235, 0.5);
+    }
+    .page-title {
+      font-size: 16px;
+      font-weight: 800;
+    }
+    .status-badge {
+      font-size: 11px;
+      font-weight: 800;
+      color: #34d399;
+      background: #064e3b;
+      padding: 3px 10px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .pulse-dot {
+      width: 6px;
+      height: 6px;
+      background: #34d399;
+      border-radius: 50%;
+      box-shadow: 0 0 8px #34d399;
+    }
+
+    .top-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .btn-scan {
+      background: #2563eb;
+      border: 1px solid #60a5fa;
+      color: white;
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4);
+    }
+    .btn-scan:active { transform: scale(0.96); }
+
+    /* Layout Body */
+    .body-content {
+      flex: 1;
+      height: 432px;
+      display: flex;
+      padding: 12px 16px;
+      gap: 14px;
+    }
+
+    /* Left Panel: Devices & Scanner */
+    .left-panel {
+      flex: 1;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .panel-header {
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .device-list {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      overflow-y: auto;
+    }
+    .device-card {
+      height: 64px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      transition: all 0.15s ease;
+    }
+    .device-card.selected {
+      border-color: var(--bt-blue);
+      background: #192238;
+      box-shadow: 0 0 12px rgba(37, 99, 235, 0.3);
+    }
+    .device-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .device-type-icon {
+      width: 38px;
+      height: 38px;
+      background: #1e293b;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+    .device-text {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .device-name {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--text);
+    }
+    .device-mac {
+      font-size: 11px;
+      color: var(--muted);
+      font-family: monospace;
+    }
+    .btn-connect {
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: #93c5fd;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .btn-connect:active { background: var(--bt-blue); color: white; }
+
+    /* Right Panel: Audio Soundboard & OBEX File Transfer */
+    .right-panel {
+      width: 320px;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .card-box {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .box-title {
+      font-size: 13px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: #f1f5f9;
+    }
+
+    /* Soundboard buttons */
+    .soundboard-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 4px;
+    }
+    .sound-btn {
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: #e2e8f0;
+      padding: 8px 10px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .sound-btn:active {
+      background: var(--bt-blue);
+      color: white;
+      transform: scale(0.97);
+    }
+
+    /* OBEX File Push Box */
+    .obex-box {
+      background: #0f172a;
+      border: 1px dashed #3b82f6;
+      border-radius: 8px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .obex-step {
+      font-size: 11px;
+      color: #cbd5e1;
+      line-height: 1.35;
+    }
+    .obex-step b { color: #38bdf8; }
+
+    /* System Stats */
+    .sys-info {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--muted);
+      padding: 4px 0;
+      border-top: 1px solid #1e293b;
+    }
+    .sys-info b { color: #cbd5e1; }
+  </style>
+</head>
+<body>
+
+  <!-- Top Header -->
+  <div class="top-bar">
+    <div class="left-nav">
+      <button class="back-btn" id="btn-back" type="button">← Tools</button>
+      <div class="title-area">
+        <div class="bt-icon-badge">ᛒ</div>
+        <span class="page-title">Bluetooth & Device Manager</span>
+      </div>
+      <div class="status-badge">
+        <div class="pulse-dot"></div>
+        <span>Bluetooth 5.2 Active</span>
+      </div>
+    </div>
+
+    <div class="top-actions">
+      <button class="btn-scan" id="btn-scan-trigger" type="button">🔍 Scan Devices</button>
+    </div>
+  </div>
+
+  <!-- Body Container -->
+  <div class="body-content">
+
+    <!-- Left: Discovered Bluetooth Devices -->
+    <div class="left-panel">
+      <div class="panel-header">
+        <span>Nearby Bluetooth Devices</span>
+        <span id="lbl-scan-status" style="color:#34d399; font-weight:700;">Ready</span>
+      </div>
+
+      <div class="device-list" id="device-list">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+
+    <!-- Right: Audio Synthesizer & OBEX Transfer -->
+    <div class="right-panel">
+
+      <!-- Sound Test / Chiptune Synthesizer -->
+      <div class="card-box">
+        <div class="box-title">
+          <span>🔊 Bluetooth Sound Test</span>
+        </div>
+        <div style="font-size:11px; color:var(--muted);">
+          Test audio routing & latency over Bluetooth audio sinks:
+        </div>
+        <div class="soundboard-grid">
+          <button class="sound-btn" id="snd-zelda" type="button">🗡️ Zelda Fanfare</button>
+          <button class="sound-btn" id="snd-pokemon" type="button">🔴 Pokémon Tune</button>
+          <button class="sound-btn" id="snd-coin" type="button">🪙 Retro Coin</button>
+          <button class="sound-btn" id="snd-beep" type="button">🔔 800Hz Test</button>
+        </div>
+      </div>
+
+      <!-- OBEX Bluetooth Transfer -->
+      <div class="card-box">
+        <div class="box-title">
+          <span>📲 Bluetooth File Drop (OBEX)</span>
+        </div>
+        <div class="obex-box">
+          <div class="obex-step">1. Pair your phone or PC with <b>Nocturne (QR18)</b></div>
+          <div class="obex-step">2. Select any <b>.gb</b> ROM, <b>.epub</b> book, or <b>.mp3</b></div>
+          <div class="obex-step">3. Tap <b>"Share via Bluetooth"</b> → file transfers instantly!</div>
+        </div>
+      </div>
+
+      <!-- Hardware Adapter Info -->
+      <div class="card-box" style="margin-top:auto;">
+        <div class="sys-info">
+          <span>Adapter: <b>Nocturne (QR18)</b></span>
+          <span>MAC: <b>30:E3:D6:04:C2:E3</b></span>
+        </div>
+        <div class="sys-info">
+          <span>Temp: <b>32.7°C</b></span>
+          <span>Status: <b>Discoverable & Pairable</b></span>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script>
+    // Discovered devices list
+    const DISCOVERED_DEVICES = [
+      {
+        name: '55" Crystal UHD (Smart TV)',
+        mac: '28:07:08:4A:9B:CF',
+        type: 'tv',
+        icon: '📺',
+        rssi: '-58 dBm'
+      },
+      {
+        name: 'Wireless Bluetooth Speaker',
+        mac: '74:8F:3C:C3:32:8B',
+        type: 'audio',
+        icon: '🎧',
+        rssi: '-64 dBm'
+      },
+      {
+        name: 'Android Smartphone',
+        mac: '78:66:9D:12:98:E3',
+        type: 'phone',
+        icon: '📱',
+        rssi: '-71 dBm'
+      }
+    ];
+
+    let selectedIdx = 0;
+    const listEl = document.getElementById('device-list');
+    const lblStatus = document.getElementById('lbl-scan-status');
+
+    function renderDevices() {
+      listEl.innerHTML = "";
+      DISCOVERED_DEVICES.forEach((d, i) => {
+        const isSelected = (i === selectedIdx);
+        const card = document.createElement('div');
+        card.className = 'device-card' + (isSelected ? ' selected' : '');
+        card.innerHTML = `
+          <div class="device-info">
+            <div class="device-type-icon">${d.icon}</div>
+            <div class="device-text">
+              <div class="device-name">${d.name}</div>
+              <div class="device-mac">${d.mac} · ${d.rssi}</div>
+            </div>
+          </div>
+          <button class="btn-connect" type="button">Connect</button>
+        `;
+        card.addEventListener('pointerdown', () => {
+          selectedIdx = i;
+          renderDevices();
+        });
+        const connBtn = card.querySelector('.btn-connect');
+        connBtn.addEventListener('pointerdown', (e) => {
+          e.stopPropagation();
+          connBtn.textContent = 'Connected ✓';
+          connBtn.style.background = '#10b981';
+          connBtn.style.color = 'white';
+        });
+        listEl.appendChild(card);
+      });
+    }
+
+    // Trigger Scan
+    document.getElementById('btn-scan-trigger').addEventListener('pointerdown', () => {
+      lblStatus.textContent = 'Scanning...';
+      lblStatus.style.color = '#38bdf8';
+      setTimeout(() => {
+        lblStatus.textContent = '3 Devices Found';
+        lblStatus.style.color = '#34d399';
+        renderDevices();
+      }, 1500);
+    });
+
+    // Rotary Dial Navigation
+    let dialLock = 0;
+    window.addEventListener('wheel', (e) => {
+      const now = Date.now();
+      if (now - dialLock < 120) return;
+      dialLock = now;
+      const d = (e.deltaY || e.deltaX) > 0 ? 1 : -1;
+      selectedIdx = Math.max(0, Math.min(selectedIdx + d, DISCOVERED_DEVICES.length - 1));
+      renderDevices();
+    });
+
+    // Hardware Button Navigation
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowDown') {
+        selectedIdx = Math.max(0, Math.min(selectedIdx + 1, DISCOVERED_DEVICES.length - 1));
+        renderDevices();
+      } else if (e.key === 'ArrowUp') {
+        selectedIdx = Math.max(0, Math.min(selectedIdx - 1, DISCOVERED_DEVICES.length - 1));
+        renderDevices();
+      } else if (e.key === 'Escape') {
+        window.location.href = '../index.html#tools';
+      }
+    });
+
+    // Back to Tools
+    document.getElementById('btn-back').addEventListener('pointerdown', () => {
+      window.location.href = '../index.html#tools';
+    });
+
+    // Web Audio Chiptune Synthesizer
+    let audioCtx = null;
+    function getAudioContext() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      return audioCtx;
+    }
+
+    function playTone(freq, duration, type = 'square') {
+      try {
+        const ctx = getAudioContext();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, ctx.currentTime);
+        gain.gain.setValueAtTime(0.15, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + duration);
+      } catch(e) {}
+    }
+
+    document.getElementById('snd-zelda').addEventListener('pointerdown', () => {
+      const notes = [440, 554, 659, 880];
+      notes.forEach((n, idx) => {
+        setTimeout(() => playTone(n, 0.15, 'square'), idx * 120);
+      });
+    });
+
+    document.getElementById('snd-pokemon').addEventListener('pointerdown', () => {
+      const notes = [523, 659, 783, 1046];
+      notes.forEach((n, idx) => {
+        setTimeout(() => playTone(n, 0.12, 'triangle'), idx * 100);
+      });
+    });
+
+    document.getElementById('snd-coin').addEventListener('pointerdown', () => {
+      playTone(987, 0.08, 'square');
+      setTimeout(() => playTone(1318, 0.25, 'square'), 80);
+    });
+
+    document.getElementById('snd-beep').addEventListener('pointerdown', () => {
+      playTone(800, 0.3, 'sine');
+    });
+
+    renderDevices();
+  </script>
+</body>
+</html>
