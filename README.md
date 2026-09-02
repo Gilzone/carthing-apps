@@ -97,6 +97,17 @@ Because KolibriOS runs with a standard PS/2 mouse driver, absolute touch coordin
 - Added a **dedicated `MENU` button** in the HUD that injects the native Windows key scancode (`0xE05B`), opening the KolibriOS Start Menu in 1 tap.
 - Added a **slide-up 5-row virtual keyboard** sending simulated scancodes into the x86 keyboard controller.
 
+### 7. 100% Offline On-Device Neural Translator (Mozilla Bergamot / Marian NMT)
+<p align="center">
+  <img src="docs/screenshots/tool_translator_final.png" alt="On-Device Offline Translator" width="700">
+</p>
+
+Bringing true on-device Machine Translation to the Spotify Car Thing without internet connectivity:
+- **Neural Engine:** Powered by **Mozilla Project Bergamot** (Marian NMT) compiled to single-threaded WebAssembly with fallback 8-bit quantized GEMM routines (`int8shiftAll`).
+- **Zero Internet Requirement:** All weights (quantized neural graph, shortlist lexicon, and SentencePiece vocabularies) for English ↔ Spanish are packaged directly into the on-device webapp.
+- **Instant Cold Boot:** Compressed neural weights are unpacked via native browser `DecompressionStream('gzip')` in under **3.5 seconds**.
+- **Automotive Touch UI:** Includes quick-access travel/emergency phrases, one-tap language direction switching (`[ 🇬🇧 EN ↔ 🇪🇸 ES ]`), clear actions, and a custom 800×480 virtual keyboard.
+
 ---
 
 ## 🗂️ Included Web Applications
@@ -125,6 +136,7 @@ Because KolibriOS runs with a standard PS/2 mouse driver, absolute touch coordin
 - **Age of War**
 
 ### 🛠️ Tools Suite
+- 🌐 **Translator:** 100% offline bidirectional Neural Machine Translation (English ↔ Spanish) powered by Mozilla Bergamot / Marian NMT WASM. Zero internet or companion PC needed.
 - 🎙️ **Recorder:** Mic memo recorder saving directly to device storage.
 - 📖 **Reader:** Turn pages using the dial wheel.
 - 📝 **Notes:** Touch notepad with full virtual QWERTY keyboard.

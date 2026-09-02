@@ -214,6 +214,14 @@
     },
     {
       "tab": "tools",
+      "file": "tools/translator.html",
+      "name": "Translator",
+      "hint": "Offline EN / ES Bergamot",
+      "mark": "TR",
+      "color": "#3b82f6"
+    },
+    {
+      "tab": "tools",
       "file": "tools/clock.html",
       "name": "Clock",
       "hint": "Time, watch, timer",
