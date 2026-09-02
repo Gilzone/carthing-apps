@@ -22,7 +22,7 @@
   "items": [
     {
       "tab": "games",
-      "file": "games/amongus.html",
+      "file": "games/amongus/index.html",
       "name": "Among Us",
       "hint": "Find the impostor",
       "mark": "AU",

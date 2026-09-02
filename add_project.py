@@ -90,8 +90,8 @@ def device_file_names() -> dict[str, set[str]] | None:
     if not ssh_ok():
         return None
     script = (
-        "echo GAMES; ls /opt/nocturne/webapps/player/games 2>/dev/null; "
-        "echo TOOLS; ls /opt/nocturne/webapps/player/tools 2>/dev/null; "
+        "echo GAMES; find /opt/nocturne/webapps/player/games -type f 2>/dev/null | sed 's|.*/||'; "
+        "echo TOOLS; find /opt/nocturne/webapps/player/tools -type f 2>/dev/null | sed 's|.*/||'; "
         "echo APPS; find /opt/nocturne/webapps/player/projects/files -type f 2>/dev/null | sed 's|.*/||'; "
         "echo TABS; find /opt/nocturne/webapps/player/tabs -type f 2>/dev/null | sed 's|.*/||'"
     )
