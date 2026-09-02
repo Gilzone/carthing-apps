@@ -92,7 +92,7 @@ def device_file_names() -> dict[str, set[str]] | None:
     script = (
         "echo GAMES; ls /opt/nocturne/webapps/player/games 2>/dev/null; "
         "echo TOOLS; ls /opt/nocturne/webapps/player/tools 2>/dev/null; "
-        "echo APPS; ls /opt/nocturne/webapps/player/projects/files 2>/dev/null; "
+        "echo APPS; find /opt/nocturne/webapps/player/projects/files -type f 2>/dev/null | sed 's|.*/||'; "
         "echo TABS; find /opt/nocturne/webapps/player/tabs -type f 2>/dev/null | sed 's|.*/||'"
     )
     r = subprocess.run(

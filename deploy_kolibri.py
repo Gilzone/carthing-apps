@@ -40,11 +40,10 @@ def main() -> None:
         + SSH_BASE
         + [REMOTE, "df -h /opt/nocturne; mkdir -p /opt/nocturne/webapps/player/projects/files"]
     )
-    run(
-        ["scp", "-r"]
-        + SSH_BASE
-        + [str(KOLIBRI), f"{REMOTE}:{REMOTE_ROOT}/projects/files/kolibri"]
-    )
+    run(["ssh"] + SSH_BASE + [REMOTE, f"mkdir -p {REMOTE_ROOT}/projects/files/kolibri"])
+    for p in KOLIBRI.glob("*"):
+        if p.is_file():
+            run(["scp"] + SSH_BASE + [str(p), f"{REMOTE}:{REMOTE_ROOT}/projects/files/kolibri/{p.name}"])
     for name in ("catalog.js", "catalog.json"):
         run(["scp"] + SSH_BASE + [str(LAUNCHER / name), f"{REMOTE}:{REMOTE_ROOT}/{name}"])
     run(

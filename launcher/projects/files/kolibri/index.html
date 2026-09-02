@@ -14,6 +14,7 @@
     #screen_container {
       width: 800px; height: 480px;
       display: flex; align-items: center; justify-content: center;
+      position: absolute; top: 0; left: 0;
     }
     #screen_container > div {
       white-space: pre; font: 14px/14px monospace; color: #86efac;
@@ -25,45 +26,187 @@
       image-rendering: crisp-edges;
     }
     #hud {
-      position: fixed; top: 8px; left: 8px; z-index: 2147483647;
-      display: flex; gap: 8px; pointer-events: none;
+      position: fixed; top: 8px; left: 8px; z-index: 2147483640;
+      display: flex; gap: 6px; pointer-events: none;
     }
-    #hud button {
+    .hud-btn {
       pointer-events: auto;
-      background: #0b0c0f; color: #e5e7eb; border: 2px solid #34d399;
-      border-radius: 999px; padding: 7px 14px;
-      font: 700 13px system-ui; letter-spacing: .08em;
+      background: rgba(11, 14, 20, 0.88); color: #e5e7eb; border: 2px solid #34d399;
+      border-radius: 999px; padding: 6px 12px;
+      font: 700 12px system-ui; letter-spacing: .06em;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      cursor: pointer;
+    }
+    .hud-btn:active, .hud-btn.on {
+      background: #34d399; color: #052e1a; border-color: #ecfdf5;
+      transform: scale(0.96);
+    }
+    .hud-btn.accent {
+      border-color: #60a5fa; color: #93c5fd;
+    }
+    .hud-btn.accent:active, .hud-btn.accent.on {
+      background: #60a5fa; color: #0b1c3d;
     }
     #status {
-      position: fixed; right: 12px; bottom: 10px; z-index: 10;
+      position: fixed; right: 12px; top: 12px; z-index: 10;
       font: 700 12px system-ui; color: #86efac; letter-spacing: .06em;
-      text-shadow: 0 1px 2px #000;
+      text-shadow: 0 1px 3px #000;
       pointer-events: none;
+      background: rgba(0,0,0,0.4); padding: 4px 8px; border-radius: 6px;
+    }
+    /* Virtual Keyboard Overlay */
+    #kb_panel {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: rgba(12, 16, 24, 0.96);
+      border-top: 2px solid #34d399;
+      box-shadow: 0 -10px 30px rgba(0,0,0,0.8);
+      z-index: 2147483645;
+      display: none;
+      flex-direction: column;
+      padding: 6px 8px 8px;
+      gap: 4px;
+    }
+    #kb_panel.open {
+      display: flex;
+    }
+    .kb-row {
+      display: flex;
+      justify-content: center;
+      gap: 4px;
+      touch-action: manipulation;
+    }
+    .k {
+      flex: 1;
+      height: 38px;
+      min-width: 0;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: #1e2430;
+      color: #f3f4f6;
+      font: 700 13px system-ui;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    .k:active, .k.active {
+      background: #34d399;
+      color: #052e1a;
+      transform: scale(0.95);
+    }
+    .k.mod {
+      background: #141a24;
+      color: #93c5fd;
+      border-color: rgba(96,165,250,0.3);
+      font-size: 11px;
+    }
+    .k.mod.on {
+      background: #3b82f6;
+      color: #fff;
+    }
+    .k.wide { flex: 1.4; }
+    .k.wider { flex: 1.8; }
+    .k.space { flex: 4.5; }
+    .k.close-k {
+      background: #371b22;
+      color: #fca5a5;
+      border-color: #ef4444;
+      font-size: 11px;
+      flex: 1.2;
     }
   </style>
 </head>
 <body>
   <div id="hud">
-    <button id="home" type="button">HOME</button>
-    <button id="reset" type="button">RESET</button>
+    <button class="hud-btn" id="btn_home" type="button">HOME</button>
+    <button class="hud-btn accent" id="btn_menu" type="button">MENU</button>
+    <button class="hud-btn" id="btn_lclick" type="button">L-CLICK</button>
+    <button class="hud-btn" id="btn_rclick" type="button">R-CLICK</button>
+    <button class="hud-btn" id="btn_kb" type="button">KEYBOARD</button>
+    <button class="hud-btn" id="btn_reset" type="button">RESET</button>
   </div>
   <div id="status">BOOTING 32MB GUEST…</div>
   <div id="screen_container">
     <div></div>
     <canvas></canvas>
   </div>
+
+  <!-- On Screen Keyboard -->
+  <div id="kb_panel">
+    <div class="kb-row" id="kb_r1"></div>
+    <div class="kb-row" id="kb_r2"></div>
+    <div class="kb-row" id="kb_r3"></div>
+    <div class="kb-row" id="kb_r4"></div>
+    <div class="kb-row" id="kb_r5"></div>
+  </div>
+
   <script src="libv86.js"></script>
   <script>
     (function () {
       var HOME = "file:///opt/nocturne/webapps/player/index.html#apps";
       var statusEl = document.getElementById("status");
       var box = document.getElementById("screen_container");
+      var kbPanel = document.getElementById("kb_panel");
+      var btnKb = document.getElementById("btn_kb");
       var emulator = null;
+      var isShift = false;
+      var isCaps = false;
 
       function setStatus(t) { statusEl.textContent = t; }
-      document.getElementById("home").onclick = function (e) {
+
+      document.getElementById("btn_home").onclick = function (e) {
         if (e) { e.preventDefault(); e.stopPropagation(); }
         location.href = HOME;
+      };
+
+      document.getElementById("btn_reset").onclick = function (e) {
+        if (e) { e.preventDefault(); e.stopPropagation(); }
+        location.reload();
+      };
+
+      // Toggle Virtual Keyboard
+      btnKb.onclick = function (e) {
+        if (e) { e.preventDefault(); e.stopPropagation(); }
+        var open = kbPanel.classList.toggle("open");
+        btnKb.classList.toggle("on", open);
+      };
+
+      function openMenu() {
+        if (!emulator || !emulator.bus) return;
+        // Press and release Windows key (keyCode 91, scancode 0xE05B)
+        if (emulator.keyboard_adapter && emulator.keyboard_adapter.simulate_press) {
+          emulator.keyboard_adapter.simulate_press(91);
+        } else {
+          emulator.bus.send("keyboard-code", 0xE0);
+          emulator.bus.send("keyboard-code", 0x5B);
+          setTimeout(function () {
+            emulator.bus.send("keyboard-code", 0xE0);
+            emulator.bus.send("keyboard-code", 0xDB);
+          }, 60);
+        }
+      }
+
+      document.getElementById("btn_menu").onclick = function (e) {
+        if (e) { e.preventDefault(); e.stopPropagation(); }
+        openMenu();
+      };
+
+      function sendClick(left, right) {
+        if (!emulator || !emulator.bus) return;
+        emulator.bus.send("mouse-click", [!!left, false, !!right]);
+      }
+
+      document.getElementById("btn_lclick").onclick = function (e) {
+        if (e) { e.preventDefault(); e.stopPropagation(); }
+        sendClick(true, false);
+        setTimeout(function () { sendClick(false, false); }, 80);
+      };
+
+      document.getElementById("btn_rclick").onclick = function (e) {
+        if (e) { e.preventDefault(); e.stopPropagation(); }
+        sendClick(false, true);
+        setTimeout(function () { sendClick(false, false); }, 80);
       };
 
       function boot() {
@@ -94,66 +237,214 @@
           }
         });
         emulator.add_listener("emulator-ready", function () {
-          setStatus("KOLIBRI · TAP=CLICK  WHEEL=MOVE  DIAL=CLICK");
-          setTimeout(function () { statusEl.style.opacity = "0.35"; }, 4000);
+          setStatus("DRAG=MOUSE  TAP=CLICK  MENU=START");
+          setTimeout(function () { statusEl.style.opacity = "0.45"; }, 5000);
         });
         emulator.add_listener("emulator-stopped", function () {
           statusEl.style.opacity = "1";
           setStatus("STOPPED");
         });
 
+        // Touchpad / Mouse Trackpad Controller
         box.addEventListener("touchstart", onTouchStart, { passive: false });
+        box.addEventListener("touchmove", onTouchMove, { passive: false });
         box.addEventListener("touchend", onTouchEnd, { passive: false });
         box.addEventListener("touchcancel", onTouchEnd, { passive: false });
+
         window.addEventListener("wheel", onWheel, { passive: false });
         window.addEventListener("keydown", onKey, true);
       }
 
-      var down = false;
-      function sendClick(on) {
-        if (!emulator || !emulator.bus) return;
-        emulator.bus.send("mouse-click", [!!on, false, false]);
-      }
-      function sendAbs(clientX, clientY) {
-        if (!emulator || !emulator.bus) return;
-        var r = box.getBoundingClientRect();
-        emulator.bus.send("mouse-absolute", [clientX - r.left, clientY - r.top, r.width, r.height]);
-      }
+      var lastTouchX = null;
+      var lastTouchY = null;
+      var touchStartT = 0;
+      var hasMoved = false;
+
       function onTouchStart(e) {
+        if (kbPanel.classList.contains("open") && e.target.closest("#kb_panel")) return;
         e.preventDefault();
         var t = e.changedTouches && e.changedTouches[0];
         if (!t) return;
-        sendAbs(t.clientX, t.clientY);
-        down = true;
-        sendClick(true);
+        lastTouchX = t.clientX;
+        lastTouchY = t.clientY;
+        touchStartT = Date.now();
+        hasMoved = false;
       }
-      function onTouchEnd(e) {
+
+      function onTouchMove(e) {
+        if (kbPanel.classList.contains("open") && e.target.closest("#kb_panel")) return;
         e.preventDefault();
         var t = e.changedTouches && e.changedTouches[0];
-        if (t) sendAbs(t.clientX, t.clientY);
-        if (down) sendClick(false);
-        down = false;
+        if (!t || lastTouchX === null || lastTouchY === null) return;
+        var dx = t.clientX - lastTouchX;
+        var dy = t.clientY - lastTouchY;
+        if (Math.abs(dx) > 1 || Math.abs(dy) > 1) {
+          hasMoved = true;
+        }
+        lastTouchX = t.clientX;
+        lastTouchY = t.clientY;
+
+        if (emulator && emulator.bus) {
+          // PS/2: +dx is right, -dy is down on screen
+          emulator.bus.send("mouse-delta", [dx * 1.35, -(dy * 1.35)]);
+        }
       }
+
+      function onTouchEnd(e) {
+        if (kbPanel.classList.contains("open") && e.target.closest("#kb_panel")) return;
+        e.preventDefault();
+        var t = e.changedTouches && e.changedTouches[0];
+        if (!t) return;
+        var elapsed = Date.now() - touchStartT;
+        // Tap without drag -> left click
+        if (!hasMoved && elapsed < 350) {
+          sendClick(true, false);
+          setTimeout(function () { sendClick(false, false); }, 75);
+        }
+        lastTouchX = null;
+        lastTouchY = null;
+      }
+
       function onWheel(e) {
         e.preventDefault();
         if (!emulator || !emulator.bus) return;
         var dx = e.deltaX || 0, dy = e.deltaY || 0;
-        if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
-        emulator.bus.send("mouse-delta", [dx * 0.45, -(dy * 0.45)]);
+        if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
+        emulator.bus.send("mouse-delta", [dx * 0.5, -(dy * 0.5)]);
       }
+
       function onKey(e) {
         if (e.key === "Enter" || e.key === "1") {
           e.preventDefault();
-          sendClick(true);
-          setTimeout(function () { sendClick(false); }, 70);
+          sendClick(true, false);
+          setTimeout(function () { sendClick(false, false); }, 70);
         }
       }
 
-      document.getElementById("reset").onclick = function (e) {
-        if (e) { e.preventDefault(); e.stopPropagation(); }
-        location.reload();
-      };
+      // Build Virtual Keyboard
+      function sendKeyChar(ch) {
+        if (!emulator) return;
+        if (emulator.keyboard_adapter && emulator.keyboard_adapter.simulate_char) {
+          emulator.keyboard_adapter.simulate_char(ch);
+        }
+      }
 
+      function sendKeyCode(code) {
+        if (!emulator) return;
+        if (emulator.keyboard_adapter && emulator.keyboard_adapter.simulate_press) {
+          emulator.keyboard_adapter.simulate_press(code);
+        }
+      }
+
+      var layout = [
+        // Row 1
+        [
+          { label: "ESC", code: 27, cls: "mod" },
+          { char: "1", shift: "!" }, { char: "2", shift: "@" }, { char: "3", shift: "#" },
+          { char: "4", shift: "$" }, { char: "5", shift: "%" }, { char: "6", shift: "^" },
+          { char: "7", shift: "&" }, { char: "8", shift: "*" }, { char: "9", shift: "(" },
+          { char: "0", shift: ")" }, { char: "-", shift: "_" }, { char: "=", shift: "+" },
+          { label: "⌫", code: 8, cls: "mod wide" }
+        ],
+        // Row 2
+        [
+          { label: "TAB", code: 9, cls: "mod wide" },
+          { char: "q" }, { char: "w" }, { char: "e" }, { char: "r" }, { char: "t" },
+          { char: "y" }, { char: "u" }, { char: "i" }, { char: "o" }, { char: "p" },
+          { char: "[", shift: "{" }, { char: "]", shift: "}" },
+          { label: "ENTER", code: 13, cls: "mod wide" }
+        ],
+        // Row 3
+        [
+          { label: "CAPS", type: "caps", cls: "mod wide" },
+          { char: "a" }, { char: "s" }, { char: "d" }, { char: "f" }, { char: "g" },
+          { char: "h" }, { char: "j" }, { char: "k" }, { char: "l" },
+          { char: ";", shift: ":" }, { char: "'", shift: '"' }, { char: "\\", shift: "|" },
+          { label: "UP ↑", code: 38, cls: "mod" }
+        ],
+        // Row 4
+        [
+          { label: "SHIFT", type: "shift", cls: "mod wider" },
+          { char: "z" }, { char: "x" }, { char: "c" }, { char: "v" }, { char: "b" },
+          { char: "n" }, { char: "m" }, { char: ",", shift: "<" }, { char: ".", shift: ">" },
+          { char: "/", shift: "?" },
+          { label: "←", code: 37, cls: "mod" },
+          { label: "↓", code: 40, cls: "mod" },
+          { label: "→", code: 39, cls: "mod" }
+        ],
+        // Row 5
+        [
+          { label: "CTRL", code: 17, cls: "mod" },
+          { label: "WIN / MENU", type: "win", cls: "mod wider" },
+          { label: "ALT", code: 18, cls: "mod" },
+          { label: "SPACE", code: 32, char: " ", cls: "space" },
+          { label: "CLOSE ✕", type: "close", cls: "close-k" }
+        ]
+      ];
+
+      function renderKeyboard() {
+        for (var r = 1; r <= 5; r++) {
+          var container = document.getElementById("kb_r" + r);
+          container.innerHTML = "";
+          var rowData = layout[r - 1];
+          rowData.forEach(function (k) {
+            var btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "k" + (k.cls ? " " + k.cls : "");
+            
+            var text = "";
+            if (k.label) {
+              text = k.label;
+            } else if (k.char) {
+              var upper = isShift || isCaps;
+              text = (isShift && k.shift) ? k.shift : (upper ? k.char.toUpperCase() : k.char);
+            }
+            btn.textContent = text;
+
+            if (k.type === "shift" && isShift) btn.classList.add("on");
+            if (k.type === "caps" && isCaps) btn.classList.add("on");
+
+            btn.onclick = function (e) {
+              e.preventDefault();
+              e.stopPropagation();
+
+              if (k.type === "shift") {
+                isShift = !isShift;
+                renderKeyboard();
+                return;
+              }
+              if (k.type === "caps") {
+                isCaps = !isCaps;
+                renderKeyboard();
+                return;
+              }
+              if (k.type === "close") {
+                kbPanel.classList.remove("open");
+                btnKb.classList.remove("on");
+                return;
+              }
+              if (k.type === "win") {
+                openMenu();
+                return;
+              }
+              if (k.code) {
+                sendKeyCode(k.code);
+              } else if (k.char) {
+                var upper = isShift || isCaps;
+                var charToSend = (isShift && k.shift) ? k.shift : (upper ? k.char.toUpperCase() : k.char);
+                sendKeyChar(charToSend);
+                if (isShift) {
+                  isShift = false;
+                  renderKeyboard();
+                }
+              }
+            };
+            container.appendChild(btn);
+          });
+        }
+      }
+
+      renderKeyboard();
       boot();
     })();
   </script>
