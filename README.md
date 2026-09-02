@@ -55,6 +55,18 @@ The custom Chromium kiosk shell runs native 800×480 with GPU hardware accelerat
 
 ---
 
+### 🌐 100% Offline On-Device Neural Translator (Marian NMT / Bergamot WASM)
+- **Edge AI on ARM:** Translates full sentences on-device using quantized Marian NMT neural networks compiled to WebAssembly. Zero companion PC, zero cloud APIs, zero internet.
+- **Instant Touch Typing & Debounce Guard:** Includes an on-screen capacitive keyboard with high-precision hardware debounce preventing double-tap glitches, uppercase/lowercase/number modes, and Spanish characters (`ñ`, `¿`, `¡`).
+- **Instant Bidirectional Swapping:** Tapping `[ ⇄ Swap ]` flips between English $\rightarrow$ Spanish and Spanish $\rightarrow$ English, automatically copying the translated text into the input field for instant reverse conversation.
+
+<p align="center">
+  <img src="docs/screenshots/tool_translator_direct_disk_live.png" width="48%" alt="English to Spanish Neural Translation" />
+  <img src="docs/screenshots/tool_translator_bidirectional_success.png" width="48%" alt="Spanish to English Bidirectional Swap" />
+</p>
+
+---
+
 ## 🔍 How Everything Was Engineered (Honest Technical Breakdown)
 
 ### 1. The Bootloader & Driver Handshake Layer
@@ -99,14 +111,16 @@ Because KolibriOS runs with a standard PS/2 mouse driver, absolute touch coordin
 
 ### 7. 100% Offline On-Device Neural Translator (Mozilla Bergamot / Marian NMT)
 <p align="center">
-  <img src="docs/screenshots/tool_translator_final.png" alt="On-Device Offline Translator" width="700">
+  <img src="docs/screenshots/tool_translator_bidirectional_success.png" alt="On-Device Offline Translator" width="700">
 </p>
 
-Bringing true on-device Machine Translation to the Spotify Car Thing without internet connectivity:
-- **Neural Engine:** Powered by **Mozilla Project Bergamot** (Marian NMT) compiled to single-threaded WebAssembly with fallback 8-bit quantized GEMM routines (`int8shiftAll`).
-- **Zero Internet Requirement:** All weights (quantized neural graph, shortlist lexicon, and SentencePiece vocabularies) for English ↔ Spanish are packaged directly into the on-device webapp.
-- **Instant Cold Boot:** Compressed neural weights are unpacked via native browser `DecompressionStream('gzip')` in under **3.5 seconds**.
-- **Automotive Touch UI:** Includes quick-access travel/emergency phrases, one-tap language direction switching (`[ 🇬🇧 EN ↔ 🇪🇸 ES ]`), clear actions, and a custom 800×480 virtual keyboard.
+Bringing true edge-AI Machine Translation to the Spotify Car Thing without internet connectivity or a companion PC:
+- **Neural Engine:** Powered by **Mozilla Project Bergamot** (Marian NMT) compiled to single-threaded WebAssembly with fallback 8-bit quantized GEMM matrix routines (`int8shiftAll`).
+- **Direct-Disk Zero-Overhead Loading:** Shrunk the webapp from an unwieldy 43MB base64 bundle down to **106 KB** (a **99.7% reduction**). Model binaries (`model.*.bin`), shortlist lexicons, and SentencePiece vocabularies are stored directly on the internal eMMC flash storage and loaded asynchronously via local `XMLHttpRequest` (`arraybuffer`) in <0.2 seconds.
+- **Smart RAM Deallocation:** Running two 17MB neural models concurrently would exhaust the Car Thing's ~450MB physical RAM and cause swap thrashing. By calling Marian's explicit C++ destructor (`activeModel.delete()`) prior to direction swaps, memory is instantly reclaimed, keeping total RAM consumption under **~35MB** with **>250MB free RAM**.
+- **Hardware-Debounced Touch Keyboard:** Embedded capacitive screens fire both `pointerdown` and `touchstart` events within 2ms of a finger touch, which causes standard web inputs to double-type characters (`"ee"`). Implemented a high-precision hardware debounce filter (`performance.now()`) with cursor-aware selection tracking, uppercase/lowercase/numbers switching, and Spanish-specific characters (`ñ`, `¿`, `¡`).
+- **Automatic Sentence Case Normalization:** Marian NMT tokenizers require natural casing to avoid verbatim fallback. Built-in normalization seamlessly formats all-caps or lowercase input into clean sentence case before inference.
+- **Automotive Travel UI:** Pre-loaded with one-touch travel & emergency phrase pills (gas station, hospital, help, directions) and 1-tap bidirectional swap (`[ ⇄ Swap ]`) that auto-populates translated responses for fluid conversation.
 
 ---
 
