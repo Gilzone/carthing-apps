@@ -3303,14 +3303,12 @@ run();
         pill.className = 'preset-pill';
         pill.textContent = p.label;
         
-        function selectPreset(e) {
-          if (e) e.preventDefault();
+        function selectPreset() {
           inputArea.value = p.text;
           updateCharCount();
           if (activeModel) doTranslate();
         }
-        pill.addEventListener('pointerdown', selectPreset);
-        pill.addEventListener('click', selectPreset);
+        bindTouch(pill, selectPreset);
         presetsContainer.appendChild(pill);
       });
     }
@@ -3380,16 +3378,24 @@ run();
       return btn;
     }
 
+    let lastTapTime = 0;
     function bindTouch(el, action) {
-      el.addEventListener('pointerdown', (e) => {
-        e.preventDefault();
+      function trigger(e) {
+        if (e) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+        const now = performance.now();
+        if (now - lastTapTime < 160) return;
+        lastTapTime = now;
         action();
+      }
+      el.addEventListener('pointerdown', trigger);
+      el.addEventListener('touchstart', trigger, { passive: false });
+      el.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
       });
-      el.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        action();
-      }, { passive: false });
-      el.addEventListener('click', (e) => e.preventDefault());
     }
 
     function insertChar(ch) {
@@ -3434,7 +3440,6 @@ run();
       timeBadge.textContent = '';
       inputArea.focus();
     }
-    document.getElementById('btn-clear').addEventListener('click', doClear);
     bindTouch(document.getElementById('btn-clear'), doClear);
 
     // Back to Launcher
@@ -3568,7 +3573,6 @@ max-length-factor: 2.0
       }
     }
 
-    btnToggleLang.addEventListener('click', toggleLanguageDirection);
     bindTouch(btnToggleLang, toggleLanguageDirection);
 
     // Hardware Rotary Dial and Buttons
@@ -3677,7 +3681,6 @@ max-length-factor: 2.0
       }, 25);
     }
 
-    btnTranslate.addEventListener('click', doTranslate);
     bindTouch(btnTranslate, doTranslate);
 
     updatePresets();
