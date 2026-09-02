@@ -191,26 +191,10 @@
     {
       "tab": "tools",
       "file": "tools/retro_player.html",
-      "name": "Game Boy Color",
-      "hint": "Zelda DX, Pok\u00e9mon & Tetris",
+      "name": "Game Boy",
+      "hint": "Zelda, Pok\u00e9mon & Kirby (Auto-Save)",
       "mark": "GB",
       "color": "#8b5cf6"
-    },
-    {
-      "tab": "tools",
-      "file": "tools/bluetooth.html",
-      "name": "Bluetooth",
-      "hint": "Scanner, Audio & OBEX Share",
-      "mark": "BT",
-      "color": "#2563eb"
-    },
-    {
-      "tab": "tools",
-      "file": "tools/youtube.html",
-      "name": "GIL STUDIO",
-      "hint": "YouTube Channel & Stats",
-      "mark": "YT",
-      "color": "#ef4444"
     },
     {
       "tab": "tools",
@@ -247,16 +231,16 @@
     {
       "tab": "tools",
       "file": "tools/clock.html",
-      "name": "Clock",
-      "hint": "Time, watch, timer",
+      "name": "HUD Clock",
+      "hint": "Night HUD, Stopwatch & Timer",
       "mark": "CLK",
       "color": "#34d399"
     },
     {
       "tab": "tools",
       "file": "tools/calc.html",
-      "name": "Calculator",
-      "hint": "Quick math",
+      "name": "Car Calc",
+      "hint": "Math & Unit Converter (PSI, Speed)",
       "mark": "CAL",
       "color": "#c084fc"
     },

@@ -3,90 +3,362 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=800, height=480, initial-scale=1, maximum-scale=1, user-scalable=no">
-  <title>Clock</title>
-  <link rel="stylesheet" href="tools.css">
+  <title>HUD Dashboard & Clock</title>
   <style>
-    .tabs { display: flex; gap: 8px; }
-    .big { font: 700 92px/1 system-ui; letter-spacing: .04em; text-align: center; margin: 24px 0 18px; }
-    .sub { text-align: center; color: #9ca3af; font-size: 18px; margin-bottom: 18px; }
-    .row { display: flex; justify-content: center; gap: 12px; }
-    .btn { min-width: 120px; height: 56px; }
+    :root {
+      --bg: #090c15;
+      --card-bg: #111726;
+      --border: #1e293b;
+      --accent: #38bdf8;
+      --text: #f8fafc;
+      --muted: #64748b;
+      --hud-glow: rgba(56, 189, 248, 0.25);
+    }
+    body.theme-red {
+      --bg: #0d0404;
+      --card-bg: #1a0808;
+      --border: #381010;
+      --accent: #ef4444;
+      --text: #fee2e2;
+      --muted: #7f1d1d;
+      --hud-glow: rgba(239, 68, 68, 0.35);
+    }
+    body.theme-amber {
+      --bg: #0f0a04;
+      --card-bg: #1c1308;
+      --border: #452408;
+      --accent: #f59e0b;
+      --text: #fef3c7;
+      --muted: #78350f;
+      --hud-glow: rgba(245, 158, 11, 0.35);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: none;
+    }
+    body {
+      width: 800px;
+      height: 480px;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+      display: flex;
+      flex-direction: column;
+      transition: background 0.25s, color 0.25s;
+    }
+
+    /* Top Bar */
+    .top {
+      height: 52px;
+      background: rgba(15, 23, 42, 0.6);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      flex-shrink: 0;
+    }
+    .left-nav {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .btn-chip {
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: var(--text);
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-weight: 800;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .btn-chip:active { transform: scale(0.96); }
+
+    .tabs {
+      display: flex;
+      gap: 6px;
+      background: #0f172a;
+      padding: 3px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .tab-btn.active {
+      background: var(--accent);
+      color: #000;
+      font-weight: 900;
+    }
+
+    .theme-toggles {
+      display: flex;
+      gap: 6px;
+    }
+    .theme-pill {
+      padding: 5px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      font-size: 11px;
+      font-weight: 800;
+      cursor: pointer;
+      background: #1e293b;
+      color: var(--text);
+    }
+
+    /* Stage */
+    .stage {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .hud-display {
+      font-size: 124px;
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: 2px;
+      color: var(--accent);
+      text-shadow: 0 0 35px var(--hud-glow);
+      font-variant-numeric: tabular-nums;
+      margin-bottom: 8px;
+    }
+    .hud-sub {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--muted);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 24px;
+    }
+
+    .control-row {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    .action-btn {
+      min-width: 140px;
+      height: 52px;
+      background: var(--card-bg);
+      border: 2px solid var(--accent);
+      color: var(--text);
+      font-size: 16px;
+      font-weight: 900;
+      border-radius: 12px;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+    }
+    .action-btn:active {
+      background: var(--accent);
+      color: #000;
+    }
+
+    .knob-hud-hint {
+      position: absolute;
+      bottom: 14px;
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.5px;
+    }
+    .knob-hud-hint b { color: var(--accent); }
   </style>
 </head>
 <body>
+
   <div class="top">
-    <button class="chip" id="home" type="button">HOME</button>
-    <div class="title">Clock</div>
-    <div class="grow"></div>
-    <div class="tabs">
-      <button class="chip" data-tab="clock" type="button">TIME</button>
-      <button class="chip off" data-tab="watch" type="button">WATCH</button>
-      <button class="chip off" data-tab="timer" type="button">TIMER</button>
+    <div class="left-nav">
+      <button class="btn-chip" id="home" type="button">← Tools</button>
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="clock" type="button">CLOCK</button>
+        <button class="tab-btn" data-tab="watch" type="button">STOPWATCH</button>
+        <button class="tab-btn" data-tab="timer" type="button">TIMER</button>
+      </div>
+    </div>
+
+    <div class="theme-toggles">
+      <button class="theme-pill" id="thm-blue" type="button">Cyber</button>
+      <button class="theme-pill" id="thm-red" type="button">🔴 Night HUD</button>
+      <button class="theme-pill" id="thm-amber" type="button">🟡 Amber</button>
     </div>
   </div>
+
   <div class="stage">
-    <div class="big" id="big">00:00:00</div>
-    <div class="sub" id="sub">Local time</div>
-    <div class="row" id="row"></div>
+    <div class="hud-display" id="big">00:00:00</div>
+    <div class="hud-sub" id="sub">LOCAL TIME</div>
+    <div class="control-row" id="row"></div>
+    <div class="knob-hud-hint">
+      🔘 <b>Push Knob</b> = Start/Stop &nbsp;|&nbsp; 🔄 <b>Turn Knob</b> = Adjust Time &nbsp;|&nbsp; <b>Back Button</b> = Reset
+    </div>
   </div>
+
   <script>
-    var HOME = "file:///opt/nocturne/webapps/player/index.html#tools";
+    var HOME = "../index.html#tools";
     document.getElementById("home").onclick = function () { location.href = HOME; };
-    var tab = "clock", watch = 0, running = false, t0 = 0, acc = 0, timerLeft = 5 * 60 * 1000, timerRun = false, timerEnd = 0;
+
+    var tab = "clock";
+    var watch = 0, running = false, t0 = 0, acc = 0;
+    var timerLeft = 5 * 60 * 1000, timerRun = false, timerEnd = 0;
+
     var big = document.getElementById("big");
     var sub = document.getElementById("sub");
     var row = document.getElementById("row");
+
     function pad(n) { return String(n).padStart(2, "0"); }
     function fmt(ms) {
       ms = Math.max(0, ms | 0);
       var s = Math.floor(ms / 1000);
-      return pad(Math.floor(s / 3600)) + ":" + pad(Math.floor(s / 60) % 60) + ":" + pad(s % 60);
+      var h = Math.floor(s / 3600);
+      var m = Math.floor(s / 60) % 60;
+      var sec = s % 60;
+      return (h > 0 ? pad(h) + ":" : "") + pad(m) + ":" + pad(sec);
     }
-    function setTab(name) {
-      tab = name;
-      [].forEach.call(document.querySelectorAll("[data-tab]"), function (el) {
-        el.classList.toggle("off", el.getAttribute("data-tab") !== name);
-      });
-      row.innerHTML = "";
-      if (name === "watch") {
-        addBtn("START", function () { if (!running) { running = true; t0 = Date.now(); } });
-        addBtn("STOP", function () { if (running) { acc += Date.now() - t0; running = false; } });
-        addBtn("RESET", function () { running = false; acc = 0; t0 = 0; });
+
+    function toggleWatch() {
+      if (!running) {
+        running = true;
+        t0 = Date.now();
+      } else {
+        acc += Date.now() - t0;
+        running = false;
       }
-      if (name === "timer") {
-        addBtn("-1m", function () { timerLeft = Math.max(0, timerLeft - 60000); timerRun = false; });
-        addBtn("+1m", function () { timerLeft += 60000; timerRun = false; });
-        addBtn("+5m", function () { timerLeft += 300000; timerRun = false; });
-        addBtn("START", function () { if (timerLeft > 0) { timerRun = true; timerEnd = Date.now() + timerLeft; } });
-        addBtn("RESET", function () { timerRun = false; timerLeft = 5 * 60000; });
-      }
+      setTab("watch");
     }
+
+    function resetWatch() {
+      running = false;
+      acc = 0;
+      t0 = 0;
+      setTab("watch");
+    }
+
+    function toggleTimer() {
+      if (!timerRun && timerLeft > 0) {
+        timerRun = true;
+        timerEnd = Date.now() + timerLeft;
+      } else {
+        timerRun = false;
+      }
+      setTab("timer");
+    }
+
+    function resetTimer() {
+      timerRun = false;
+      timerLeft = 5 * 60 * 1000;
+      setTab("timer");
+    }
+
     function addBtn(label, fn) {
       var b = document.createElement("button");
-      b.className = "btn"; b.textContent = label; b.onclick = fn; row.appendChild(b);
+      b.className = "action-btn";
+      b.textContent = label;
+      b.onclick = fn;
+      row.appendChild(b);
     }
-    [].forEach.call(document.querySelectorAll("[data-tab]"), function (el) {
-      el.onclick = function () { setTab(el.getAttribute("data-tab")); };
+
+    function setTab(name) {
+      tab = name;
+      var tabs = document.querySelectorAll("[data-tab]");
+      for (var i = 0; i < tabs.length; i++) {
+        tabs[i].classList.toggle("active", tabs[i].getAttribute("data-tab") === name);
+      }
+      row.innerHTML = "";
+
+      if (name === "watch") {
+        addBtn(running ? "STOP" : "START", toggleWatch);
+        addBtn("RESET", resetWatch);
+      } else if (name === "timer") {
+        addBtn(timerRun ? "PAUSE" : "START", toggleTimer);
+        addBtn("+1m", function () { timerLeft += 60000; setTab("timer"); });
+        addBtn("RESET", resetTimer);
+      }
+    }
+
+    var tabButtons = document.querySelectorAll("[data-tab]");
+    for (var i = 0; i < tabButtons.length; i++) {
+      tabButtons[i].onclick = function () { setTab(this.getAttribute("data-tab")); };
+    }
+
+    // Hardware Rotary Knob Controls:
+    window.addEventListener("keydown", function(e) {
+      if (e.key === "Enter" || e.key === " " || e.key === "MediaPlayPause") {
+        if (tab === "watch") toggleWatch();
+        else if (tab === "timer") toggleTimer();
+      } else if (e.key === "Escape" || e.key === "Backspace") {
+        if (tab === "watch") resetWatch();
+        else if (tab === "timer") resetTimer();
+        else location.href = HOME;
+      }
     });
+
+    window.addEventListener("wheel", function(e) {
+      var delta = (e.deltaY || e.deltaX) > 0 ? 1 : -1;
+      if (tab === "timer") {
+        timerLeft = Math.max(60000, timerLeft + (delta * 60000));
+        if (timerRun) timerEnd += (delta * 60000);
+      }
+    });
+
+    // Theme Switchers
+    document.getElementById("thm-blue").onclick = function() {
+      document.body.className = "";
+      localStorage.setItem("hud_theme", "blue");
+    };
+    document.getElementById("thm-red").onclick = function() {
+      document.body.className = "theme-red";
+      localStorage.setItem("hud_theme", "red");
+    };
+    document.getElementById("thm-amber").onclick = function() {
+      document.body.className = "theme-amber";
+      localStorage.setItem("hud_theme", "amber");
+    };
+
+    var savedTheme = localStorage.getItem("hud_theme");
+    if (savedTheme === "red") document.body.className = "theme-red";
+    else if (savedTheme === "amber") document.body.className = "theme-amber";
+
+    // Main HUD Loop
     setInterval(function () {
       if (tab === "clock") {
         var d = new Date();
         big.textContent = pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
-        sub.textContent = d.toDateString();
+        sub.textContent = d.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' });
       } else if (tab === "watch") {
         var ms = acc + (running ? Date.now() - t0 : 0);
         big.textContent = fmt(ms);
-        sub.textContent = running ? "Running" : "Stopped";
+        sub.textContent = running ? "STOPWATCH RUNNING" : "STOPWATCH STOPPED";
       } else {
         var left = timerRun ? timerEnd - Date.now() : timerLeft;
         if (timerRun) {
           timerLeft = Math.max(0, left);
-          if (left <= 0) { timerRun = false; sub.textContent = "Done"; }
+          if (left <= 0) {
+            timerRun = false;
+            sub.textContent = "TIMER FINISHED!";
+          }
         }
         big.textContent = fmt(timerLeft);
-        if (!timerRun && timerLeft > 0) sub.textContent = "Timer";
+        if (timerRun) sub.textContent = "COUNTDOWN ACTIVE";
+        else if (timerLeft > 0) sub.textContent = "TIMER SET (TURN KNOB TO ADJUST)";
       }
-    }, 200);
+    }, 150);
+
     setTab("clock");
   </script>
 </body>

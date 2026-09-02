@@ -373,6 +373,7 @@
       <span class="fps-badge" id="lbl-fps">GB 60 FPS</span>
     </div>
     <div class="top-actions">
+      <button class="action-pill" id="btn-save" type="button">💾 Save</button>
       <button class="action-pill" id="btn-reset" type="button">🔄 Reset</button>
       <button class="action-pill" id="btn-open-file" type="button">📂 ROM</button>
       <input type="file" id="file-input" accept=".gb,.gbc" style="display:none">
@@ -610,6 +611,24 @@
         gb.firstIteration = dateObj.getTime();
         gb.iterations = 0;
 
+        // Restore save state from localStorage if available
+        let restoredSram = false;
+        try {
+          const sramKey = "gb_sram_" + (title || "game").replace(/[^a-zA-Z0-9]/g, "_");
+          const saved = localStorage.getItem(sramKey);
+          if (saved && gb.MBCRam) {
+            const raw = JSON.parse(saved);
+            if (Array.isArray(raw) && raw.length > 0) {
+              for (let i = 0; i < Math.min(raw.length, gb.MBCRam.length); i++) {
+                gb.MBCRam[i] = raw[i];
+              }
+              restoredSram = true;
+            }
+          }
+        } catch (e) {
+          console.error("Failed to restore save:", e);
+        }
+
         // High-precision execution loop
         gbLoop = setInterval(() => {
           if (gb) {
@@ -618,12 +637,33 @@
           }
         }, 10);
 
-        showOsd(`Playing ${title}!`);
+        showOsd(restoredSram ? `Loaded ${title} (Save Restored)` : `Playing ${title}!`);
       } catch (err) {
         showOsd("Error: " + err.message);
         console.error(err);
       }
     }
+
+    // Save SRAM battery backup to localStorage
+    function persistSram(notify = false) {
+      if (!gb || !gb.cBATT || !gb.MBCRam || gb.MBCRam.length === 0) return;
+      try {
+        const data = gb.saveSRAMState();
+        if (data && data.length > 0) {
+          const title = lblTitle.textContent || "game";
+          const sramKey = "gb_sram_" + title.replace(/[^a-zA-Z0-9]/g, "_");
+          localStorage.setItem(sramKey, JSON.stringify(data));
+          if (notify) showOsd("💾 Game progress saved!");
+        }
+      } catch(e) {
+        console.error("Failed to save SRAM:", e);
+      }
+    }
+
+    // Auto-save battery SRAM every 12 seconds & on exit
+    setInterval(() => persistSram(false), 12000);
+    window.addEventListener('beforeunload', () => persistSram(false));
+    document.getElementById('btn-save').addEventListener('pointerdown', () => persistSram(true));
 
     async function loadRomByPath(path, title) {
       showOsd("Loading game...");
@@ -685,6 +725,7 @@
 
     // Back to Launcher Tools
     document.getElementById('btn-back').addEventListener('pointerdown', () => {
+      persistSram(false);
       window.location.href = '../index.html#tools';
     });
 

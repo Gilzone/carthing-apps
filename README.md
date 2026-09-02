@@ -52,14 +52,14 @@ The custom Chromium kiosk shell runs native 800×480 with GPU hardware accelerat
   <img src="docs/screenshots/gb_pokemon_red_user_live.png" width="32%" alt="Pokemon Red on Car Thing" />
 </p>
 
-### ᛒ Bluetooth & Device Manager (Tools Tab)
-- **Real-Time Bluetooth 5.2 Scanner:** Leverages the Car Thing's onboard Cypress BCM20703A2 Bluetooth 5.2 controller to scan and discover nearby Bluetooth devices (Smart TVs, Bluetooth speakers, headphones, and smartphones).
-- **📲 Bluetooth File Sharing (OBEX Push):** Auto-accepts incoming file transfers over Bluetooth. Beam `.gb` / `.gbc` game ROMs, `.epub` books, or audio files straight from your Android, iPhone, or PC into the Car Thing!
-- **🔊 Bluetooth Audio Synthesizer Test:** Test audio latency and routing over Bluetooth audio sinks with an interactive 8-bit chiptune soundboard (Zelda fanfare, Pokémon theme, Retro Coin chime).
-- **⚙️ Hardware Diagnostics:** Real-time adapter status (`30:E3:D6:04:C2:E3`), connection state, and live thermal monitoring (`32.7°C`).
+### 🏎️ Automotive HUD Clock & 🚗 Car Unit Converter (Tools Tab)
+- **HUD Dashboard Clock:** High-contrast digital clock with Cyber, Amber, and Night Vision Red HUD themes designed for automotive dashboard use. Fully integrated with physical controls: push the knob to start/stop the precision stopwatch and countdown timer; turn the knob to adjust minutes; press the physical Back button to reset.
+- **Car Unit Converter & Calculator:** Instant live conversions for automotive metrics: speed ($km/h \leftrightarrow mph$), tire pressure ($PSI \leftrightarrow Bar$), temperature ($^\circ C \leftrightarrow ^\circ F$), and fuel consumption ($MPG \leftrightarrow L/100km$).
+- **Game Boy Battery Auto-Save:** Cycle-accurate cartridge battery SRAM saves (Zelda, Pokémon Red, Kirby) auto-saved to persistent local storage every 12 seconds and restored on boot with dedicated `[ 💾 Save ]` controls.
 
 <p align="center">
-  <img src="docs/screenshots/tool_bluetooth_live.png" width="80%" alt="Bluetooth & Device Manager on Car Thing" />
+  <img src="docs/screenshots/tool_hud_clock_live.png" width="48%" alt="Automotive HUD Clock on Car Thing" />
+  <img src="docs/screenshots/tool_car_calc_live.png" width="48%" alt="Car Unit Converter & Calculator on Car Thing" />
 </p>
 
 ---
