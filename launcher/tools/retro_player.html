@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=800, height=480, initial-scale=1.0, user-scalable=no">
+  <title>Game Boy Advance Player</title>
+  <style>
+    :root {
+      --bg: #090d16;
+      --border: #1e293b;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --accent: #3b82f6;
+      --btn-a: #10b981;
+      --btn-b: #f43f5e;
+      --btn-l: #475569;
+      --dpad-bg: #1e293b;
+      --dpad-border: #334155;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body {
+      width: 800px;
+      height: 480px;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top Bar */
+    .top-bar {
+      height: 40px;
+      background: #0f172a;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px;
+      z-index: 30;
+    }
+    .back-btn {
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: var(--text);
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .back-btn:active { background: #334155; }
+
+    .title-area {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .game-badge {
+      background: #1e293b;
+      border: 1px solid #3b82f6;
+      color: #93c5fd;
+      padding: 3px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 800;
+      max-width: 220px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .fps-badge {
+      font-size: 11px;
+      font-weight: 800;
+      color: #34d399;
+      background: #064e3b;
+      padding: 2px 8px;
+      border-radius: 8px;
+    }
+
+    .top-actions {
+      display: flex;
+      gap: 6px;
+    }
+    .action-pill {
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: var(--text);
+      padding: 5px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .action-pill:active { background: var(--accent); }
+
+    /* Console Body */
+    .console-body {
+      flex: 1;
+      height: 440px;
+      display: flex;
+      position: relative;
+    }
+
+    /* Left Control Wing */
+    .left-wing {
+      width: 160px;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 0 16px;
+      z-index: 20;
+    }
+    .trigger-btn {
+      width: 110px;
+      height: 42px;
+      background: #1e293b;
+      border: 2px solid #334155;
+      border-radius: 10px;
+      color: #cbd5e1;
+      font-size: 15px;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+      cursor: pointer;
+    }
+    .trigger-btn.active {
+      background: var(--accent) !important;
+      color: white !important;
+      transform: translateY(2px);
+    }
+
+    /* Large Ergonomic D-PAD */
+    .dpad-container {
+      width: 140px;
+      height: 140px;
+      position: relative;
+      margin-top: 10px;
+    }
+    .dpad-center {
+      position: absolute;
+      left: 46px;
+      top: 46px;
+      width: 48px;
+      height: 48px;
+      background: var(--dpad-bg);
+      border: 2px solid var(--dpad-border);
+      border-radius: 4px;
+    }
+    .dpad-btn {
+      position: absolute;
+      background: var(--dpad-bg);
+      border: 2px solid var(--dpad-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      color: #cbd5e1;
+      cursor: pointer;
+    }
+    .dpad-btn.active {
+      background: var(--accent) !important;
+      color: white !important;
+    }
+    .dpad-up {
+      left: 46px;
+      top: 0;
+      width: 48px;
+      height: 50px;
+      border-top-left-radius: 8px;
+      border-top-right-radius: 8px;
+      border-bottom: none;
+    }
+    .dpad-down {
+      left: 46px;
+      bottom: 0;
+      width: 48px;
+      height: 50px;
+      border-bottom-left-radius: 8px;
+      border-bottom-right-radius: 8px;
+      border-top: none;
+    }
+    .dpad-left {
+      left: 0;
+      top: 46px;
+      width: 50px;
+      height: 48px;
+      border-top-left-radius: 8px;
+      border-bottom-left-radius: 8px;
+      border-right: none;
+    }
+    .dpad-right {
+      right: 0;
+      top: 46px;
+      width: 50px;
+      height: 48px;
+      border-top-right-radius: 8px;
+      border-bottom-right-radius: 8px;
+      border-left: none;
+    }
+
+    .meta-pill-left {
+      width: 100px;
+      height: 38px;
+      background: #1e293b;
+      border: 2px solid #334155;
+      color: #cbd5e1;
+      border-radius: 19px;
+      font-size: 12px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+    }
+    .meta-pill-left.active {
+      background: var(--accent) !important;
+      color: white !important;
+    }
+
+    /* Center Screen Pillar */
+    .center-pillar {
+      width: 480px;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    .screen-bezel {
+      width: 484px;
+      height: 324px;
+      background: #000;
+      border: 2px solid #334155;
+      border-radius: 6px;
+      box-shadow: 0 0 24px rgba(0, 0, 0, 0.9), inset 0 0 8px rgba(0,0,0,0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+    #screen {
+      width: 480px !important;
+      height: 320px !important;
+      image-rendering: pixelated !important;
+      image-rendering: crisp-edges !important;
+      display: block;
+      background: #000;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* Bottom ROM Picker */
+    .rom-carousel {
+      margin-top: 10px;
+      width: 480px;
+      height: 44px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: center;
+      padding: 0 4px;
+    }
+    .rom-pill {
+      background: #131d2e;
+      border: 1px solid #2d3b55;
+      color: #cbd5e1;
+      padding: 7px 14px;
+      border-radius: 16px;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+    .rom-pill.active {
+      background: #2563eb;
+      border-color: #60a5fa;
+      color: white;
+    }
+    .rom-pill:active {
+      transform: scale(0.96);
+    }
+
+    /* Right Control Wing */
+    .right-wing {
+      width: 160px;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 0 16px;
+      z-index: 20;
+    }
+    .action-cluster {
+      position: relative;
+      width: 140px;
+      height: 130px;
+      margin-top: 6px;
+    }
+    .round-btn {
+      position: absolute;
+      width: 62px;
+      height: 62px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      font-weight: 900;
+      color: white;
+      box-shadow: 0 6px 14px rgba(0,0,0,0.6), inset 0 2px 4px rgba(255,255,255,0.4);
+      cursor: pointer;
+    }
+    .round-btn-b {
+      left: 4px;
+      bottom: 8px;
+      background: var(--btn-b);
+      border: 3px solid #be123c;
+    }
+    .round-btn-b.active {
+      background: #9f1239 !important;
+      transform: translateY(2px);
+    }
+    .round-btn-a {
+      right: 4px;
+      top: 8px;
+      background: var(--btn-a);
+      border: 3px solid #047857;
+    }
+    .round-btn-a.active {
+      background: #065f46 !important;
+      transform: translateY(2px);
+    }
+
+    .meta-pill-right {
+      width: 100px;
+      height: 38px;
+      background: #1e293b;
+      border: 2px solid #334155;
+      color: #cbd5e1;
+      border-radius: 19px;
+      font-size: 12px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+    }
+    .meta-pill-right.active {
+      background: var(--accent) !important;
+      color: white !important;
+    }
+
+    /* OSD Messages */
+    .osd {
+      position: absolute;
+      top: 16px;
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid #38bdf8;
+      color: #38bdf8;
+      padding: 6px 18px;
+      border-radius: 14px;
+      font-size: 13px;
+      font-weight: 800;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s;
+      z-index: 60;
+    }
+    .osd.visible { opacity: 1; }
+  </style>
+</head>
+<body>
+
+  <!-- Top Status Bar -->
+  <div class="top-bar">
+    <button class="back-btn" id="btn-back" type="button">← Launcher</button>
+    <div class="title-area">
+      <span class="game-badge" id="lbl-title">Loading...</span>
+      <span class="fps-badge" id="lbl-fps">GBA 60 FPS</span>
+    </div>
+    <div class="top-actions">
+      <button class="action-pill" id="btn-save" type="button">💾 Save</button>
+      <button class="action-pill" id="btn-load" type="button">⚡ Load</button>
+      <button class="action-pill" id="btn-reset" type="button">🔄 Reset</button>
+      <button class="action-pill" id="btn-open-file" type="button">📂 ROM</button>
+      <input type="file" id="file-input" accept=".gba,.bin" style="display:none">
+    </div>
+  </div>
+
+  <!-- Console Main Viewport -->
+  <div class="console-body">
+    <div class="osd" id="osd-msg">Saved state!</div>
+
+    <!-- Left Controls: L, D-Pad, SELECT -->
+    <div class="left-wing">
+      <button class="trigger-btn" id="btn-l" type="button">L</button>
+      <div class="dpad-container" id="dpad">
+        <div class="dpad-center"></div>
+        <button class="dpad-btn dpad-up" id="btn-up" type="button">▲</button>
+        <button class="dpad-btn dpad-down" id="btn-down" type="button">▼</button>
+        <button class="dpad-btn dpad-left" id="btn-left" type="button">◀</button>
+        <button class="dpad-btn dpad-right" id="btn-right" type="button">▶</button>
+      </div>
+      <button class="meta-pill-left" id="btn-select" type="button">SELECT</button>
+    </div>
+
+    <!-- Center Display & Game Selector -->
+    <div class="center-pillar">
+      <div class="screen-bezel">
+        <canvas id="screen" width="240" height="160"></canvas>
+      </div>
+      <div class="rom-carousel">
+        <button class="rom-pill active" id="pill-anguna" type="button">🗡️ Zelda (Anguna)</button>
+        <button class="rom-pill" id="pill-pokemon" type="button">🔴 Pokémon FireRed</button>
+        <button class="rom-pill" id="pill-advancetris" type="button">🧱 Advancetris</button>
+        <button class="rom-pill" id="pill-custom" type="button">➕ Custom ROM...</button>
+      </div>
+    </div>
+
+    <!-- Right Controls: R, A/B, START -->
+    <div class="right-wing">
+      <button class="trigger-btn" id="btn-r" type="button">R</button>
+      <div class="action-cluster">
+        <button class="round-btn round-btn-b" id="btn-b" type="button">B</button>
+        <button class="round-btn round-btn-a" id="btn-a" type="button">A</button>
+      </div>
+      <button class="meta-pill-right" id="btn-start" type="button">START</button>
+    </div>
+  </div>
+
+  <!-- Load GBA Engine & Clean BIOS -->
+  <script src="emulator/gbajs.bundle.js"></script>
+
+  <script>
+    // Clean-room 220-byte BIOS
+    const BIOS_B64 = "BgAA6v7//+oFAADq/v//6v7//+oAAKDhDAAA6v7//+oC86DjAABd4wHToAMg0E0CAEAt6QIAXuUEAFDjCQAACwUAUOMHAAALAEC96A7wsOEPUC3pAQOg4wDgj+IE8BDlD1C96ATwXuIQQC3pBNBN4rAQzeEBQ6DjAkyE4rAA1OGyAM3hsBDd4QEAgOGwAMThAUOg4x8AoOMA8CnhAACg4wEDxOXTAKDjAPAp4bgAVOGwEN3hABAR4AAQIRC4EEQR8///CgFDoOMCTITisgDd4bAAxOEE0I3iEIC96A==";
+
+    function getBiosBuffer() {
+      const bin = atob(BIOS_B64);
+      const buf = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; ++i) buf[i] = bin.charCodeAt(i);
+      return buf.buffer;
+    }
+
+    const canvas = document.getElementById('screen');
+    const lblTitle = document.getElementById('lbl-title');
+    const lblFps = document.getElementById('lbl-fps');
+    const osd = document.getElementById('osd-msg');
+
+    function showOsd(text) {
+      osd.textContent = text;
+      osd.className = 'osd visible';
+      clearTimeout(window._osdTimer);
+      window._osdTimer = setTimeout(() => { osd.className = 'osd'; }, 1800);
+    }
+
+    // Binary file reader from disk
+    function loadDiskFile(path) {
+      return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('GET', path);
+        xhr.responseType = 'arraybuffer';
+        xhr.onload = () => {
+          if (xhr.status === 200 || xhr.status === 0) resolve(xhr.response);
+          else reject(new Error(`Failed to load ${path}`));
+        };
+        xhr.onerror = () => reject(new Error(`Network error loading ${path}`));
+        xhr.send();
+      });
+    }
+
+    let gba = null;
+    let isFastFwd = false;
+
+    // Direct GBA Hardware Bit Mapping (Active LOW: 0 = pressed, 1 = released)
+    const BIT_MAP = {
+      a: 0,
+      b: 1,
+      select: 2,
+      start: 3,
+      right: 4,
+      left: 5,
+      up: 6,
+      down: 7,
+      r: 8,
+      l: 9
+    };
+
+    // UI Element References for visual active feedback
+    const BTN_ELS = {
+      a: document.getElementById('btn-a'),
+      b: document.getElementById('btn-b'),
+      select: document.getElementById('btn-select'),
+      start: document.getElementById('btn-start'),
+      up: document.getElementById('btn-up'),
+      down: document.getElementById('btn-down'),
+      left: document.getElementById('btn-left'),
+      right: document.getElementById('btn-right'),
+      l: document.getElementById('btn-l'),
+      r: document.getElementById('btn-r')
+    };
+
+    const PRESS_TIMERS = {};
+
+    function updateInput(key, down) {
+      const bit = BIT_MAP[key];
+      const el = BTN_ELS[key];
+
+      if (down) {
+        if (el) el.classList.add('active');
+        if (gba && gba.keypad) {
+          gba.keypad.currentDown &= ~(1 << bit);
+        }
+      } else {
+        // Guarantee minimum 140ms latch so game frame loop never misses a quick finger tap
+        clearTimeout(PRESS_TIMERS[key]);
+        PRESS_TIMERS[key] = setTimeout(() => {
+          if (el) el.classList.remove('active');
+          if (gba && gba.keypad) {
+            gba.keypad.currentDown |= (1 << bit);
+          }
+        }, 140);
+      }
+    }
+
+    // Touch and Pointer Control Binding
+    function bindControl(el, key) {
+      function press(e) {
+        if (e) e.preventDefault();
+        updateInput(key, true);
+      }
+      function release(e) {
+        if (e) e.preventDefault();
+        updateInput(key, false);
+      }
+
+      el.addEventListener('pointerdown', press);
+      el.addEventListener('pointerup', release);
+      el.addEventListener('pointercancel', release);
+      el.addEventListener('pointerleave', release);
+
+      el.addEventListener('touchstart', press, { passive: false });
+      el.addEventListener('touchend', release, { passive: false });
+      el.addEventListener('touchcancel', release, { passive: false });
+    }
+
+    Object.keys(BTN_ELS).forEach(k => {
+      if (BTN_ELS[k]) bindControl(BTN_ELS[k], k);
+    });
+
+    // Hardware Button Bindings on Car Thing
+    // Top 1: L trigger, Top 4: R trigger, Top 2: SELECT, Top 3: START, Dial Click Enter: A
+    window.addEventListener('keydown', (e) => {
+      const k = e.key;
+      if (k === '1') updateInput('l', true);
+      else if (k === '4') updateInput('r', true);
+      else if (k === '2') updateInput('select', true);
+      else if (k === '3') updateInput('start', true);
+      else if (k === 'Enter') updateInput('a', true);
+      else if (k === 'ArrowUp' || k === 'w') updateInput('up', true);
+      else if (k === 'ArrowDown' || k === 's') updateInput('down', true);
+      else if (k === 'ArrowLeft' || k === 'a') updateInput('left', true);
+      else if (k === 'ArrowRight' || k === 'd') updateInput('right', true);
+      else if (k === 'z' || k === 'j') updateInput('a', true);
+      else if (k === 'x' || k === 'k') updateInput('b', true);
+      else if (k === 'Escape') window.location.href = '../index.html#games';
+    });
+
+    window.addEventListener('keyup', (e) => {
+      const k = e.key;
+      if (k === '1') updateInput('l', false);
+      else if (k === '4') updateInput('r', false);
+      else if (k === '2') updateInput('select', false);
+      else if (k === '3') updateInput('start', false);
+      else if (k === 'Enter') updateInput('a', false);
+      else if (k === 'ArrowUp' || k === 'w') updateInput('up', false);
+      else if (k === 'ArrowDown' || k === 's') updateInput('down', false);
+      else if (k === 'ArrowLeft' || k === 'a') updateInput('left', false);
+      else if (k === 'ArrowRight' || k === 'd') updateInput('right', false);
+      else if (k === 'z' || k === 'j') updateInput('a', false);
+      else if (k === 'x' || k === 'k') updateInput('b', false);
+    });
+
+    // Rotary Dial Wheel: Fast-Forward Speed Toggle
+    let dialDebounce = 0;
+    window.addEventListener('wheel', (e) => {
+      const now = Date.now();
+      if (now - dialDebounce < 250) return;
+      dialDebounce = now;
+      isFastFwd = !isFastFwd;
+      if (gba) {
+        // Turbo frame advance
+        gba.waitFrame = isFastFwd ? false : true;
+      }
+      showOsd(isFastFwd ? "Fast-Forward ON (2x)" : "Fast-Forward OFF (1x)");
+    });
+
+    // Launch GBA Game with Pixel-Perfect Direct Canvas Scaling
+    async function launchGame(romBuffer, title) {
+      if (gba) {
+        try { gba.pause(); } catch(e) {}
+        gba = null;
+      }
+
+      lblTitle.textContent = title || "GBA Game";
+      lblFps.textContent = "GBA 60 FPS";
+
+      // Reset internal canvas buffer to native GBA resolution
+      canvas.width = 240;
+      canvas.height = 160;
+
+      gba = new GameBoyAdvance();
+      
+      // CRITICAL FIX: Use setCanvasDirect so the 240x160 buffer is rendered
+      // directly without indirect downscaling or 2x zoom distortion
+      gba.setCanvasDirect(canvas);
+      gba.setBios(getBiosBuffer());
+
+      const success = gba.setRom(romBuffer);
+      if (!success) {
+        showOsd("Failed to load GBA ROM");
+        return;
+      }
+
+      gba.runStable();
+      showOsd(`Playing ${title}!`);
+    }
+
+    async function loadRomByPath(path, title) {
+      showOsd("Loading game...");
+      try {
+        const buf = await loadDiskFile(path);
+        await launchGame(buf, title);
+      } catch (err) {
+        showOsd("Error: " + err.message);
+        console.error(err);
+      }
+    }
+
+    // Carousel Navigation
+    function setActivePill(id) {
+      document.querySelectorAll('.rom-pill').forEach(p => p.classList.remove('active'));
+      const el = document.getElementById(id);
+      if (el) el.classList.add('active');
+    }
+
+    document.getElementById('pill-anguna').addEventListener('pointerdown', () => {
+      setActivePill('pill-anguna');
+      loadRomByPath('roms/anguna.gba', 'Zelda (Anguna)');
+    });
+
+    document.getElementById('pill-pokemon').addEventListener('pointerdown', () => {
+      setActivePill('pill-pokemon');
+      loadRomByPath('roms/pokemon_firered.gba', 'Pokémon FireRed');
+    });
+
+    document.getElementById('pill-advancetris').addEventListener('pointerdown', () => {
+      setActivePill('pill-advancetris');
+      loadRomByPath('roms/advancetris.gba', 'Advancetris');
+    });
+
+    // Custom ROM Picker
+    const fileInput = document.getElementById('file-input');
+    document.getElementById('btn-open-file').addEventListener('pointerdown', () => fileInput.click());
+    document.getElementById('pill-custom').addEventListener('pointerdown', () => fileInput.click());
+
+    fileInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      setActivePill('pill-custom');
+      showOsd(`Loading ${file.name}...`);
+      const reader = new FileReader();
+      reader.onload = async () => {
+        await launchGame(reader.result, file.name);
+      };
+      reader.readAsArrayBuffer(file);
+    });
+
+    // Save & Load State
+    document.getElementById('btn-save').addEventListener('pointerdown', () => {
+      if (gba) {
+        try {
+          const state = gba.freeze();
+          localStorage.setItem('retro_gba_state', JSON.stringify(state));
+          showOsd("State Saved!");
+        } catch(e) { showOsd("Save failed: " + e.message); }
+      }
+    });
+
+    document.getElementById('btn-load').addEventListener('pointerdown', () => {
+      if (gba) {
+        try {
+          const saved = localStorage.getItem('retro_gba_state');
+          if (saved) {
+            gba.defrost(JSON.parse(saved));
+            showOsd("State Loaded!");
+          } else {
+            showOsd("No save found");
+          }
+        } catch(e) { showOsd("Load failed: " + e.message); }
+      }
+    });
+
+    // Reset
+    document.getElementById('btn-reset').addEventListener('pointerdown', () => {
+      if (gba) {
+        gba.reset();
+        gba.runStable();
+        showOsd("Game Reset");
+      }
+    });
+
+    // Back to Launcher
+    document.getElementById('btn-back').addEventListener('pointerdown', () => {
+      window.location.href = '../index.html#games';
+    });
+
+    // Boot default: Zelda (Anguna: Warriors of the Demisun)
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        loadRomByPath('roms/anguna.gba', 'Zelda (Anguna)');
+      }, 150);
+    });
+  </script>
+</body>
+</html>

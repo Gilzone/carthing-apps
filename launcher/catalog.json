@@ -22,6 +22,14 @@
   "items": [
     {
       "tab": "games",
+      "file": "tools/retro_player.html",
+      "name": "Game Boy & GBA",
+      "hint": "GBA & GBC Emulator + ROMs",
+      "mark": "GB",
+      "color": "#6366f1"
+    },
+    {
+      "tab": "games",
       "file": "games/amongus/index.html",
       "name": "Among Us",
       "hint": "Find the impostor",

@@ -33,6 +33,21 @@ The custom Chromium kiosk shell runs native 800×480 with GPU hardware accelerat
 
 ---
 
+### 🕹️ Standalone Game Boy Advance (GBA) Player & 2D RPG Suite
+- **Pixel-Perfect Scaling:** Native $240 \times 160$ scanline renderer directly scaled $2\times$ to $480 \times 320$ inside a crisp bezel, centered between ergonomic on-screen touch controls.
+- **Hardware & Touch Controls:** Large tactile D-Pad (left), arcade-style A/B action buttons (right), and wide 100px START & SELECT pills with a 140ms touch latch filter ensuring no missed inputs. Top buttons `1` & `4` act as L & R triggers, and the rotary dial clicks for `A` and turns for 2x Fast-Forward.
+- **Pre-Loaded Classics:**
+  - 🗡️ **Zelda (Anguna: Warriors of the Demisun):** Full 2D top-down Action RPG with overworld exploration, sword combat, and dungeons.
+  - 🔴 **Pokémon FireRed:** Complete 2D Pokémon adventure running locked at 60 FPS.
+  - 🧱 **Advancetris:** Modern GBA block stacker.
+
+<p align="center">
+  <img src="docs/screenshots/retro_pokemon_title.png" width="48%" alt="Pokemon FireRed on Car Thing" />
+  <img src="docs/screenshots/retro_anguna_live.png" width="48%" alt="Zelda Anguna Gameplay on Car Thing" />
+</p>
+
+---
+
 ### 📖 Dial-Controlled E-Reader & 🎙️ Voice Memo Recorder
 - **E-Reader:** Uses the physical rotary dial to flip book pages. Reconstructs reflowable EPUBs into clean paginated views.
 - **Voice Recorder:** Taps directly into the Car Thing’s onboard microphone array to record voice notes saved locally to flash storage.
