@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=800, height=480, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Car Thing Games</title>
+  <style>
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body {
+      margin: 0;
+      width: 800px;
+      height: 480px;
+      overflow: hidden;
+      background: #07080a;
+      color: #f3f4f6;
+      font-family: system-ui, "Segoe UI", sans-serif;
+      user-select: none;
+      touch-action: none;
+    }
+    body {
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px 0 28px;
+      flex-shrink: 0;
+    }
+    .tabs { display: flex; gap: 8px; }
+    .tab {
+      border: 2px solid #4b5563;
+      background: transparent;
+      color: #9ca3af;
+      border-radius: 999px;
+      padding: 7px 12px;
+      font: 700 13px system-ui;
+      letter-spacing: .08em;
+    }
+    .tab.on { border-color: #34d399; color: #ecfdf5; background: #052e1a; }
+    .brand {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .brand small {
+      letter-spacing: 0.28em;
+      font-size: 11px;
+      color: #6ee7b7;
+      font-weight: 700;
+    }
+    .brand h1 {
+      margin: 0;
+      font-size: 28px;
+      letter-spacing: 0.04em;
+      font-weight: 700;
+    }
+    .count {
+      font-size: 15px;
+      color: #9ca3af;
+    }
+    .stage {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+    .card {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 210px;
+      height: 248px;
+      margin: -124px 0 0 -105px;
+      border-radius: 22px;
+      padding: 18px 16px 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      border: 2px solid rgba(255,255,255,0.08);
+      background: #14161c;
+      box-shadow: 0 18px 40px rgba(0,0,0,0.45);
+      transition: transform 0.16s ease, opacity 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+      will-change: transform, opacity;
+    }
+    .card.on {
+      border-color: #34d399;
+      box-shadow: 0 0 0 3px rgba(52,211,153,0.28), 0 22px 50px rgba(0,0,0,0.55);
+    }
+    .swatch {
+      height: 92px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 42px;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      color: #0b0c0f;
+    }
+    .meta h2 {
+      margin: 12px 0 4px;
+      font-size: 22px;
+      line-height: 1.1;
+    }
+    .meta p {
+      margin: 0;
+      font-size: 13px;
+      color: #9ca3af;
+      line-height: 1.3;
+    }
+    .idx {
+      position: absolute;
+      top: 12px;
+      right: 14px;
+      font-size: 12px;
+      color: rgba(255,255,255,0.55);
+      font-weight: 700;
+    }
+    footer {
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 22px;
+      color: #9ca3af;
+      font-size: 14px;
+      letter-spacing: 0.06em;
+      flex-shrink: 0;
+    }
+    footer b { color: #e5e7eb; font-weight: 700; }
+    .dot { width: 4px; height: 4px; border-radius: 50%; background: #4b5563; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <small>CAR THING</small>
+      <h1 id="heading">Games</h1>
+    </div>
+    <div class="tabs" id="tabs"></div>
+    <div class="count" id="count"></div>
+  </header>
+  <div class="stage" id="stage"></div>
+  <footer>
+    <span>Turn <b>wheel</b> to select</span>
+    <span class="dot"></span>
+    <span>Press <b>dial</b> to play</span>
+    <span class="dot"></span>
+    <span id="hint3">In a game: <b>PAD</b> toggles touch keys</span>
+  </footer>
+  <script src="catalog.js"></script>
+  <script>
+    var CATALOG = window.CT_CATALOG || { tabs: [], items: [] };
+    function tabList() { return CATALOG.tabs || []; }
+    function tabIds() { return tabList().map(function (t) { return t.id; }); }
+    function tabById(id) {
+      for (var n = 0; n < tabList().length; n++) if (tabList()[n].id === id) return tabList()[n];
+      return tabList()[0] || { id: "games", label: "Games", hint: "" };
+    }
+    var hash = String(location.hash || "").replace("#", "");
+    var mode = tabIds().indexOf(hash) >= 0 ? hash : (tabIds()[0] || "games");
+    var i = 0;
+    var stage = document.getElementById("stage");
+    var count = document.getElementById("count");
+    var cards = [];
+    var lock = 0;
+    var acc = 0;
+
+    function items() {
+      return (CATALOG.items || []).filter(function (it) { return it.tab === mode; });
+    }
+
+    function build() {
+      stage.innerHTML = "";
+      cards = [];
+      var list = items();
+      if (!list.length) {
+        stage.innerHTML = '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#9ca3af;font:16px system-ui">Nothing in this tab yet. Add HTML from the PC app.</div>';
+        return;
+      }
+      list.forEach(function (g, n) {
+        var el = document.createElement("div");
+        el.className = "card";
+        el.innerHTML =
+          '<div class="idx">' + (n + 1) + "/" + items().length + "</div>" +
+          '<div class="swatch" style="background:' + g.color + '">' + g.mark + "</div>" +
+          '<div class="meta"><h2>' + g.name + "</h2><p>" + g.hint + "</p></div>";
+        el.addEventListener("click", function () {
+          i = n;
+          render();
+          play();
+        });
+        stage.appendChild(el);
+        cards.push(el);
+      });
+    }
+
+    function renderTabs() {
+      var box = document.getElementById("tabs");
+      box.innerHTML = "";
+      tabList().forEach(function (t) {
+        var b = document.createElement("button");
+        b.className = "tab" + (t.id === mode ? " on" : "");
+        b.type = "button";
+        b.textContent = t.name || t.label;
+        b.onclick = function () { setMode(t.id); };
+        box.appendChild(b);
+      });
+    }
+
+    function setMode(next) {
+      var ids = tabIds();
+      if (ids.indexOf(next) < 0) next = ids[0] || "games";
+      mode = next;
+      i = 0;
+      location.hash = next;
+      var t = tabById(next);
+      document.getElementById("heading").textContent = t.label || t.name || next;
+      document.getElementById("hint3").innerHTML = t.hint || "Turn the wheel to select";
+      renderTabs();
+      build();
+      render();
+    }
+
+    function render() {
+      var list = items();
+      if (!list.length) {
+        count.textContent = "Empty";
+        return;
+      }
+      if (i >= list.length) i = 0;
+      count.textContent = (i + 1) + " / " + list.length + "  ·  " + list[i].name;
+      cards.forEach(function (el, n) {
+        var d = n - i;
+        var abs = Math.abs(d);
+        if (abs > 3) {
+          el.style.opacity = "0";
+          el.style.pointerEvents = "none";
+          el.style.transform = "translateX(" + (d * 220) + "px) scale(0.55)";
+          el.classList.remove("on");
+          return;
+        }
+        var x = d * 228;
+        var s = d === 0 ? 1.08 : 0.82 - abs * 0.08;
+        el.style.opacity = d === 0 ? "1" : String(0.92 - abs * 0.18);
+        el.style.pointerEvents = "auto";
+        el.style.transform = "translateX(" + x + "px) scale(" + s + ")";
+        el.style.zIndex = String(20 - abs);
+        el.classList.toggle("on", d === 0);
+      });
+    }
+
+    function step(dir) {
+      var now = Date.now();
+      if (now < lock) return;
+      lock = now + 70;
+      var list = items();
+      if (!list.length) return;
+      i = (i + dir + list.length) % list.length;
+      render();
+    }
+
+    function play() {
+      var list = items();
+      if (!list.length) return;
+      location.href = list[i].file;
+    }
+
+    window.addEventListener("wheel", function (e) {
+      e.preventDefault();
+      var d = e.deltaX || e.deltaY;
+      acc += d;
+      if (acc > 24) { step(1); acc = 0; }
+      else if (acc < -24) { step(-1); acc = 0; }
+    }, { passive: false });
+
+    window.addEventListener("keydown", function (e) {
+      var k = e.key;
+      if (k === "ArrowRight" || k === "ArrowDown" || k === "PageDown") { e.preventDefault(); step(1); }
+      else if (k === "ArrowLeft" || k === "ArrowUp" || k === "PageUp") { e.preventDefault(); step(-1); }
+      else if (k === "Enter" || k === " " || k === "MediaPlayPause" || k === "1") { e.preventDefault(); play(); }
+      else if (k === "m" || k === "M") {
+        e.preventDefault();
+        var order = tabIds();
+        if (!order.length) return;
+        setMode(order[(Math.max(0, order.indexOf(mode)) + 1) % order.length]);
+      }
+      else if (k >= "2" && k <= "9") {
+        var n = parseInt(k, 10) - 1;
+        if (n < items().length) { i = n; render(); }
+      }
+    });
+
+    function loadUserApps() {
+      return new Promise(function (resolve) {
+        var req = indexedDB.open("ct-apps", 1);
+        req.onupgradeneeded = function () { req.result.createObjectStore("apps", { keyPath: "id" }); };
+        req.onerror = function () { resolve([]); };
+        req.onsuccess = function () {
+          var out = [];
+          req.result.transaction("apps").objectStore("apps").openCursor().onsuccess = function (e) {
+            var c = e.target.result;
+            if (c) {
+              var v = c.value;
+              out.push({
+                tab: "apps",
+                file: "projects/open.html#" + v.id,
+                name: v.name,
+                hint: v.hint || "Imported",
+                mark: v.mark || "APP",
+                color: v.color || "#64748b"
+              });
+              c.continue();
+            } else resolve(out);
+          };
+        };
+      });
+    }
+    loadUserApps().then(function (rows) {
+      CATALOG.items = (CATALOG.items || []).concat(rows);
+      if (mode === "apps") { build(); render(); }
+    });
+    setMode(mode);
+  </script>
+</body>
+</html>

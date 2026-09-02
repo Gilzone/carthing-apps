@@ -1,0 +1,17 @@
+<style id="ct-home-style">
+#ct-home{
+  position:fixed;top:8px;left:8px;z-index:2147483647;
+  background:#0b0c0f;color:#e5e7eb;border:2px solid #34d399;
+  border-radius:999px;padding:7px 14px;font:700 13px system-ui,sans-serif;
+  letter-spacing:.08em
+}
+</style>
+<button id="ct-home" type="button">HOME</button>
+<script src="file:///opt/nocturne/webapps/player/touch-fix.js"></script>
+<script>
+(function(){
+  var HOME="file:///opt/nocturne/webapps/player/index.html#apps";
+  var b=document.getElementById("ct-home");
+  if(b) b.onclick=function(e){ if(e){e.preventDefault();e.stopPropagation();} location.href=HOME; };
+})();
+</script>

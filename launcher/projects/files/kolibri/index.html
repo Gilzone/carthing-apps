@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=800, height=480, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>KolibriOS</title>
+  <style>
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body {
+      margin: 0; width: 800px; height: 480px; overflow: hidden;
+      background: #000; color: #e5e7eb; font-family: system-ui, sans-serif;
+      user-select: none; touch-action: none;
+    }
+    #screen_container {
+      width: 800px; height: 480px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    #screen_container > div {
+      white-space: pre; font: 14px/14px monospace; color: #86efac;
+    }
+    #screen_container canvas {
+      display: none;
+      max-width: 800px; max-height: 480px;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
+    #hud {
+      position: fixed; top: 8px; left: 8px; z-index: 2147483647;
+      display: flex; gap: 8px; pointer-events: none;
+    }
+    #hud button {
+      pointer-events: auto;
+      background: #0b0c0f; color: #e5e7eb; border: 2px solid #34d399;
+      border-radius: 999px; padding: 7px 14px;
+      font: 700 13px system-ui; letter-spacing: .08em;
+    }
+    #status {
+      position: fixed; right: 12px; bottom: 10px; z-index: 10;
+      font: 700 12px system-ui; color: #86efac; letter-spacing: .06em;
+      text-shadow: 0 1px 2px #000;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="hud">
+    <button id="home" type="button">HOME</button>
+    <button id="reset" type="button">RESET</button>
+  </div>
+  <div id="status">BOOTING 32MB GUEST…</div>
+  <div id="screen_container">
+    <div></div>
+    <canvas></canvas>
+  </div>
+  <script src="libv86.js"></script>
+  <script>
+    (function () {
+      var HOME = "file:///opt/nocturne/webapps/player/index.html#apps";
+      var statusEl = document.getElementById("status");
+      var box = document.getElementById("screen_container");
+      var emulator = null;
+
+      function setStatus(t) { statusEl.textContent = t; }
+      document.getElementById("home").onclick = function (e) {
+        if (e) { e.preventDefault(); e.stopPropagation(); }
+        location.href = HOME;
+      };
+
+      function boot() {
+        if (!window.V86) {
+          setStatus("v86 FAILED TO LOAD");
+          return;
+        }
+        emulator = new V86({
+          wasm_path: "v86.wasm",
+          memory_size: 32 * 1024 * 1024,
+          vga_memory_size: 2 * 1024 * 1024,
+          screen_container: box,
+          bios: { url: "seabios.bin" },
+          vga_bios: { url: "vgabios.bin" },
+          fda: { url: "kolibri.img", size: 1474560, async: false },
+          boot_order: 0x231,
+          autostart: true,
+          disable_audio: true,
+          acpi: false
+        });
+        emulator.add_listener("download-progress", function (e) {
+          if (!e || !e.file_name) return;
+          var n = String(e.file_name).split("/").pop().split("?")[0];
+          if (e.total) {
+            setStatus("LOAD " + n + " " + Math.floor(100 * e.loaded / e.total) + "%");
+          } else {
+            setStatus("LOAD " + n);
+          }
+        });
+        emulator.add_listener("emulator-ready", function () {
+          setStatus("KOLIBRI · TAP=CLICK  WHEEL=MOVE  DIAL=CLICK");
+          setTimeout(function () { statusEl.style.opacity = "0.35"; }, 4000);
+        });
+        emulator.add_listener("emulator-stopped", function () {
+          statusEl.style.opacity = "1";
+          setStatus("STOPPED");
+        });
+
+        box.addEventListener("touchstart", onTouchStart, { passive: false });
+        box.addEventListener("touchend", onTouchEnd, { passive: false });
+        box.addEventListener("touchcancel", onTouchEnd, { passive: false });
+        window.addEventListener("wheel", onWheel, { passive: false });
+        window.addEventListener("keydown", onKey, true);
+      }
+
+      var down = false;
+      function sendClick(on) {
+        if (!emulator || !emulator.bus) return;
+        emulator.bus.send("mouse-click", [!!on, false, false]);
+      }
+      function sendAbs(clientX, clientY) {
+        if (!emulator || !emulator.bus) return;
+        var r = box.getBoundingClientRect();
+        emulator.bus.send("mouse-absolute", [clientX - r.left, clientY - r.top, r.width, r.height]);
+      }
+      function onTouchStart(e) {
+        e.preventDefault();
+        var t = e.changedTouches && e.changedTouches[0];
+        if (!t) return;
+        sendAbs(t.clientX, t.clientY);
+        down = true;
+        sendClick(true);
+      }
+      function onTouchEnd(e) {
+        e.preventDefault();
+        var t = e.changedTouches && e.changedTouches[0];
+        if (t) sendAbs(t.clientX, t.clientY);
+        if (down) sendClick(false);
+        down = false;
+      }
+      function onWheel(e) {
+        e.preventDefault();
+        if (!emulator || !emulator.bus) return;
+        var dx = e.deltaX || 0, dy = e.deltaY || 0;
+        if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+        emulator.bus.send("mouse-delta", [dx * 0.45, -(dy * 0.45)]);
+      }
+      function onKey(e) {
+        if (e.key === "Enter" || e.key === "1") {
+          e.preventDefault();
+          sendClick(true);
+          setTimeout(function () { sendClick(false); }, 70);
+        }
+      }
+
+      document.getElementById("reset").onclick = function (e) {
+        if (e) { e.preventDefault(); e.stopPropagation(); }
+        location.reload();
+      };
+
+      boot();
+    })();
+  </script>
+</body>
+</html>

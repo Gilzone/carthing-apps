@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=800, height=480, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Reader</title>
+  <link rel="stylesheet" href="tools.css">
+  <style>
+    .stage { display: flex; gap: 12px; padding-top: 8px; }
+    .lib { width: 220px; overflow: auto; display: flex; flex-direction: column; gap: 8px; }
+    .book {
+      text-align: left; padding: 10px 12px; border-radius: 12px;
+      border: 2px solid rgba(255,255,255,.1); background: #14161c; color: #f3f4f6;
+      font: 700 14px/1.25 system-ui; white-space: normal;
+    }
+    .book small { display: block; margin-top: 3px; font: 600 11px system-ui; color: #9ca3af; }
+    .book.on { border-color: #fbbf24; }
+    .pagewrap { flex: 1; display: flex; flex-direction: column; }
+    .page {
+      flex: 1; background: #1a1712; color: #f5e6c8; border-radius: 16px;
+      padding: 16px 18px; overflow: hidden; font: 20px/1.45 Georgia, serif;
+      user-select: text;
+    }
+    .nav { display: flex; align-items: center; gap: 10px; padding-top: 8px; }
+    .nav .btn { flex: 1; height: 44px; }
+    input[type=file] { display: none; }
+  </style>
+</head>
+<body>
+  <div class="top">
+    <button class="chip" id="home" type="button">HOME</button>
+    <div class="title">Reader</div>
+    <div class="grow"></div>
+    <label class="chip warn">IMPORT<input id="file" type="file" accept=".txt,.md,.html,.htm,text/plain"></label>
+  </div>
+  <div class="stage">
+    <div class="lib" id="lib"></div>
+    <div class="pagewrap">
+      <div class="page" id="page">Pick a book. Turn the wheel to change pages.</div>
+      <div class="nav">
+        <button class="btn" id="prev" type="button">PREV</button>
+        <div class="muted" id="pg">0 / 0</div>
+        <button class="btn" id="next" type="button">NEXT</button>
+      </div>
+    </div>
+  </div>
+  <script src="books/contented.js"></script>
+  <script>
+    var HOME = "file:///opt/nocturne/webapps/player/index.html#tools";
+    document.getElementById("home").onclick = function () { location.href = HOME; };
+    var BUNDLED = (window.CT_EXTRA_BOOKS || []).concat([
+      { id: "oz", title: "Ozymandias", text: "I met a traveller from an antique land,\nWho said—“Two vast and trunkless legs of stone\nStand in the desert. . . . Near them, on the sand,\nHalf sunk a shattered visage lies, whose frown,\nAnd wrinkled lip, and sneer of cold command,\nTell that its sculptor well those passions read\nWhich yet survive, stamped on these lifeless things,\nThe hand that mocked them, and the heart that fed;\nAnd on the pedestal, these words appear:\nMy name is Ozymandias, King of Kings;\nLook on my Works, ye Mighty, and despair!\nNothing beside remains. Round the decay\nOf that colossal Wreck, boundless and bare\nThe lone and level sands stretch far away." },
+      { id: "gettysburg", title: "Gettysburg Address", text: "Four score and seven years ago our fathers brought forth on this continent, a new nation, conceived in Liberty, and dedicated to the proposition that all men are created equal.\n\nNow we are engaged in a great civil war, testing whether that nation, or any nation so conceived and so dedicated, can long endure. We are met on a great battle-field of that war. We have come to dedicate a portion of that field, as a final resting place for those who here gave their lives that that nation might live. It is altogether fitting and proper that we should do this.\n\nBut, in a larger sense, we can not dedicate—we can not consecrate—we can not hallow—this ground. The brave men, living and dead, who struggled here, have consecrated it, far above our poor power to add or detract. The world will little note, nor long remember what we say here, but it can never forget what they did here. It is for us the living, rather, to be dedicated here to the unfinished work which they who fought here have thus far so nobly advanced. It is rather for us to be here dedicated to the great task remaining before us—that from these honored dead we take increased devotion to that cause for which they gave the last full measure of devotion—that we here highly resolve that these dead shall not have died in vain—that this nation, under God, shall have a new birth of freedom—and that government of the people, by the people, for the people, shall not perish from the earth." },
+      { id: "if", title: "If—", text: "If you can keep your head when all about you\nAre losing theirs and blaming it on you,\nIf you can trust yourself when all men doubt you,\nBut make allowance for their doubting too;\nIf you can wait and not be tired by waiting,\nOr being lied about, don’t deal in lies,\nOr being hated, don’t give way to hating,\nAnd yet don’t look too good, nor talk too wise:\n\nIf you can dream—and not make dreams your master;\nIf you can think—and not make thoughts your aim;\nIf you can meet with Triumph and Disaster\nAnd treat those two impostors just the same;\nIf you can bear to hear the truth you’ve spoken\nTwisted by knaves to make a trap for fools,\nOr watch the things you gave your life to, broken,\nAnd stoop and build ’em up with worn-out tools:\n\nIf you can make one heap of all your winnings\nAnd risk it on one turn of pitch-and-toss,\nAnd lose, and start again at your beginnings\nAnd never breathe a word about your loss;\nIf you can force your heart and nerve and sinew\nTo serve your turn long after they are gone,\nAnd so hold on when there is nothing in you\nExcept the Will which says to them: ‘Hold on!’\n\nIf you can talk with crowds and keep your virtue,\nOr walk with Kings—nor lose the common touch,\nIf neither foes nor loving friends can hurt you,\nIf all men count with you, but none too much;\nIf you can fill the unforgiving minute\nWith sixty seconds’ worth of distance run,\nYours is the Earth and everything that’s in it,\nAnd—which is more—you’ll be a Man, my son!" }
+    ]);
+    var books = BUNDLED.slice();
+    var cur = 0, page = 0, pages = [];
+    var PAGE_CHARS = 620;
+
+    function openDb() {
+      return new Promise(function (resolve, reject) {
+        var r = indexedDB.open("ct-tools", 1);
+        r.onupgradeneeded = function () {
+          var db = r.result;
+          if (!db.objectStoreNames.contains("recordings")) db.createObjectStore("recordings", { keyPath: "id" });
+          if (!db.objectStoreNames.contains("notes")) db.createObjectStore("notes", { keyPath: "id" });
+          if (!db.objectStoreNames.contains("books")) db.createObjectStore("books", { keyPath: "id" });
+        };
+        r.onsuccess = function () { resolve(r.result); };
+        r.onerror = function () { reject(r.error); };
+      });
+    }
+    function loadImported() {
+      return openDb().then(function (db) {
+        return new Promise(function (resolve) {
+          var out = [];
+          db.transaction("books").objectStore("books").openCursor().onsuccess = function (e) {
+            var c = e.target.result;
+            if (c) { out.push(c.value); c.continue(); }
+            else resolve(out);
+          };
+        });
+      }).catch(function () { return []; });
+    }
+    function saveImported(book) {
+      return openDb().then(function (db) {
+        return new Promise(function (resolve) {
+          db.transaction("books", "readwrite").objectStore("books").put(book).onsuccess = function () { resolve(); };
+        });
+      });
+    }
+
+    function paginate(text) {
+      var t = String(text || "").replace(/\r\n/g, "\n");
+      var out = [], i = 0;
+      while (i < t.length) {
+        var slice = t.slice(i, i + PAGE_CHARS);
+        var cut = slice.lastIndexOf("\n");
+        if (cut < PAGE_CHARS * 0.55) cut = slice.lastIndexOf(" ");
+        if (cut < PAGE_CHARS * 0.4) cut = slice.length;
+        out.push(t.slice(i, i + cut).trim());
+        i += Math.max(cut, 1);
+      }
+      return out.length ? out : [""];
+    }
+    function show() {
+      var b = books[cur];
+      pages = paginate(b ? b.text : "");
+      if (page < 0) page = 0;
+      if (page >= pages.length) page = pages.length - 1;
+      document.getElementById("page").textContent = b ? pages[page] : "Pick a book.";
+      document.getElementById("pg").textContent = (page + 1) + " / " + pages.length;
+      [].forEach.call(document.querySelectorAll(".book"), function (el, n) {
+        el.classList.toggle("on", n === cur);
+      });
+      try { localStorage.setItem("ct-reader", JSON.stringify({ id: b && b.id, page: page })); } catch (e) {}
+    }
+    function renderLib() {
+      var lib = document.getElementById("lib");
+      lib.innerHTML = "";
+      books.forEach(function (b, n) {
+        var el = document.createElement("button");
+        el.className = "book";
+        el.textContent = b.title;
+        if (b.author) {
+          var sm = document.createElement("small");
+          sm.textContent = b.author;
+          el.appendChild(sm);
+        }
+        el.onclick = function () { cur = n; page = 0; show(); };
+        lib.appendChild(el);
+      });
+    }
+    function step(d) { page += d; show(); }
+
+    document.getElementById("prev").onclick = function () { step(-1); };
+    document.getElementById("next").onclick = function () { step(1); };
+    document.getElementById("page").onclick = function (e) {
+      step(e.clientX > 500 ? 1 : -1);
+    };
+    window.addEventListener("wheel", function (e) {
+      e.preventDefault();
+      var d = e.deltaX || e.deltaY;
+      if (Math.abs(d) < 20) return;
+      step(d > 0 ? 1 : -1);
+    }, { passive: false });
+    window.addEventListener("keydown", function (e) {
+      if (e.key === "ArrowRight" || e.key === "ArrowDown") step(1);
+      if (e.key === "ArrowLeft" || e.key === "ArrowUp") step(-1);
+    });
+    document.getElementById("file").onchange = function (e) {
+      var f = e.target.files && e.target.files[0];
+      if (!f) return;
+      var reader = new FileReader();
+      reader.onload = async function () {
+        var book = { id: "imp-" + Date.now(), title: f.name.replace(/\.[^.]+$/, ""), text: String(reader.result || "") };
+        books.push(book);
+        try { await saveImported(book); } catch (err) {}
+        cur = books.length - 1; page = 0;
+        renderLib(); show();
+      };
+      reader.readAsText(f);
+    };
+
+    (async function () {
+      var extra = await loadImported();
+      books = BUNDLED.concat(extra);
+      try {
+        var st = JSON.parse(localStorage.getItem("ct-reader") || "{}");
+        var idx = books.findIndex(function (b) { return b.id === st.id; });
+        if (idx >= 0) { cur = idx; page = st.page || 0; }
+      } catch (e) {}
+      renderLib(); show();
+    })();
+  </script>
+  <script src="file:///opt/nocturne/webapps/player/touch-fix.js"></script>
+</body>
+</html>

@@ -1,0 +1,3 @@
+KIOSK_URL=file:///opt/nocturne/webapps/player/index.html
+KIOSK_EXTRA="--use-fake-ui-for-media-stream --allow-file-access-from-files --unsafely-treat-insecure-origin-as-secure=file://"
+

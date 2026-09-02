@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=800, height=480, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Calculator</title>
+  <link rel="stylesheet" href="tools.css">
+  <style>
+    .disp {
+      height: 72px; background: #101217; border-radius: 14px; margin-bottom: 10px;
+      display: flex; align-items: center; justify-content: flex-end; padding: 0 16px;
+      font: 700 40px system-ui; letter-spacing: .04em;
+    }
+    .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; height: 320px; }
+    .grid .btn { font-size: 26px; }
+    .op { border-color: #34d399 !important; }
+  </style>
+</head>
+<body>
+  <div class="top">
+    <button class="chip" id="home" type="button">HOME</button>
+    <div class="title">Calculator</div>
+  </div>
+  <div class="stage">
+    <div class="disp" id="disp">0</div>
+    <div class="grid" id="grid"></div>
+  </div>
+  <script>
+    var HOME = "file:///opt/nocturne/webapps/player/index.html#tools";
+    document.getElementById("home").onclick = function () { location.href = HOME; };
+    var disp = document.getElementById("disp");
+    var cur = "0", acc = null, op = null, fresh = false;
+    var keys = ["C","±","%","/","7","8","9","*","4","5","6","-","1","2","3","+","0",".","⌫","="];
+    function show() { disp.textContent = cur.length > 12 ? Number(cur).toExponential(6) : cur; }
+    function n() { return parseFloat(cur); }
+    function apply() {
+      var x = n();
+      if (acc == null || !op) { acc = x; return; }
+      if (op === "+") acc += x;
+      if (op === "-") acc -= x;
+      if (op === "*") acc *= x;
+      if (op === "/") acc = x ? acc / x : acc;
+      cur = String(acc);
+    }
+    keys.forEach(function (k) {
+      var b = document.createElement("button");
+      b.className = "btn" + ("/*-+=".indexOf(k) >= 0 ? " op" : "");
+      b.textContent = k;
+      b.onclick = function () {
+        if (k >= "0" && k <= "9") {
+          cur = (fresh || cur === "0") ? k : cur + k; fresh = false;
+        } else if (k === ".") {
+          if (fresh) { cur = "0."; fresh = false; }
+          else if (cur.indexOf(".") < 0) cur += ".";
+        } else if (k === "C") { cur = "0"; acc = null; op = null; }
+        else if (k === "±") { cur = String(-n()); }
+        else if (k === "%") { cur = String(n() / 100); }
+        else if (k === "⌫") { cur = cur.length > 1 ? cur.slice(0, -1) : "0"; }
+        else if (k === "=") { apply(); op = null; fresh = true; }
+        else { apply(); op = k; fresh = true; }
+        show();
+      };
+      document.getElementById("grid").appendChild(b);
+    });
+  </script>
+</body>
+</html>

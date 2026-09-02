@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=800, height=480, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Lamp</title>
+  <style>
+    html, body { margin: 0; width: 800px; height: 480px; overflow: hidden; }
+    body { background: #fffbe6; }
+    body.red { background: #3f0d0d; }
+    body.dim { background: #1c1917; }
+    #home {
+      position: fixed; top: 10px; left: 12px; z-index: 2;
+      background: rgba(0,0,0,.35); color: #fff; border: 2px solid #34d399;
+      border-radius: 999px; padding: 7px 14px; font: 700 13px system-ui; letter-spacing: .08em;
+    }
+    #hint {
+      position: fixed; bottom: 16px; left: 0; right: 0; text-align: center;
+      color: rgba(0,0,0,.45); font: 700 14px system-ui; letter-spacing: .12em;
+    }
+    body.red #hint, body.dim #hint { color: rgba(255,255,255,.35); }
+  </style>
+</head>
+<body>
+  <button id="home" type="button">HOME</button>
+  <div id="hint">TAP TO CYCLE  WHITE · NIGHT RED · DIM</div>
+  <script>
+    var HOME = "file:///opt/nocturne/webapps/player/index.html#tools";
+    document.getElementById("home").onclick = function (e) { e.stopPropagation(); location.href = HOME; };
+    var modes = ["", "red", "dim"], i = 0;
+    document.body.onclick = function () {
+      i = (i + 1) % modes.length;
+      document.body.className = modes[i];
+    };
+  </script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+[Unit]
+Description=MP3 player kiosk HTTP
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/bin/busybox httpd -f -p 127.0.0.1:8090 -h /opt/nocturne/webapps/player
+Restart=always
+RestartSec=1
+
+[Install]
+WantedBy=multi-user.target

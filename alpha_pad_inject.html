@@ -1,0 +1,339 @@
+<style id="ct-pad-style">
+#ct-hud{position:fixed;top:0;left:0;width:0;height:0;overflow:visible;z-index:2147483646;pointer-events:none;font-family:system-ui,sans-serif;user-select:none;touch-action:none}
+#ct-hud.pad-on{inset:0;width:auto;height:auto;overflow:hidden}
+#ct-hud *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:none}
+#ct-hud .bar{position:absolute;top:8px;left:8px;width:auto;display:flex;gap:8px;pointer-events:none;z-index:2}
+#ct-hud .chip{pointer-events:auto}
+#ct-hud .chip{
+  background:rgba(8,10,12,.82);color:#e5e7eb;border:2px solid #34d399;border-radius:999px;
+  padding:7px 14px;font:700 13px system-ui;letter-spacing:.08em
+}
+#ct-hud .chip.off{border-color:#6b7280;color:#9ca3af}
+#ct-hud .chip:active{transform:scale(.96)}
+#ct-hud.pad-off .pad{display:none}
+.pad{pointer-events:none}
+.stick,.look,.btns,.hot,.row{pointer-events:auto;contain:layout style}
+.stick{
+  position:absolute;left:12px;bottom:58px;width:136px;height:136px;border-radius:50%;
+  background:rgba(255,255,255,.07);border:2px solid rgba(255,255,255,.2)
+}
+.knob{
+  position:absolute;width:52px;height:52px;border-radius:50%;left:42px;top:42px;
+  background:#34d399;border:2px solid #ecfdf5;will-change:transform;transform:translate3d(0,0,0)
+}
+.look{
+  position:absolute;right:108px;top:56px;width:180px;height:180px;border-radius:16px;
+  background:rgba(255,255,255,.04);border:1px dashed rgba(255,255,255,.25);
+  color:rgba(255,255,255,.4);font:700 12px system-ui;letter-spacing:.14em;
+  display:flex;align-items:center;justify-content:center
+}
+.btns{position:absolute;right:10px;bottom:58px;display:grid;grid-template-columns:60px 60px;gap:8px}
+.btn{
+  width:60px;height:48px;border-radius:12px;border:2px solid rgba(255,255,255,.2);
+  background:rgba(8,10,12,.7);color:#f3f4f6;font:700 11px system-ui;letter-spacing:.04em
+}
+.btn.on,.btn:active{background:#34d399;color:#052e1a;border-color:#ecfdf5}
+.row{position:absolute;left:156px;bottom:58px;display:flex;gap:6px}
+.row .btn{width:48px}
+.hot{position:absolute;left:12px;right:12px;bottom:8px;display:flex;gap:4px}
+.hot .btn{flex:1;height:38px;width:auto;font-size:14px}
+</style>
+<div id="ct-hud" class="pad-off">
+  <div class="bar">
+    <button class="chip" id="ct-home" type="button">HOME</button>
+    <button class="chip off" id="ct-pad-toggle" type="button">PAD OFF</button>
+  </div>
+  <div class="pad">
+    <div class="stick" id="ct-stick"><div class="knob" id="ct-knob"></div></div>
+    <div class="look" id="ct-look">LOOK</div>
+    <div class="row">
+      <button class="btn" type="button" data-key="e" data-which="69" data-code="KeyE">E</button>
+      <button class="btn" type="button" data-key="q" data-which="81" data-code="KeyQ">Q</button>
+      <button class="btn" type="button" data-key="t" data-which="84" data-code="KeyT">T</button>
+      <button class="btn" type="button" data-key="Enter" data-which="13" data-code="Enter">OK</button>
+      <button class="btn" type="button" data-key="Escape" data-which="27" data-code="Escape">ESC</button>
+    </div>
+    <div class="btns">
+      <button class="btn" type="button" id="ct-atk">ATK</button>
+      <button class="btn" type="button" id="ct-use">USE</button>
+      <button class="btn" type="button" data-key="Shift" data-which="16" data-code="ShiftLeft">SNEAK</button>
+      <button class="btn" type="button" data-key=" " data-which="32" data-code="Space">JUMP</button>
+    </div>
+    <div class="hot" id="ct-hot"></div>
+  </div>
+</div>
+<script id="ct-pad-script">
+(function(){
+  var HOME="file:///opt/nocturne/webapps/player/index.html";
+  var hud=document.getElementById("ct-hud");
+  var tog=document.getElementById("ct-pad-toggle");
+  var stick=document.getElementById("ct-stick");
+  var knob=document.getElementById("ct-knob");
+  var look=document.getElementById("ct-look");
+  var held={};
+  var padKey="ct-pad:"+location.pathname;
+  var padOn=false;
+  try{ padOn=localStorage.getItem(padKey)==="1"; }catch(e){}
+  var canvasEl=null;
+  function canvas(){
+    if(canvasEl && canvasEl.isConnected) return canvasEl;
+    canvasEl=document.querySelector("canvas");
+    return canvasEl;
+  }
+
+  function sendKey(type, which, key, code){
+    var ev=new KeyboardEvent(type,{
+      bubbles:true, cancelable:true, composed:true, key:key, code:code, view:window
+    });
+    try{
+      Object.defineProperty(ev,"which",{get:function(){return which;}});
+      Object.defineProperty(ev,"keyCode",{get:function(){return which;}});
+      Object.defineProperty(ev,"charCode",{get:function(){return type==="keypress"?which:0;}});
+    }catch(err){}
+    document.dispatchEvent(ev);
+  }
+
+  function setKey(which, key, code, on){
+    which=which|0;
+    if(!!held[which]===!!on) return;
+    held[which]=!!on;
+    sendKey(on?"keydown":"keyup", which, key, code);
+  }
+
+  function releaseAll(){
+    Object.keys(held).forEach(function(k){
+      if(held[k]) setKey(+k, "", "", false);
+    });
+    mouseUp(0); mouseUp(2);
+    lookAccX=0; lookAccY=0;
+  }
+
+  function sendMouse(type, extra){
+    extra=extra||{};
+    var ev=new MouseEvent(type,{
+      bubbles:true, cancelable:true, composed:true, view:window,
+      clientX:extra.clientX||0, clientY:extra.clientY||0,
+      screenX:extra.clientX||0, screenY:extra.clientY||0,
+      button:extra.button||0, buttons:extra.buttons||0,
+      movementX:extra.movementX||0, movementY:extra.movementY||0
+    });
+    try{
+      Object.defineProperty(ev,"which",{get:function(){return extra.which||0;}});
+      Object.defineProperty(ev,"movementX",{get:function(){return extra.movementX||0;}});
+      Object.defineProperty(ev,"movementY",{get:function(){return extra.movementY||0;}});
+      Object.defineProperty(ev,"offsetX",{get:function(){return extra.offsetX||0;}});
+      Object.defineProperty(ev,"offsetY",{get:function(){return extra.offsetY||0;}});
+    }catch(err){}
+    var c=canvas();
+    (c||document).dispatchEvent(ev);
+  }
+
+  var mouseHeld={0:false,2:false};
+  function mouseDown(button){
+    if(mouseHeld[button]) return;
+    mouseHeld[button]=true;
+    sendMouse("mousedown",{button:button, buttons:button===0?1:2, which:button===0?1:3});
+  }
+  function mouseUp(button){
+    if(!mouseHeld[button]) return;
+    mouseHeld[button]=false;
+    sendMouse("mouseup",{button:button, buttons:0, which:button===0?1:3});
+  }
+
+  function applyPad(){
+    hud.classList.toggle("pad-off", !padOn);
+    hud.classList.toggle("pad-on", padOn);
+    tog.textContent=padOn?"PAD ON":"PAD OFF";
+    tog.classList.toggle("off", !padOn);
+    if(!padOn) releaseAll();
+  }
+
+  document.getElementById("ct-home").addEventListener("click", function(e){
+    e.preventDefault(); e.stopPropagation();
+    releaseAll();
+    location.href=HOME;
+  }, true);
+
+  tog.addEventListener("click", function(e){
+    e.preventDefault(); e.stopPropagation();
+    padOn=!padOn;
+    try{ localStorage.setItem(padKey, padOn?"1":"0"); }catch(err){}
+    applyPad();
+  }, true);
+
+  var hot=document.getElementById("ct-hot");
+  for(var n=1;n<=9;n++){
+    var b=document.createElement("button");
+    b.className="btn";
+    b.type="button";
+    b.textContent=""+n;
+    b.setAttribute("data-which", ""+(48+n));
+    b.setAttribute("data-key", ""+n);
+    b.setAttribute("data-code", "Digit"+n);
+    hot.appendChild(b);
+  }
+
+  function bindHold(el, down, up){
+    el.addEventListener("pointerdown", function(e){
+      e.preventDefault(); e.stopPropagation();
+      try{ el.setPointerCapture(e.pointerId); }catch(err){}
+      el.classList.add("on");
+      down(e);
+    });
+    function end(e){
+      e.preventDefault(); e.stopPropagation();
+      el.classList.remove("on");
+      up(e);
+    }
+    el.addEventListener("pointerup", end);
+    el.addEventListener("pointercancel", end);
+  }
+
+  hud.querySelectorAll("[data-which]").forEach(function(el){
+    var which=+el.getAttribute("data-which");
+    var key=el.getAttribute("data-key");
+    var code=el.getAttribute("data-code");
+    bindHold(el, function(){ setKey(which,key,code,true); }, function(){ setKey(which,key,code,false); });
+  });
+
+  bindHold(document.getElementById("ct-atk"), function(){ mouseDown(0); }, function(){ mouseUp(0); });
+  bindHold(document.getElementById("ct-use"), function(){ mouseDown(2); }, function(){ mouseUp(2); });
+
+  var stickPtr=null;
+  function stickKeys(nx, ny, on){
+    var dead=0.28;
+    var up=on && ny<-dead, down=on && ny>dead, left=on && nx<-dead, right=on && nx>dead;
+    setKey(87,"w","KeyW", up);
+    setKey(83,"s","KeyS", down);
+    setKey(65,"a","KeyA", left);
+    setKey(68,"d","KeyD", right);
+    setKey(38,"ArrowUp","ArrowUp", up);
+    setKey(40,"ArrowDown","ArrowDown", down);
+    setKey(37,"ArrowLeft","ArrowLeft", left);
+    setKey(39,"ArrowRight","ArrowRight", right);
+  }
+  function stickPos(e){
+    var r=stick.getBoundingClientRect();
+    var dx=e.clientX-(r.left+r.width/2), dy=e.clientY-(r.top+r.height/2);
+    var max=r.width*0.32;
+    var mag=Math.sqrt(dx*dx+dy*dy)||1;
+    if(mag>max){ dx=dx/mag*max; dy=dy/mag*max; }
+    knob.style.transform="translate3d("+dx+"px,"+dy+"px,0)";
+    stickKeys(dx/max, dy/max, true);
+  }
+  function stickReset(){
+    stickPtr=null;
+    knob.style.transform="translate3d(0,0,0)";
+    stickKeys(0,0,false);
+  }
+  stick.addEventListener("pointerdown", function(e){
+    e.preventDefault(); e.stopPropagation();
+    stickPtr=e.pointerId;
+    try{ stick.setPointerCapture(e.pointerId); }catch(err){}
+    stickPos(e);
+  });
+  stick.addEventListener("pointermove", function(e){
+    if(stickPtr!==e.pointerId) return;
+    e.preventDefault(); stickPos(e);
+  });
+  stick.addEventListener("pointerup", function(e){ if(stickPtr===e.pointerId){ e.preventDefault(); stickReset(); }});
+  stick.addEventListener("pointercancel", function(e){ if(stickPtr===e.pointerId) stickReset(); });
+
+  var lookPtr=null, lx=0, ly=0, lookAccX=0, lookAccY=0, lookRaf=0, lookCX=0, lookCY=0, lookRect=null;
+  function flushLook(){
+    lookRaf=0;
+    var dx=lookAccX, dy=lookAccY;
+    lookAccX=0; lookAccY=0;
+    if(!dx && !dy) return;
+    var ox=lookCX, oy=lookCY;
+    if(lookRect){ ox=lookCX-lookRect.left; oy=lookCY-lookRect.top; }
+    sendMouse("mousemove",{movementX:dx, movementY:dy, clientX:lookCX, clientY:lookCY, offsetX:ox, offsetY:oy});
+  }
+  look.addEventListener("pointerdown", function(e){
+    e.preventDefault(); e.stopPropagation();
+    lookPtr=e.pointerId; lx=e.clientX; ly=e.clientY;
+    var c=canvas();
+    lookRect=c?c.getBoundingClientRect():null;
+    try{ look.setPointerCapture(e.pointerId); }catch(err){}
+  });
+  look.addEventListener("pointermove", function(e){
+    if(lookPtr!==e.pointerId) return;
+    e.preventDefault();
+    lookAccX+=(e.clientX-lx)*1.6;
+    lookAccY+=(e.clientY-ly)*1.6;
+    lookCX=e.clientX; lookCY=e.clientY;
+    lx=e.clientX; ly=e.clientY;
+    if(!lookRaf) lookRaf=requestAnimationFrame(flushLook);
+  });
+  look.addEventListener("pointerup", function(e){
+    if(lookPtr!==e.pointerId) return;
+    lookPtr=null; e.preventDefault();
+    if(lookRaf){ cancelAnimationFrame(lookRaf); flushLook(); }
+  });
+  look.addEventListener("pointercancel", function(){
+    lookPtr=null;
+    if(lookRaf){ cancelAnimationFrame(lookRaf); lookRaf=0; }
+    lookAccX=0; lookAccY=0;
+  });
+
+  if(/amongus\.html/i.test(location.pathname)){
+    var lastPtr=0, synthing=false;
+    function hudHit(el){
+      return !!(el && el.closest && el.closest("#ct-hud .chip, #ct-hud .btn, #ct-hud .stick, #ct-hud .look, #ct-hud .bar"));
+    }
+    function fireMousePointer(type, x, y, buttons, button){
+      if(synthing) return;
+      synthing=true;
+      try{
+        var init={
+          bubbles:true, cancelable:true, composed:true, view:window,
+          clientX:x, clientY:y, pageX:x, pageY:y, screenX:x, screenY:y,
+          pointerId:1, pointerType:"mouse", isPrimary:true,
+          button:button, buttons:buttons, width:1, height:1,
+          pressure:buttons?0.5:0
+        };
+        var pev=new PointerEvent(type, init);
+        try{
+          Object.defineProperty(pev,"pointerType",{get:function(){return "mouse";}});
+          Object.defineProperty(pev,"pointerId",{get:function(){return 1;}});
+        }catch(err){}
+        var c=canvas()||document;
+        c.dispatchEvent(pev);
+        var mt={pointerdown:"mousedown", pointermove:"mousemove", pointerup:"mouseup", pointercancel:"mouseup"}[type];
+        if(mt){
+          c.dispatchEvent(new MouseEvent(mt,{
+            bubbles:true, cancelable:true, view:window,
+            clientX:x, clientY:y, button:button<0?0:button, buttons:buttons
+          }));
+        }
+      }finally{ synthing=false; }
+    }
+    function fromPointer(e){
+      if(e.pointerType==="mouse") return;
+      if(hudHit(e.target)) return;
+      lastPtr=performance.now();
+      var up=e.type==="pointerup"||e.type==="pointercancel";
+      fireMousePointer(e.type, e.clientX, e.clientY, up?0:1, e.type==="pointermove"?-1:0);
+    }
+    window.addEventListener("pointerdown", fromPointer, true);
+    window.addEventListener("pointermove", fromPointer, true);
+    window.addEventListener("pointerup", fromPointer, true);
+    window.addEventListener("pointercancel", fromPointer, true);
+    function fromTouch(type, e){
+      if(performance.now()-lastPtr<80) return;
+      if(hudHit(e.target)) return;
+      var t=e.changedTouches && e.changedTouches[0];
+      if(!t) return;
+      var up=type==="pointerup";
+      fireMousePointer(type, t.clientX, t.clientY, up?0:1, type==="pointermove"?-1:0);
+    }
+    window.addEventListener("touchstart", function(e){ fromTouch("pointerdown", e); }, true);
+    window.addEventListener("touchmove", function(e){ fromTouch("pointermove", e); }, true);
+    window.addEventListener("touchend", function(e){ fromTouch("pointerup", e); }, true);
+    window.addEventListener("touchcancel", function(e){ fromTouch("pointerup", e); }, true);
+  }
+
+  applyPad();
+})();
+</script>
+<script src="file:///opt/nocturne/webapps/player/touch-fix.js"></script>

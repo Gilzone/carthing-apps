@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=800, height=480, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Recorder</title>
+  <link rel="stylesheet" href="tools.css">
+  <style>
+    .stage { display: flex; gap: 14px; }
+    .left { width: 280px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; }
+    .rec {
+      width: 150px; height: 150px; border-radius: 50%;
+      border: 6px solid #f43f5e; background: #1a0a0e;
+      color: #fda4af; font: 700 22px system-ui; letter-spacing: .08em;
+    }
+    .rec.live { background: #f43f5e; color: #fff; animation: pulse 1s infinite; }
+    @keyframes pulse { 50% { transform: scale(.96); } }
+    .status { text-align: center; font-size: 15px; min-height: 40px; }
+    .list { flex: 1; overflow: auto; display: flex; flex-direction: column; gap: 8px; }
+    .clip {
+      display: flex; align-items: center; gap: 10px;
+      background: #14161c; border-radius: 14px; padding: 10px 12px;
+      border: 2px solid rgba(255,255,255,.08);
+    }
+    .clip b { font-size: 15px; }
+    .clip .meta { font-size: 12px; color: #9ca3af; }
+    .tiny { padding: 8px 12px; font-size: 13px; border-radius: 10px; }
+  </style>
+</head>
+<body>
+  <div class="top">
+    <button class="chip" id="home" type="button">HOME</button>
+    <div class="title">Recorder</div>
+    <div class="grow"></div>
+    <button class="chip off" id="perm" type="button">ASK MIC</button>
+  </div>
+  <div class="stage">
+    <div class="left">
+      <button class="rec" id="rec" type="button">REC</button>
+      <div class="status muted" id="status">Tap ASK MIC, then REC.<br>Clips are saved on this device.</div>
+      <div id="timer" style="font:700 28px system-ui">0:00</div>
+    </div>
+    <div class="list" id="list"></div>
+  </div>
+  <script>
+    var HOME = "file:///opt/nocturne/webapps/player/index.html#tools";
+    document.getElementById("home").onclick = function () { location.href = HOME; };
+    var stream = null, rec = null, chunks = [], t0 = 0, tick = 0, dbp = null;
+    var recBtn = document.getElementById("rec");
+    var status = document.getElementById("status");
+    var timer = document.getElementById("timer");
+    var list = document.getElementById("list");
+
+    function openDb() {
+      if (dbp) return dbp;
+      dbp = new Promise(function (resolve, reject) {
+        var r = indexedDB.open("ct-tools", 1);
+        r.onupgradeneeded = function () {
+          var db = r.result;
+          if (!db.objectStoreNames.contains("recordings")) db.createObjectStore("recordings", { keyPath: "id" });
+          if (!db.objectStoreNames.contains("notes")) db.createObjectStore("notes", { keyPath: "id" });
+          if (!db.objectStoreNames.contains("books")) db.createObjectStore("books", { keyPath: "id" });
+        };
+        r.onsuccess = function () { resolve(r.result); };
+        r.onerror = function () { reject(r.error); };
+      });
+      return dbp;
+    }
+    function tx(store, mode) {
+      return openDb().then(function (db) { return db.transaction(store, mode).objectStore(store); });
+    }
+    function allClips() {
+      return tx("recordings", "readonly").then(function (s) {
+        return new Promise(function (resolve) {
+          var out = [];
+          s.openCursor(null, "prev").onsuccess = function (e) {
+            var c = e.target.result;
+            if (c) { out.push(c.value); c.continue(); }
+            else resolve(out);
+          };
+        });
+      });
+    }
+    function putClip(row) {
+      return tx("recordings", "readwrite").then(function (s) {
+        return new Promise(function (resolve) { s.put(row).onsuccess = function () { resolve(); }; });
+      });
+    }
+    function delClip(id) {
+      return tx("recordings", "readwrite").then(function (s) {
+        return new Promise(function (resolve) { s.delete(id).onsuccess = function () { resolve(); }; });
+      });
+    }
+
+    function fmt(ms) {
+      var s = Math.floor(ms / 1000);
+      return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
+    }
+    function mime() {
+      var types = ["audio/webm;codecs=opus", "audio/webm", "audio/ogg;codecs=opus", "audio/mp4"];
+      for (var i = 0; i < types.length; i++) {
+        try { if (window.MediaRecorder && MediaRecorder.isTypeSupported(types[i])) return types[i]; } catch (e) {}
+      }
+      return "";
+    }
+
+    async function askMic() {
+      status.textContent = "Requesting microphone…";
+      try {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          throw new Error("This kiosk build has no getUserMedia");
+        }
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: { echoCancellation: true, noiseSuppression: true, channelCount: 1 }
+        });
+        status.textContent = "Microphone allowed. Tap REC to start.";
+        document.getElementById("perm").textContent = "MIC ON";
+        document.getElementById("perm").classList.remove("off");
+      } catch (err) {
+        status.textContent = "Mic blocked or busy (" + (err.name || "error") + "). Nocturne may already be using the mic. Clips already saved still play.";
+      }
+    }
+
+    function stopTracks() {
+      if (stream) stream.getTracks().forEach(function (t) { t.stop(); });
+    }
+
+    recBtn.onclick = async function () {
+      if (rec && rec.state === "recording") {
+        rec.stop();
+        return;
+      }
+      if (!stream || !stream.active) await askMic();
+      if (!stream) return;
+      chunks = [];
+      var opts = {};
+      var m = mime();
+      if (m) opts.mimeType = m;
+      try { rec = new MediaRecorder(stream, opts); }
+      catch (e) { try { rec = new MediaRecorder(stream); } catch (e2) { status.textContent = "Recorder API missing."; return; } }
+      rec.ondataavailable = function (e) { if (e.data && e.data.size) chunks.push(e.data); };
+      rec.onstop = async function () {
+        clearInterval(tick);
+        recBtn.classList.remove("live");
+        recBtn.textContent = "REC";
+        var blob = new Blob(chunks, { type: rec.mimeType || "audio/webm" });
+        var row = {
+          id: Date.now(),
+          created: Date.now(),
+          duration: Date.now() - t0,
+          mime: blob.type,
+          blob: blob
+        };
+        await putClip(row);
+        status.textContent = "Saved " + fmt(row.duration) + " clip.";
+        renderList();
+      };
+      rec.start(250);
+      t0 = Date.now();
+      recBtn.classList.add("live");
+      recBtn.textContent = "STOP";
+      status.textContent = "Recording… tap STOP to save.";
+      tick = setInterval(function () { timer.textContent = fmt(Date.now() - t0); }, 200);
+    };
+
+    document.getElementById("perm").onclick = askMic;
+
+    async function renderList() {
+      var rows = [];
+      try { rows = await allClips(); } catch (e) { list.textContent = "Storage unavailable."; return; }
+      list.innerHTML = "";
+      if (!rows.length) {
+        list.innerHTML = '<div class="muted">No clips yet.</div>';
+        return;
+      }
+      rows.forEach(function (row) {
+        var el = document.createElement("div");
+        el.className = "clip";
+        var d = new Date(row.created);
+        el.innerHTML =
+          "<div class='grow'><b>" + d.toLocaleString() + "</b><div class='meta'>" + fmt(row.duration) + " · " + (row.mime || "audio") + "</div></div>";
+        var play = document.createElement("button");
+        play.className = "btn tiny";
+        play.textContent = "PLAY";
+        play.onclick = function () {
+          var url = URL.createObjectURL(row.blob);
+          var a = new Audio(url);
+          a.play().catch(function () { status.textContent = "Playback blocked (kiosk has audio output off). Clip is still saved."; });
+          a.onended = function () { URL.revokeObjectURL(url); };
+        };
+        var del = document.createElement("button");
+        del.className = "btn tiny";
+        del.textContent = "DEL";
+        del.onclick = async function () { await delClip(row.id); renderList(); };
+        el.appendChild(play);
+        el.appendChild(del);
+        list.appendChild(el);
+      });
+    }
+    renderList();
+  </script>
+</body>
+</html>

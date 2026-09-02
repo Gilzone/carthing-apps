@@ -1,0 +1,1400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=800, height=480, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Retro MP3 Player Simulator</title>
+<style>
+  :root{
+    --body-black:#161616;
+    --body-black-2:#0c0c0c;
+    --screen-bezel:#000;
+    --accent-pink:#ff2e63;
+    --accent-orange:#f5a623;
+    --accent-green:#43b581;
+    --accent-teal:#20c4d8;
+    --accent-red:#ff3b30;
+    --ink:#e9e9ee;
+    --dim:#8a8a93;
+    --card:#1c1c22;
+    --card-2:#232329;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;}
+  html,body{
+    height:100%;margin:0;
+    background:radial-gradient(circle at 50% 0%, #2b2b33, #0a0a0d 65%);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    display:flex;align-items:center;justify-content:center;
+    color:var(--ink);
+    overflow:hidden;
+  }
+  .stage{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:30px;}
+  .device-wrap{position:relative;filter:drop-shadow(0 30px 60px rgba(0,0,0,.65));}
+  .device{
+    width:300px;height:560px;
+    background:linear-gradient(160deg,var(--body-black),var(--body-black-2) 70%);
+    border-radius:38px;
+    padding:16px 14px;
+    position:relative;
+    box-shadow:inset 0 0 0 1.5px #2c2c33, inset 0 2px 6px rgba(255,255,255,.04);
+  }
+  .speaker-grid{
+    position:absolute;right:14px;bottom:60px;
+    display:grid;grid-template-columns:repeat(3,10px);gap:8px;
+    opacity:.5;
+  }
+  .speaker-grid span{width:10px;height:5px;border-radius:3px;background:#000;box-shadow:inset 0 0 0 1px #2a2a30;}
+  .brand{position:absolute;left:0;right:0;bottom:14px;text-align:center;font-size:9px;letter-spacing:3px;color:#4a4a52;font-weight:600;}
+  .screen-frame{
+    background:#000;border-radius:26px;height:100%;
+    box-shadow:0 0 0 2px #050505, 0 0 0 3px #2a2a30;
+    overflow:hidden;position:relative;
+  }
+  .screen{
+    position:relative;height:100%;width:100%;
+    background:#050506;
+    display:flex;flex-direction:column;
+    overflow:hidden;
+  }
+  /* status bar */
+  .statusbar{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:9px 14px 4px 14px;font-size:13px;color:#eee;font-variant-numeric:tabular-nums;
+    letter-spacing:.5px;flex-shrink:0;z-index:5;
+  }
+  .statusbar .right{display:flex;align-items:center;gap:6px;}
+  .sd-icon{width:14px;height:14px;opacity:.9;}
+  .batt{display:flex;align-items:center;gap:2px;}
+  .batt-body{width:22px;height:11px;border:1.3px solid #eee;border-radius:2.5px;position:relative;padding:1.5px;}
+  .batt-fill{height:100%;background:#4ade80;border-radius:1px;}
+  .batt-tip{width:2px;height:5px;background:#eee;border-radius:0 2px 2px 0;}
+  /* app root */
+  .app-root{flex:1;position:relative;overflow:hidden;}
+  .view{
+    position:absolute;inset:0;
+    display:flex;flex-direction:column;
+    animation:fadein .18s ease;
+  }
+  @keyframes fadein{from{opacity:0;transform:scale(.98)}to{opacity:1;transform:scale(1)}}
+
+  /* ---------- HOME ---------- */
+  .home-pages{flex:1;display:flex;width:200%;height:100%;transition:transform .35s cubic-bezier(.4,0,.2,1);}
+  .home-page{width:50%;height:100%;display:grid;grid-template-columns:repeat(3,1fr);grid-auto-rows:min-content;gap:18px 6px;padding:20px 12px 0 12px;flex-shrink:0;}
+  .app-icon{display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;}
+  .app-icon .circle{
+    width:56px;height:56px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 4px 10px rgba(0,0,0,.4);
+    transition:transform .12s ease;
+  }
+  .app-icon:active .circle{transform:scale(.9);}
+  .app-icon span{font-size:11px;color:#dcdce2;}
+  .circle svg{width:28px;height:28px;}
+  .dots{display:flex;justify-content:center;gap:6px;padding:10px 0 14px 0;}
+  .dot{width:6px;height:6px;border-radius:50%;background:#4a4a52;cursor:pointer;}
+  .dot.active{background:var(--accent-teal);}
+
+  /* ---------- APP HEADER ---------- */
+  .app-header{
+    display:flex;align-items:center;gap:8px;padding:10px 12px;flex-shrink:0;
+    border-bottom:1px solid #1c1c22;
+  }
+  .back-btn{
+    width:28px;height:28px;border-radius:50%;background:#1c1c22;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;
+  }
+  .back-btn svg{width:14px;height:14px;}
+  .app-title{font-size:14px;font-weight:600;letter-spacing:.3px;}
+  .app-body{flex:1;overflow-y:auto;padding:10px 14px 16px 14px;}
+  .app-body::-webkit-scrollbar{width:3px;}
+  .app-body::-webkit-scrollbar-thumb{background:#333;border-radius:3px;}
+
+  /* ---------- MUSIC ---------- */
+  .now-playing{display:flex;flex-direction:column;align-items:center;padding:6px 0 10px 0;}
+  .art{
+    width:150px;height:150px;border-radius:16px;margin:6px 0 14px 0;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 10px 24px rgba(0,0,0,.5);
+    position:relative;overflow:hidden;
+  }
+  .art .disc{width:70px;height:70px;border-radius:50%;background:radial-gradient(circle,#111 0 8px,#eee 9px 11px,#111 12px 100%);animation:spin 4s linear infinite;animation-play-state:paused;}
+  .art.spinning .disc{animation-play-state:running;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .track-title{font-size:15px;font-weight:600;}
+  .track-artist{font-size:12px;color:var(--dim);margin-top:2px;}
+  .progress-wrap{width:100%;padding:14px 4px 0 4px;}
+  .progress-bar{height:4px;background:#2a2a31;border-radius:2px;position:relative;cursor:pointer;}
+  .progress-fill{height:100%;background:var(--accent-pink);border-radius:2px;width:0%;}
+  .progress-times{display:flex;justify-content:space-between;font-size:10px;color:var(--dim);margin-top:4px;}
+  .controls-row{display:flex;align-items:center;justify-content:center;gap:22px;padding:12px 0 6px 0;}
+  .ctrl-btn{width:34px;height:34px;border-radius:50%;background:#1c1c22;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+  .ctrl-btn.big{width:50px;height:50px;background:var(--accent-pink);}
+  .ctrl-btn svg{width:16px;height:16px;}
+  .ctrl-btn.big svg{width:20px;height:20px;}
+  .vol-row{display:flex;align-items:center;gap:8px;padding:8px 10px 0 10px;}
+  .vol-row svg{width:14px;height:14px;flex-shrink:0;opacity:.7;}
+  input[type=range]{-webkit-appearance:none;width:100%;height:3px;background:#2a2a31;border-radius:3px;outline:none;}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:#fff;cursor:pointer;margin-top:-4.5px;}
+  .track-list{margin-top:10px;}
+  .track-row{display:flex;align-items:center;gap:10px;padding:9px 6px;border-radius:10px;cursor:pointer;}
+  .track-row.playing{background:#1c1c22;}
+  .track-num{width:20px;font-size:11px;color:var(--dim);text-align:center;}
+  .track-row .meta{flex:1;}
+  .track-row .meta .t{font-size:13px;}
+  .track-row .meta .a{font-size:10px;color:var(--dim);}
+  .eq{display:flex;gap:2px;align-items:flex-end;height:12px;width:14px;}
+  .eq span{width:2.5px;background:var(--accent-pink);animation:eqbounce .8s ease-in-out infinite;}
+  @keyframes eqbounce{0%,100%{height:3px}50%{height:12px}}
+
+  /* ---------- EBOOK ---------- */
+  .book-page{
+    flex:1;padding:8px 4px;font-size:14px;line-height:1.85;color:#dcdce2;
+    font-family:Georgia,'Times New Roman',serif;
+    overflow-y:auto;
+  }
+  .book-footer{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-top:1px solid #1c1c22;font-size:11px;color:var(--dim);}
+  .book-footer .navbtn{width:30px;height:30px;border-radius:8px;background:#1c1c22;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+  .book-footer .navbtn svg{width:13px;height:13px;}
+  .fontctrl{display:flex;gap:6px;}
+  .fontctrl div{width:22px;height:22px;border-radius:6px;background:#1c1c22;display:flex;align-items:center;justify-content:center;font-size:11px;cursor:pointer;}
+  .book-toc{padding:4px 2px;}
+  .toc-row{padding:11px 6px;border-bottom:1px solid #1c1c22;font-size:13px;cursor:pointer;display:flex;justify-content:space-between;color:#dcdce2;}
+  .toc-row .pg{color:var(--dim);font-size:11px;}
+
+  /* ---------- PICTURES ---------- */
+  .pic-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
+  .pic-thumb{aspect-ratio:1;border-radius:8px;cursor:pointer;overflow:hidden;}
+  .pic-thumb canvas{width:100%;height:100%;display:block;}
+  .pic-viewer{position:absolute;inset:0;background:#000;display:flex;flex-direction:column;z-index:20;}
+  .pic-viewer .top{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;font-size:12px;color:var(--dim);}
+  .pic-viewer .stage-area{flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;}
+  .pic-viewer canvas{border-radius:10px;transition:transform .2s ease;}
+  .pic-nav{display:flex;justify-content:center;gap:26px;padding:14px;}
+
+  /* ---------- FOLDER ---------- */
+  .path-bar{display:flex;align-items:center;gap:4px;padding:2px 0 10px 0;font-size:11px;color:var(--dim);flex-wrap:wrap;}
+  .path-bar span{cursor:pointer;}
+  .path-bar span:last-child{color:#dcdce2;}
+  .file-row{display:flex;align-items:center;gap:10px;padding:10px 6px;border-bottom:1px solid #17171b;cursor:pointer;}
+  .file-row .fmeta{flex:1;}
+  .file-row .fname{font-size:13px;}
+  .file-row .fsub{font-size:10px;color:var(--dim);}
+  .ficon{width:26px;height:26px;flex-shrink:0;}
+
+  /* ---------- RECORD ---------- */
+  .rec-main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;}
+  .rec-timer{font-size:34px;font-variant-numeric:tabular-nums;font-weight:300;letter-spacing:1px;}
+  .rec-wave{display:flex;align-items:center;gap:3px;height:40px;}
+  .rec-wave span{width:3px;background:var(--accent-red);border-radius:2px;height:6px;transition:height .1s ease;}
+  .rec-button{width:70px;height:70px;border-radius:50%;background:var(--accent-red);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 6px 18px rgba(255,59,48,.4);}
+  .rec-button .inner{width:26px;height:26px;border-radius:8px;background:#fff;}
+  .rec-button.recording .inner{border-radius:50%;}
+  .rec-hint{font-size:11px;color:var(--dim);}
+  .rec-list{border-top:1px solid #1c1c22;margin-top:6px;padding-top:6px;}
+  .rec-item{display:flex;align-items:center;gap:10px;padding:9px 4px;}
+  .rec-item .meta{flex:1;font-size:12px;}
+  .rec-item .meta .sub{font-size:10px;color:var(--dim);}
+  .mini-btn{width:26px;height:26px;border-radius:50%;background:#1c1c22;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;}
+  .mini-btn svg{width:11px;height:11px;}
+
+  /* ---------- FM ---------- */
+  .fm-display{display:flex;flex-direction:column;align-items:center;padding:14px 0 6px 0;}
+  .fm-freq{font-size:42px;font-weight:200;letter-spacing:1px;font-variant-numeric:tabular-nums;}
+  .fm-freq span{font-size:16px;color:var(--dim);margin-left:4px;}
+  .fm-station{font-size:12px;color:var(--accent-teal);height:16px;margin-top:2px;}
+  .fm-dial{position:relative;height:46px;margin:14px 10px;background:#131317;border-radius:10px;overflow:hidden;}
+  .fm-ticks{position:absolute;inset:0;display:flex;align-items:flex-end;justify-content:space-between;padding:0 4px 4px 4px;}
+  .fm-ticks div{width:1px;height:8px;background:#333;}
+  .fm-ticks div.major{height:14px;background:#555;}
+  .fm-needle{position:absolute;top:0;bottom:0;width:2px;background:var(--accent-teal);box-shadow:0 0 6px var(--accent-teal);transition:left .12s ease;}
+  .fm-seekrow{display:flex;align-items:center;justify-content:center;gap:20px;padding:8px 0;}
+  .fm-presets{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px;}
+  .preset{background:#1c1c22;border-radius:10px;padding:8px 4px;text-align:center;cursor:pointer;}
+  .preset.active{background:var(--accent-teal);color:#04292c;}
+  .preset .pf{font-size:12px;font-weight:600;}
+  .preset .pn{font-size:9px;color:var(--dim);margin-top:1px;}
+  .preset.active .pn{color:#04292c;opacity:.7;}
+  .fm-power{display:flex;justify-content:center;padding:6px 0 4px 0;}
+  .power-pill{padding:7px 22px;border-radius:20px;background:#1c1c22;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px;}
+  .power-pill.on{background:var(--accent-teal);color:#04292c;}
+  .dotpulse{width:6px;height:6px;border-radius:50%;background:#666;}
+  .power-pill.on .dotpulse{background:#04292c;animation:pulse 1s infinite;}
+  @keyframes pulse{50%{opacity:.3}}
+
+  /* ---------- SETTINGS / CALC / ALARM / ABOUT ---------- */
+  .setting-row{display:flex;align-items:center;justify-content:space-between;padding:12px 4px;border-bottom:1px solid #1c1c22;}
+  .setting-row .label{font-size:13px;}
+  .setting-row .sub{font-size:10px;color:var(--dim);margin-top:2px;}
+  .switch{width:38px;height:22px;border-radius:12px;background:#2a2a31;position:relative;cursor:pointer;flex-shrink:0;}
+  .switch.on{background:var(--accent-teal);}
+  .switch .knob{position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;transition:left .15s ease;}
+  .switch.on .knob{left:18px;}
+  .calc-display{background:#101014;border-radius:12px;padding:18px 14px;text-align:right;font-size:32px;margin-bottom:10px;font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .calc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+  .calc-btn{background:#1c1c22;border-radius:10px;padding:14px 0;text-align:center;font-size:15px;cursor:pointer;}
+  .calc-btn.op{background:var(--accent-teal);color:#04292c;font-weight:600;}
+  .calc-btn.eq{background:var(--accent-pink);color:#2b0410;font-weight:700;}
+  .calc-btn.zero{grid-column:span 2;}
+  .about-logo{display:flex;flex-direction:column;align-items:center;padding:18px 0;}
+  .about-logo .badge{width:70px;height:70px;border-radius:20px;background:linear-gradient(140deg,var(--accent-teal),var(--accent-pink));display:flex;align-items:center;justify-content:center;font-size:26px;margin-bottom:12px;}
+  .about-row{display:flex;justify-content:space-between;padding:10px 4px;border-bottom:1px solid #1c1c22;font-size:12px;}
+  .about-row .k{color:var(--dim);}
+  .alarm-card{background:#1c1c22;border-radius:14px;padding:14px;display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+  .alarm-time{font-size:26px;font-weight:300;}
+  .alarm-sub{font-size:10px;color:var(--dim);margin-top:2px;}
+  .add-alarm{display:flex;align-items:center;justify-content:center;gap:6px;padding:12px;border:1.5px dashed #333;border-radius:14px;font-size:12px;color:var(--dim);cursor:pointer;margin-top:6px;}
+
+  /* ---------- LOCK SCREEN ---------- */
+  .lock-screen{position:absolute;inset:0;background:#000;z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;}
+  .lock-time{font-size:52px;font-weight:200;letter-spacing:1px;}
+  .lock-date{font-size:13px;color:var(--dim);margin-top:4px;}
+  .lock-hint{position:absolute;bottom:26px;font-size:11px;color:#555;letter-spacing:.5px;}
+  .lock-hint svg{width:14px;height:14px;vertical-align:-3px;margin-right:4px;}
+
+  /* ---------- OSD (volume overlay) ---------- */
+  .osd{
+    position:absolute;top:44px;left:50%;transform:translateX(-50%);
+    background:rgba(28,28,34,.92);border-radius:12px;padding:10px 16px;
+    display:flex;align-items:center;gap:10px;z-index:60;
+    opacity:0;pointer-events:none;transition:opacity .15s ease;
+  }
+  .osd.show{opacity:1;}
+  .osd svg{width:16px;height:16px;}
+  .osd-bar{width:90px;height:4px;background:#333;border-radius:2px;overflow:hidden;}
+  .osd-fill{height:100%;background:var(--accent-teal);}
+
+  /* ---------- toast ---------- */
+  .toast{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);background:rgba(28,28,34,.95);padding:9px 16px;border-radius:20px;font-size:11px;z-index:70;opacity:0;transition:opacity .2s ease;pointer-events:none;white-space:nowrap;}
+  .toast.show{opacity:1;}
+
+  /* ---------- side buttons ---------- */
+  .side-btn{
+    position:absolute;background:linear-gradient(90deg,#0c0c0e,#1b1b20);
+    border-radius:3px;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.5);
+  }
+  .btn-power{right:-3px;top:70px;width:6px;height:46px;border-radius:3px 0 0 3px;}
+  .btn-volup{left:-3px;top:120px;width:6px;height:34px;border-radius:0 3px 3px 0;}
+  .btn-voldown{left:-3px;top:162px;width:6px;height:34px;border-radius:0 3px 3px 0;}
+  .btn-reset{right:-3px;top:230px;width:5px;height:18px;border-radius:3px 0 0 3px;opacity:.7;}
+
+  .hint-caption{text-align:center;color:#6a6a74;font-size:12px;margin-top:22px;max-width:300px;line-height:1.6;}
+  .hint-caption b{color:#9a9aa4;}
+
+  /* Car Thing kiosk: Chromium is 800x480; Weston rotate-270 maps it onto the 480x800 panel. */
+  html, body {
+    width: 800px !important;
+    height: 480px !important;
+    max-width: 800px !important;
+    max-height: 480px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    display: block !important;
+    background: #050506 !important;
+  }
+  .stage, .device-wrap {
+    width: 800px !important;
+    height: 480px !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    filter: none !important;
+  }
+  .device, .screen-frame, .screen {
+    width: 800px !important;
+    height: 480px !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    background: #050506 !important;
+  }
+  .speaker-grid, .brand, .side-btn, .hint-caption { display: none !important; }
+  .statusbar { padding: 8px 18px 4px !important; font-size: 15px !important; }
+  .home-page {
+    grid-template-columns: repeat(5, 1fr) !important;
+    gap: 18px 12px !important;
+    padding: 18px 24px 0 !important;
+  }
+  .app-icon .circle { width: 72px !important; height: 72px !important; }
+  .app-icon span { font-size: 13px !important; }
+  .circle svg { width: 34px !important; height: 34px !important; }
+  .art { width: 210px !important; height: 210px !important; }
+  .ctrl-btn { width: 48px !important; height: 48px !important; }
+  .ctrl-btn.big { width: 64px !important; height: 64px !important; }
+  .app-title { font-size: 18px !important; }
+  .track-title { font-size: 18px !important; }
+  .calc-btn { padding: 16px 0 !important; font-size: 18px !important; }
+  .fm-freq { font-size: 48px !important; }
+  .lock-time { font-size: 64px !important; }
+
+</style>
+</head>
+<body>
+<div class="stage">
+<div class="device-wrap">
+  <div class="device" id="deviceRoot">
+    <div class="screen-frame">
+      <div class="screen" id="screen">
+        <div class="statusbar">
+          <div id="clock">14:08</div>
+          <div class="right">
+            <svg class="sd-icon" viewBox="0 0 24 24" fill="none"><path d="M7 2h8l4 4v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z" stroke="#eee" stroke-width="1.5"/><path d="M9 2v5h3V2" stroke="#eee" stroke-width="1.5"/></svg>
+            <div class="batt">
+              <div class="batt-body"><div class="batt-fill" id="battFill" style="width:82%"></div></div>
+              <div class="batt-tip"></div>
+            </div>
+          </div>
+        </div>
+        <div class="app-root" id="appRoot"></div>
+        <div class="osd" id="osd">
+          <svg viewBox="0 0 24 24" fill="none" id="osdIcon"><path d="M4 9v6h4l5 5V4L8 9H4z" fill="#e9e9ee"/></svg>
+          <div class="osd-bar"><div class="osd-fill" id="osdFill" style="width:70%"></div></div>
+        </div>
+        <div class="toast" id="toast"></div>
+      </div>
+    </div>
+    <div class="speaker-grid">
+      <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+    <div class="brand">M300 MUSIC</div>
+    <div class="side-btn btn-power" id="btnPower" title="Power"></div>
+    <div class="side-btn btn-volup" id="btnVolUp" title="Volume Up"></div>
+    <div class="side-btn btn-voldown" id="btnVolDown" title="Volume Down"></div>
+    <div class="side-btn btn-reset"></div>
+  </div>
+</div>
+</div>
+
+<script>
+/* ============================================================
+   GLOBAL STATE
+============================================================ */
+const state = {
+  page: 0,
+  locked: false,
+  masterVolume: 0.7,
+  history: [],
+};
+
+let audioCtx = null;
+function getCtx(){
+  if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+  if(audioCtx.state === 'suspended' && !musicState.playing) { /* leave suspended until needed */ }
+  return audioCtx;
+}
+
+/* master gain shared by music + fm */
+let masterGain = null;
+function getMasterGain(){
+  const ctx = getCtx();
+  if(!masterGain){
+    masterGain = ctx.createGain();
+    masterGain.gain.value = state.masterVolume;
+    masterGain.connect(ctx.destination);
+  }
+  return masterGain;
+}
+function applyVolume(){
+  if(masterGain) masterGain.gain.value = state.masterVolume;
+  const previewAudio = document.querySelector('audio[data-rec-playing="1"]');
+  if(previewAudio) previewAudio.volume = state.masterVolume;
+}
+
+/* ============================================================
+   CLOCK
+============================================================ */
+function tickClock(){
+  const d = new Date();
+  const hh = String(d.getHours()).padStart(2,'0');
+  const mm = String(d.getMinutes()).padStart(2,'0');
+  document.getElementById('clock').textContent = `${hh}:${mm}`;
+  const lockTime = document.getElementById('lockTime');
+  if(lockTime) lockTime.textContent = `${hh}:${mm}`;
+  const lockDate = document.getElementById('lockDate');
+  if(lockDate) lockDate.textContent = d.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'});
+}
+setInterval(tickClock,1000*10);
+tickClock();
+
+/* battery slow drain simulation */
+let battLevel = 82;
+setInterval(()=>{
+  battLevel = Math.max(14, battLevel - 1);
+  const el = document.getElementById('battFill');
+  if(el){ el.style.width = battLevel+'%'; el.style.background = battLevel<20?'#ff5555':'#4ade80'; }
+}, 45000);
+
+/* ============================================================
+   ICONS (inline svg strings)
+============================================================ */
+const ICONS = {
+  back: `<svg viewBox="0 0 24 24" fill="none"><path d="M15 5l-7 7 7 7" stroke="#e9e9ee" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+  play: `<svg viewBox="0 0 24 24" fill="#e9e9ee"><path d="M8 5v14l11-7z"/></svg>`,
+  pause: `<svg viewBox="0 0 24 24" fill="#e9e9ee"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>`,
+  next: `<svg viewBox="0 0 24 24" fill="#e9e9ee"><path d="M6 5v14l9-7z"/><rect x="16" y="5" width="2.5" height="14" rx="1"/></svg>`,
+  prev: `<svg viewBox="0 0 24 24" fill="#e9e9ee"><path d="M18 5v14L9 12z"/><rect x="5.5" y="5" width="2.5" height="14" rx="1"/></svg>`,
+  volume: `<svg viewBox="0 0 24 24" fill="none"><path d="M4 9v6h4l5 5V4L8 9H4z" fill="#8a8a93"/></svg>`,
+  volLoud: `<svg viewBox="0 0 24 24" fill="none"><path d="M4 9v6h4l5 5V4L8 9H4z" fill="#8a8a93"/><path d="M17 8a5 5 0 0 1 0 8" stroke="#8a8a93" stroke-width="1.6" stroke-linecap="round"/></svg>`,
+  chevL: `<svg viewBox="0 0 24 24" fill="none"><path d="M15 5l-7 7 7 7" stroke="#e9e9ee" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+  chevR: `<svg viewBox="0 0 24 24" fill="none"><path d="M9 5l7 7-7 7" stroke="#e9e9ee" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+  folder: `<svg viewBox="0 0 24 24" fill="none"><path d="M3 6a1 1 0 0 1 1-1h5l2 2h9a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6z" fill="#f5c26b"/></svg>`,
+  fileTxt: `<svg viewBox="0 0 24 24" fill="none"><path d="M6 2h9l4 4v16H6V2z" fill="#3b3b44"/><path d="M15 2v4h4" fill="#55555f"/><path d="M8 12h8M8 15h8M8 9h4" stroke="#9a9aa4" stroke-width="1"/></svg>`,
+  fileAudio: `<svg viewBox="0 0 24 24" fill="none"><path d="M6 2h9l4 4v16H6V2z" fill="#3b2530"/><path d="M15 2v4h4" fill="#553040"/><path d="M9 16v-5l6-1v5" stroke="#ff2e63" stroke-width="1.3"/><circle cx="9" cy="16" r="1.6" fill="#ff2e63"/><circle cx="15" cy="15" r="1.6" fill="#ff2e63"/></svg>`,
+  fileImg: `<svg viewBox="0 0 24 24" fill="none"><path d="M6 2h9l4 4v16H6V2z" fill="#1e2f3b"/><path d="M15 2v4h4" fill="#284355"/><circle cx="10" cy="12" r="1.3" fill="#20c4d8"/><path d="M8 17l3-3 2 2 3-4 2 5H8z" fill="#20c4d8"/></svg>`,
+  mic: `<svg viewBox="0 0 24 24" fill="none"><rect x="9" y="3" width="6" height="11" rx="3" fill="#ff2e63"/><path d="M6 11a6 6 0 0 0 12 0M12 17v3" stroke="#ff2e63" stroke-width="1.6" stroke-linecap="round"/></svg>`,
+  trash: `<svg viewBox="0 0 24 24" fill="none"><path d="M5 7h14M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m-9 0 1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13" stroke="#e9e9ee" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+  gear: `<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="#e9e9ee" stroke-width="1.6"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1" stroke="#e9e9ee" stroke-width="1.6" stroke-linecap="round"/></svg>`,
+  calc: `<svg viewBox="0 0 24 24" fill="none"><rect x="5" y="2" width="14" height="20" rx="2" stroke="#e9e9ee" stroke-width="1.6"/><rect x="7.5" y="4.5" width="9" height="4" rx="1" fill="#e9e9ee"/><circle cx="8.5" cy="13" r="1" fill="#e9e9ee"/><circle cx="12" cy="13" r="1" fill="#e9e9ee"/><circle cx="15.5" cy="13" r="1" fill="#e9e9ee"/><circle cx="8.5" cy="17" r="1" fill="#e9e9ee"/><circle cx="12" cy="17" r="1" fill="#e9e9ee"/><circle cx="15.5" cy="17" r="1" fill="#e9e9ee"/></svg>`,
+  alarm: `<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="13" r="8" stroke="#e9e9ee" stroke-width="1.6"/><path d="M12 9v4l3 2" stroke="#e9e9ee" stroke-width="1.6" stroke-linecap="round"/><path d="M5 3 2 6M19 3l3 3" stroke="#e9e9ee" stroke-width="1.6" stroke-linecap="round"/></svg>`,
+  info: `<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#e9e9ee" stroke-width="1.6"/><path d="M12 8v.01M12 11v5" stroke="#e9e9ee" stroke-width="1.8" stroke-linecap="round"/></svg>`,
+};
+
+/* ============================================================
+   ROUTER
+============================================================ */
+const VIEWS = {};
+const INIT = {};
+function navigate(view, opts){
+  state.history.push(view);
+  render(view, opts);
+}
+function goBack(){
+  if(musicIsSubview){ musicIsSubview=null; render('music'); return; }
+  state.history.pop();
+  const prev = state.history.pop() || 'home';
+  navigate(prev);
+}
+function goHome(){ state.history = []; render('home'); }
+
+function render(view, opts={}){
+  const root = document.getElementById('appRoot');
+  root.innerHTML = VIEWS[view](opts);
+  INIT[view] && INIT[view](opts);
+}
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(()=>t.classList.remove('show'),1600);
+}
+
+/* ============================================================
+   HOME VIEW
+============================================================ */
+const HOME_APPS_1 = [
+  {id:'music', label:'Music', color:'linear-gradient(140deg,#ff5d8f,#ff2e63)', icon:`<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" fill="#fff" opacity=".15"/><circle cx="12" cy="12" r="4.2" fill="#fff"/><circle cx="12" cy="12" r="1.4" fill="#ff2e63"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3" stroke="#fff" stroke-width="1.4" opacity=".7"/></svg>`},
+  {id:'ebook', label:'E book', color:'linear-gradient(140deg,#ffc266,#f5a623)', icon:`<svg viewBox="0 0 24 24" fill="none"><path d="M4 5c2-1 5-1 8 1 3-2 6-2 8-1v13c-2-1-5-1-8 1-3-2-6-2-8-1V5z" fill="#fff"/><path d="M12 6v13" stroke="#f5a623" stroke-width="1.3"/></svg>`},
+  {id:'pictures', label:'Pictures', color:'#fff', icon:`<svg viewBox="0 0 24 24"><g><path d="M12 2v9" stroke="#ff2e63" stroke-width="2" stroke-linecap="round"/><path d="M12 2v9" stroke="#f5a623" stroke-width="2" stroke-linecap="round" transform="rotate(51 12 11)"/><path d="M12 2v9" stroke="#43b581" stroke-width="2" stroke-linecap="round" transform="rotate(102 12 11)"/><path d="M12 2v9" stroke="#20c4d8" stroke-width="2" stroke-linecap="round" transform="rotate(153 12 11)"/><path d="M12 2v9" stroke="#7b5cff" stroke-width="2" stroke-linecap="round" transform="rotate(204 12 11)"/><path d="M12 2v9" stroke="#ff5d8f" stroke-width="2" stroke-linecap="round" transform="rotate(255 12 11)"/><path d="M12 2v9" stroke="#ffd93d" stroke-width="2" stroke-linecap="round" transform="rotate(306 12 11)"/></g></svg>`},
+  {id:'folder', label:'Folder', color:'linear-gradient(140deg,#66d19e,#43b581)', icon:`<svg viewBox="0 0 24 24" fill="none"><path d="M4 7a1 1 0 0 1 1-1h4l2 2h8a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7z" fill="#fff"/></svg>`},
+  {id:'record', label:'Record', color:'#fff', icon:`<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9.5" stroke="#ff3b30" stroke-width="1.6" fill="none"/><rect x="9.3" y="4" width="5.4" height="10" rx="2.7" fill="#ff3b30"/><path d="M6.5 11.5a5.5 5.5 0 0 0 11 0M12 17v2.5" stroke="#ff3b30" stroke-width="1.4" stroke-linecap="round"/></svg>`},
+  {id:'fm', label:'FM', color:'linear-gradient(140deg,#4fe0f0,#20c4d8)', icon:`<svg viewBox="0 0 24 24" fill="none"><rect x="4" y="10" width="2" height="6" rx="1" fill="#fff"/><rect x="8" y="7" width="2" height="9" rx="1" fill="#fff"/><rect x="12" y="4" width="2" height="12" rx="1" fill="#fff"/><rect x="16" y="8" width="2" height="8" rx="1" fill="#fff"/><rect x="20" y="11" width="1.5" height="5" rx="1" fill="#fff" opacity=".7"/></svg>`},
+];
+const HOME_APPS_2 = [
+  {id:'alarm', label:'Alarm', color:'#1c1c22', icon:ICONS.alarm},
+  {id:'calc', label:'Calculator', color:'#1c1c22', icon:ICONS.calc},
+  {id:'settings', label:'Settings', color:'#1c1c22', icon:ICONS.gear},
+  {id:'about', label:'About', color:'#1c1c22', icon:ICONS.info},
+];
+
+function iconHtml(app){
+  return `<div class="app-icon" onclick="openApp('${app.id}')">
+    <div class="circle" style="background:${app.color}">${app.icon}</div>
+    <span>${app.label}</span>
+  </div>`;
+}
+window.openApp = function(id){
+  if(['music','ebook','pictures','folder','record','fm','alarm','calc','settings','about'].includes(id)){
+    navigate(id);
+  }
+};
+
+VIEWS_HOME = () => `
+  <div class="view" style="padding-top:6px;">
+    <div class="home-pages" id="homePages" style="transform:translateX(${state.page===0?'0':'-50%'})">
+      <div class="home-page">${HOME_APPS_1.map(iconHtml).join('')}</div>
+      <div class="home-page">${HOME_APPS_2.map(iconHtml).join('')}
+        <div style="grid-column:span 3;text-align:center;color:#4a4a52;font-size:10px;margin-top:10px;">Swipe or tap dots to change page</div>
+      </div>
+    </div>
+    <div class="dots">
+      <div class="dot ${state.page===0?'active':''}" onclick="setPage(0)"></div>
+      <div class="dot ${state.page===1?'active':''}" onclick="setPage(1)"></div>
+    </div>
+  </div>
+`;
+window.setPage = function(p){
+  state.page = p;
+  const el = document.getElementById('homePages');
+  if(el) el.style.transform = `translateX(${p===0?'0':'-50%'})`;
+  document.querySelectorAll('.dot').forEach((d,i)=>d.classList.toggle('active', i===p));
+};
+
+/* swipe support for home */
+let touchStartX = null;
+document.addEventListener('touchstart', e=>{
+  if(!document.getElementById('homePages')) return;
+  touchStartX = e.touches[0].clientX;
+});
+document.addEventListener('touchend', e=>{
+  if(touchStartX===null || !document.getElementById('homePages')) return;
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  if(dx < -40) setPage(1);
+  if(dx > 40) setPage(0);
+  touchStartX = null;
+});
+
+/* ============================================================
+   MUSIC APP
+============================================================ */
+const TRACKS = [
+  {title:'Morning Waltz', artist:'Lo-fi Meadow', color:'linear-gradient(140deg,#ff8fa3,#ff2e63)',
+   notes:[[523,.4],[587,.4],[659,.4],[587,.4],[523,.4],[494,.4],[440,.6],[0,.2],[523,.4],[659,.4],[784,.6],[659,.4],[587,.8]]},
+  {title:'Night Drive', artist:'Neon Signal', color:'linear-gradient(140deg,#7b5cff,#3b2fb0)',
+   notes:[[220,.3],[220,.3],[261,.3],[293,.3],[329,.5],[293,.3],[261,.3],[220,.6],[0,.2],[196,.3],[220,.3],[261,.4],[220,.7]]},
+  {title:'Sunny Days', artist:'Porch Light', color:'linear-gradient(140deg,#ffd93d,#f5a623)',
+   notes:[[392,.3],[440,.3],[494,.3],[523,.5],[494,.3],[440,.3],[392,.6],[0,.15],[440,.3],[494,.3],[587,.4],[523,.6]]},
+  {title:'Deep Focus', artist:'Study Room', color:'linear-gradient(140deg,#43b581,#1e7f56)',
+   notes:[[196,.6],[220,.6],[246,.8],[220,.6],[196,1.0],[0,.3],[174,.6],[196,.6],[220,1.0]]},
+];
+
+const musicState = {
+  index:0, playing:false, startTime:0, offset:0, duration:0, timer:null, nodes:[]
+};
+
+function trackDuration(track){ return track.notes.reduce((s,n)=>s+n[1],0); }
+
+function scheduleTrack(track, fromOffset){
+  const ctx = getCtx();
+  const gain = getMasterGain();
+  const trackGain = ctx.createGain();
+  trackGain.gain.value = .18;
+  trackGain.connect(gain);
+  musicState.nodes.push(trackGain);
+  let t = ctx.currentTime;
+  let acc = 0;
+  track.notes.forEach(([freq,dur])=>{
+    const noteStart = acc;
+    acc += dur;
+    if(noteStart + dur <= fromOffset) return; // already past
+    const playAt = t + Math.max(0, noteStart - fromOffset);
+    const playDur = dur - Math.max(0, fromOffset - noteStart);
+    if(freq > 0){
+      const osc = ctx.createOscillator();
+      osc.type = 'triangle';
+      osc.frequency.value = freq;
+      const env = ctx.createGain();
+      env.gain.setValueAtTime(0, playAt);
+      env.gain.linearRampToValueAtTime(1, playAt+0.02);
+      env.gain.setValueAtTime(1, playAt+Math.max(0.02,playDur-0.06));
+      env.gain.linearRampToValueAtTime(0, playAt+playDur);
+      osc.connect(env); env.connect(trackGain);
+      osc.start(playAt);
+      osc.stop(playAt+playDur+0.02);
+      musicState.nodes.push(osc);
+    }
+  });
+}
+
+function stopMusicNodes(){
+  musicState.nodes.forEach(n=>{ try{ n.stop && n.stop(); n.disconnect && n.disconnect(); }catch(e){} });
+  musicState.nodes = [];
+}
+
+function playTrack(idx, fromOffset=0){
+  stopMusicNodes();
+  stopFM(); // exclusive audio
+  musicState.index = idx;
+  const track = TRACKS[idx];
+  musicState.duration = trackDuration(track);
+  musicState.offset = fromOffset;
+  const ctx = getCtx();
+  if(ctx.state === 'suspended') ctx.resume();
+  musicState.startTime = ctx.currentTime;
+  scheduleTrack(track, fromOffset);
+  musicState.playing = true;
+  updateMusicUI(true);
+  startMusicTimer();
+}
+function pauseMusic(){
+  if(!musicState.playing) return;
+  musicState.offset = getElapsed();
+  const ctx = getCtx();
+  stopMusicNodes();
+  musicState.playing = false;
+  updateMusicUI(false);
+  clearInterval(musicState.timer);
+}
+function togglePlay(){
+  if(musicState.playing) pauseMusic();
+  else playTrack(musicState.index, musicState.offset >= musicState.duration-0.05 ? 0 : musicState.offset);
+}
+function getElapsed(){
+  if(!musicState.playing) return musicState.offset;
+  const ctx = getCtx();
+  return Math.min(musicState.duration, musicState.offset + (ctx.currentTime - musicState.startTime));
+}
+function nextTrack(){ playTrack((musicState.index+1)%TRACKS.length,0); }
+function prevTrack(){ playTrack((musicState.index-1+TRACKS.length)%TRACKS.length,0); }
+
+function startMusicTimer(){
+  clearInterval(musicState.timer);
+  musicState.timer = setInterval(()=>{
+    const el = getElapsed();
+    const pct = (el/musicState.duration)*100;
+    const fill = document.getElementById('progFill');
+    if(fill) fill.style.width = pct+'%';
+    const cur = document.getElementById('curTime');
+    if(cur) cur.textContent = fmtTime(el);
+    if(el >= musicState.duration-0.05){
+      nextTrack();
+    }
+  }, 200);
+}
+function fmtTime(s){ s=Math.max(0,s); const m=Math.floor(s/60); const sec=Math.floor(s%60); return `${m}:${String(sec).padStart(2,'0')}`; }
+
+let musicIsSubview = null;
+function updateMusicUI(playing){
+  const pp = document.getElementById('playPauseIcon');
+  if(pp) pp.innerHTML = playing? ICONS.pause.match(/<path.*?\/>|<rect.*?\/>/g).join('') : ICONS.play.replace(/<\/?svg[^>]*>/g,'');
+  const art = document.getElementById('artDisc');
+  if(art) art.parentElement.classList.toggle('spinning', playing);
+  const rows = document.querySelectorAll('.track-row');
+  rows.forEach((r,i)=>r.classList.toggle('playing', i===musicState.index));
+  const eqEls = document.querySelectorAll('.eq');
+  eqEls.forEach(e=> e.style.display = 'none');
+  const activeEq = document.querySelector(`.track-row[data-idx="${musicState.index}"] .eq`);
+  if(activeEq) activeEq.style.display = playing ? 'flex' : 'none';
+}
+
+VIEWS.music = () => {
+  const track = TRACKS[musicState.index];
+  return `
+  <div class="view">
+    <div class="app-header">
+      <div class="back-btn" onclick="goBack()">${ICONS.back}</div>
+      <div class="app-title">Now Playing</div>
+    </div>
+    <div class="app-body" style="padding-top:2px;">
+      <div class="now-playing">
+        <div class="art" id="artWrap" style="background:${track.color}">
+          <div class="disc" id="artDisc"></div>
+        </div>
+        <div class="track-title">${track.title}</div>
+        <div class="track-artist">${track.artist}</div>
+        <div class="progress-wrap">
+          <div class="progress-bar" id="progBar" onclick="seekMusic(event)">
+            <div class="progress-fill" id="progFill" style="width:${(musicState.offset/musicState.duration*100)||0}%"></div>
+          </div>
+          <div class="progress-times">
+            <span id="curTime">${fmtTime(musicState.offset)}</span>
+            <span>${fmtTime(musicState.duration)}</span>
+          </div>
+        </div>
+        <div class="controls-row">
+          <div class="ctrl-btn" onclick="prevTrack()">${ICONS.prev}</div>
+          <div class="ctrl-btn big" onclick="togglePlay()" id="playPauseBtn"><span id="playPauseIcon">${musicState.playing?ICONS.pause.replace(/<\/?svg[^>]*>/g,''):ICONS.play.replace(/<\/?svg[^>]*>/g,'')}</span></div>
+          <div class="ctrl-btn" onclick="nextTrack()">${ICONS.next}</div>
+        </div>
+        <div class="vol-row">
+          ${ICONS.volLoud}
+          <input type="range" min="0" max="1" step="0.01" value="${state.masterVolume}" oninput="setVolume(this.value)">
+        </div>
+      </div>
+      <div class="track-list">
+        ${TRACKS.map((t,i)=>`
+          <div class="track-row" data-idx="${i}" onclick="playTrack(${i},0)">
+            <div class="track-num">${i+1}</div>
+            <div class="meta"><div class="t">${t.title}</div><div class="a">${t.artist} · ${fmtTime(trackDuration(t))}</div></div>
+            <div class="eq" style="display:${musicState.playing && musicState.index===i ? 'flex':'none'}"><span style="animation-delay:0s"></span><span style="animation-delay:.2s"></span><span style="animation-delay:.4s"></span></div>
+          </div>`).join('')}
+      </div>
+    </div>
+  </div>`;
+};
+INIT.music = () => { updateMusicUI(musicState.playing); if(musicState.playing) startMusicTimer(); };
+
+window.seekMusic = function(e){
+  const bar = document.getElementById('progBar');
+  const rect = bar.getBoundingClientRect();
+  const pct = Math.min(1,Math.max(0,(e.clientX-rect.left)/rect.width));
+  const target = pct*musicState.duration;
+  if(musicState.playing) playTrack(musicState.index, target);
+  else { musicState.offset = target; document.getElementById('progFill').style.width=(pct*100)+'%'; document.getElementById('curTime').textContent=fmtTime(target); }
+};
+window.setVolume = function(v){ state.masterVolume = parseFloat(v); applyVolume(); };
+window.togglePlay = togglePlay; window.nextTrack = nextTrack; window.prevTrack = prevTrack; window.playTrack = playTrack;
+
+/* ============================================================
+   E-BOOK APP
+============================================================ */
+const BOOK = {
+  title:"The Lighthouse Keeper's Log",
+  chapters:[
+    {name:'I. Arrival', pages:[
+`I arrived at the station on the first ferry of autumn, when the water still held the color of old pewter. The keeper before me left a single note pinned to the door: "Trim the wick before dusk, and never trust a calm sea in October."\n\nThe tower itself was narrower than I expected, a stack of iron rungs winding up into a room of glass and brass. From the gallery I could see the whole curve of the bay, and beyond it, nothing but grey water reaching for the sky.`,
+`My first days were spent learning the rhythms of the light: wind the clockwork at sunset, check the lens for salt film, log the wind speed every four hours whether or not anyone would ever read the ledger. It was solitary work, but not lonely — the sea kept me company in a language I was slowly learning to understand.`,
+]},
+    {name:'II. The Storm', pages:[
+`By the second week, the barometer began its long fall. I watched the needle drop through the afternoon, and by nightfall the wind had found every loose shutter in the house. I climbed the tower with a lantern in one hand and rope in the other, half convinced the glass would not hold.\n\nIt held. The light turned steadily through the worst of it, sweeping the harbor every eight seconds like a slow heartbeat, and somewhere out past the point, a fishing boat found its way home by that heartbeat alone.`,
+`When the wind finally dropped near dawn, I sat on the gallery floor with my back against the warm brass housing and watched the clouds tear apart to show a strip of green sky. I understood then why the old keeper's note had no mention of fear — only instructions. There is no room for fear in this work, only attention.`,
+]},
+    {name:'III. Winter Light', pages:[
+`Winter brought short days and a stillness I had not expected. The bay froze at its edges, and gulls stood in silent rows along the rocks as though waiting for a verdict. I kept the log faithfully: wind, temperature, the hour the light was lit, the hour it was doused.\n\nSome nights I climbed the tower simply to watch the beam turn across the ice, a single word of light repeated into the dark until someone, somewhere, could steer by it.`,
+`I have come to think of the lighthouse not as a building but as a promise, renewed every evening at the same hour, asking nothing in return except that it be kept. That, I have decided, is the whole of the job — and perhaps the whole of most jobs worth doing.`,
+]},
+  ]
+};
+let bookState = {chapter:0, page:0, fontSize:14};
+function flatPages(){
+  const list = [];
+  BOOK.chapters.forEach((c,ci)=>c.pages.forEach((p,pi)=>list.push({ci,pi,text:p,chapterName:c.name})));
+  return list;
+}
+function currentFlatIndex(){
+  let idx=0;
+  for(let i=0;i<bookState.chapter;i++) idx += BOOK.chapters[i].pages.length;
+  return idx + bookState.page;
+}
+
+VIEWS.ebook = () => {
+  const flat = flatPages();
+  const idx = currentFlatIndex();
+  const cur = flat[idx];
+  return `
+  <div class="view">
+    <div class="app-header">
+      <div class="back-btn" onclick="goBack()">${ICONS.back}</div>
+      <div class="app-title">${BOOK.title}</div>
+    </div>
+    <div style="padding:6px 14px 0 14px;font-size:10px;color:var(--dim);display:flex;justify-content:space-between;">
+      <span>${cur.chapterName}</span>
+      <span onclick="openBookToc()" style="text-decoration:underline;cursor:pointer;">Contents</span>
+    </div>
+    <div class="book-page" id="bookPage" style="font-size:${bookState.fontSize}px;white-space:pre-line;">${cur.text}</div>
+    <div class="book-footer">
+      <div class="navbtn" onclick="bookPrev()">${ICONS.chevL}</div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+        <div>Page ${idx+1} / ${flat.length}</div>
+        <div class="fontctrl">
+          <div onclick="bookFont(-1)">A-</div>
+          <div onclick="bookFont(1)">A+</div>
+        </div>
+      </div>
+      <div class="navbtn" onclick="bookNext()">${ICONS.chevR}</div>
+    </div>
+  </div>`;
+};
+window.bookPrev = function(){
+  const flat = flatPages(); let idx = currentFlatIndex();
+  idx = Math.max(0, idx-1);
+  bookState.chapter = flat[idx].ci; bookState.page = flat[idx].pi;
+  render('ebook');
+};
+window.bookNext = function(){
+  const flat = flatPages(); let idx = currentFlatIndex();
+  idx = Math.min(flat.length-1, idx+1);
+  bookState.chapter = flat[idx].ci; bookState.page = flat[idx].pi;
+  render('ebook');
+};
+window.bookFont = function(d){ bookState.fontSize = Math.min(20,Math.max(11,bookState.fontSize+d)); render('ebook'); };
+window.openBookToc = function(){ navigate('ebooktoc'); };
+
+VIEWS.ebooktoc = () => `
+  <div class="view">
+    <div class="app-header">
+      <div class="back-btn" onclick="render('ebook')">${ICONS.back}</div>
+      <div class="app-title">Contents</div>
+    </div>
+    <div class="app-body">
+      <div class="book-toc">
+        ${BOOK.chapters.map((c,ci)=>`
+          <div class="toc-row" onclick="jumpChapter(${ci})">
+            <span>${c.name}</span><span class="pg">${c.pages.length} pg</span>
+          </div>`).join('')}
+      </div>
+    </div>
+  </div>`;
+window.jumpChapter = function(ci){ bookState.chapter=ci; bookState.page=0; render('ebook'); };
+
+/* ============================================================
+   PICTURES APP  (procedurally generated abstract art thumbnails)
+============================================================ */
+const PIC_SEEDS = [
+  {name:'Dune Light', palette:['#ff9d6c','#ff2e63','#3b1440']},
+  {name:'Cold Current', palette:['#20c4d8','#0b3d55','#eaffff']},
+  {name:'Meadow Fade', palette:['#a8e063','#43b581','#0e3b26']},
+  {name:'Violet Hour', palette:['#7b5cff','#c893fd','#180a3d']},
+  {name:'Amber Fields', palette:['#ffd93d','#f5a623','#4a2a06']},
+  {name:'Rose Static', palette:['#ff5d8f','#2b0410','#ffe0ea']},
+];
+function drawArt(canvas, seedIdx){
+  const seed = PIC_SEEDS[seedIdx];
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width = canvas.clientWidth * 2;
+  const h = canvas.height = canvas.clientHeight * 2;
+  const grad = ctx.createLinearGradient(0,0,w,h);
+  grad.addColorStop(0, seed.palette[0]);
+  grad.addColorStop(.5, seed.palette[1]);
+  grad.addColorStop(1, seed.palette[2]);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0,0,w,h);
+  let rand = mulberry32(seedIdx*97+13);
+  for(let i=0;i<7;i++){
+    ctx.beginPath();
+    const cx = rand()*w, cy = rand()*h, r = (rand()*.35+.1)*w;
+    ctx.fillStyle = seed.palette[i%3];
+    ctx.globalAlpha = .18;
+    ctx.arc(cx,cy,r,0,Math.PI*2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+
+VIEWS.pictures = () => `
+  <div class="view">
+    <div class="app-header">
+      <div class="back-btn" onclick="goBack()">${ICONS.back}</div>
+      <div class="app-title">Pictures (${PIC_SEEDS.length})</div>
+    </div>
+    <div class="app-body">
+      <div class="pic-grid">
+        ${PIC_SEEDS.map((p,i)=>`<div class="pic-thumb" onclick="openPic(${i})"><canvas id="thumb${i}"></canvas></div>`).join('')}
+      </div>
+    </div>
+  </div>`;
+INIT.pictures = () => { PIC_SEEDS.forEach((p,i)=>drawArt(document.getElementById('thumb'+i), i)); };
+
+let picViewerIndex = 0, picZoom = 1;
+window.openPic = function(i){
+  picViewerIndex = i; picZoom = 1;
+  const root = document.getElementById('appRoot');
+  const div = document.createElement('div');
+  div.innerHTML = viewerHtml();
+  root.appendChild(div.firstElementChild);
+  drawArt(document.getElementById('viewerCanvas'), picViewerIndex);
+};
+function viewerHtml(){
+  return `<div class="pic-viewer" id="picViewer">
+    <div class="top"><span onclick="closePic()" style="cursor:pointer;">✕ Close</span><span>${PIC_SEEDS[picViewerIndex].name}</span><span>${picViewerIndex+1}/${PIC_SEEDS.length}</span></div>
+    <div class="stage-area"><canvas id="viewerCanvas" width="260" height="260" style="width:220px;height:220px;transform:scale(${picZoom})"></canvas></div>
+    <div class="pic-nav">
+      <div class="ctrl-btn" onclick="picStep(-1)">${ICONS.prev}</div>
+      <div class="ctrl-btn" onclick="picZoomFn(-1)">−</div>
+      <div class="ctrl-btn" onclick="picZoomFn(1)">＋</div>
+      <div class="ctrl-btn" onclick="picStep(1)">${ICONS.next}</div>
+    </div>
+  </div>`;
+}
+window.closePic = function(){ const v=document.getElementById('picViewer'); if(v) v.remove(); };
+window.picStep = function(d){
+  picViewerIndex = (picViewerIndex+d+PIC_SEEDS.length)%PIC_SEEDS.length; picZoom=1;
+  closePic(); openPic(picViewerIndex);
+};
+window.picZoomFn = function(d){
+  picZoom = Math.min(2, Math.max(.6, picZoom + d*0.2));
+  const c = document.getElementById('viewerCanvas');
+  if(c) c.style.transform = `scale(${picZoom})`;
+};
+
+/* ============================================================
+   FOLDER APP
+============================================================ */
+const FS = {
+  name:'Internal Storage', type:'folder', children:[
+    {name:'Music', type:'folder', children:[
+      {name:'Morning Waltz.mp3', type:'audio', size:'3.4 MB'},
+      {name:'Night Drive.mp3', type:'audio', size:'4.1 MB'},
+      {name:'Sunny Days.mp3', type:'audio', size:'2.9 MB'},
+      {name:'Deep Focus.mp3', type:'audio', size:'5.0 MB'},
+    ]},
+    {name:'Pictures', type:'folder', children: PIC_SEEDS.map(p=>({name:p.name.replace(/ /g,'_')+'.jpg', type:'image', size:'1.2 MB'}))},
+    {name:'Recordings', type:'folder', children:[]},
+    {name:'Books', type:'folder', children:[
+      {name:"The Lighthouse Keeper's Log.txt", type:'text', size:'18 KB'},
+    ]},
+    {name:'readme.txt', type:'text', size:'1 KB'},
+  ]
+};
+let folderPath = [];
+function resolveFolder(path){
+  let node = FS;
+  for(const name of path) node = node.children.find(c=>c.name===name);
+  return node;
+}
+VIEWS.folder = () => {
+  const node = resolveFolder(folderPath);
+  const items = node.children || [];
+  return `
+  <div class="view">
+    <div class="app-header">
+      <div class="back-btn" onclick="folderBack()">${ICONS.back}</div>
+      <div class="app-title">Folder</div>
+    </div>
+    <div class="app-body">
+      <div class="path-bar">
+        <span onclick="folderJump(-1)">Storage</span>
+        ${folderPath.map((p,i)=>`<span> / </span><span onclick="folderJump(${i})">${p}</span>`).join('')}
+      </div>
+      ${items.length===0 ? `<div style="color:var(--dim);font-size:12px;padding:20px 4px;text-align:center;">This folder is empty.</div>` :
+        items.map(item=>`
+        <div class="file-row" onclick="folderOpen('${item.name.replace(/'/g,"\\'")}')">
+          <div class="ficon">${item.type==='folder'?ICONS.folder:item.type==='audio'?ICONS.fileAudio:item.type==='image'?ICONS.fileImg:ICONS.fileTxt}</div>
+          <div class="fmeta"><div class="fname">${item.name}</div><div class="fsub">${item.type==='folder'?(item.children.length+' items'):item.size}</div></div>
+        </div>`).join('')}
+    </div>
+  </div>`;
+};
+window.folderBack = function(){
+  if(folderPath.length===0){ goBack(); return; }
+  folderPath.pop(); render('folder');
+};
+window.folderJump = function(i){ folderPath = i<0 ? [] : folderPath.slice(0,i+1); render('folder'); };
+window.folderOpen = function(name){
+  const node = resolveFolder(folderPath);
+  const item = node.children.find(c=>c.name===name);
+  if(item.type==='folder'){ folderPath.push(name); render('folder'); return; }
+  if(item.type==='audio'){
+    const trackIdx = TRACKS.findIndex(t=>item.name.startsWith(t.title));
+    if(trackIdx>=0){ showToast('Opening in Music…'); setTimeout(()=>{ navigate('music'); playTrack(trackIdx,0); },350); }
+    else showToast('Cannot open '+item.name);
+    return;
+  }
+  if(item.type==='image'){ showToast('Opening in Pictures…'); setTimeout(()=>navigate('pictures'),350); return; }
+  if(item.type==='text'){ navigate('textpreview',{name:item.name}); return; }
+};
+VIEWS.textpreview = (opts) => {
+  const isReadme = opts && opts.name === 'readme.txt';
+  const content = isReadme
+    ? `M300 Music Player\n------------------\nThank you for exploring this device.\n\nQuick tips:\n- Swipe the home screen to see more apps.\n- Use the side buttons to adjust volume or lock the screen.\n- Recordings you make are saved under Recordings.\n\nEnjoy!`
+    : `${BOOK.title}\n\nOpen this file from the E book app to read it with page turning and adjustable text size.`;
+  return `
+  <div class="view">
+    <div class="app-header">
+      <div class="back-btn" onclick="render('folder')">${ICONS.back}</div>
+      <div class="app-title">${opts.name}</div>
+    </div>
+    <div class="book-page" style="white-space:pre-line;">${content}</div>
+  </div>`;
+};
+
+/* ============================================================
+   RECORD APP
+============================================================ */
+let mediaRecorder=null, mediaChunks=[], recStream=null, recStartTime=0, recTimerInt=null;
+let recordings = []; // {name, url, duration}
+let recAnalyser=null, recDataArr=null, recAnimId=null;
+
+VIEWS.record = () => `
+  <div class="view">
+    <div class="app-header">
+      <div class="back-btn" onclick="goBack()">${ICONS.back}</div>
+      <div class="app-title">Voice Recorder</div>
+    </div>
+    <div class="app-body" style="display:flex;flex-direction:column;">
+      <div class="rec-main">
+        <div class="rec-timer" id="recTimer">00:00</div>
+        <div class="rec-wave" id="recWave">${Array.from({length:18}).map(()=>'<span></span>').join('')}</div>
+        <div class="rec-button" id="recBtn" onclick="toggleRecord()"><div class="inner"></div></div>
+        <div class="rec-hint" id="recHint">Tap to start recording</div>
+      </div>
+      <div class="rec-list" id="recList">
+        ${recordings.length===0 ? `<div style="color:var(--dim);font-size:11px;text-align:center;padding:10px 0;">No recordings yet</div>` :
+        recordings.map((r,i)=>`
+          <div class="rec-item">
+            <div class="mini-btn" onclick="playRecording(${i})">${ICONS.play.replace(/fill="#e9e9ee"/,'fill="#e9e9ee"')}</div>
+            <div class="meta"><div>${r.name}</div><div class="sub">${r.duration}</div></div>
+            <div class="mini-btn" onclick="deleteRecording(${i})">${ICONS.trash}</div>
+          </div>`).join('')}
+      </div>
+    </div>
+  </div>`;
+
+window.toggleRecord = async function(){
+  const btn = document.getElementById('recBtn');
+  const hint = document.getElementById('recHint');
+  if(mediaRecorder && mediaRecorder.state === 'recording'){
+    mediaRecorder.stop();
+    return;
+  }
+  try{
+    recStream = await navigator.mediaDevices.getUserMedia({audio:true});
+  }catch(err){
+    showToast('Microphone access denied');
+    return;
+  }
+  mediaChunks = [];
+  mediaRecorder = new MediaRecorder(recStream);
+  mediaRecorder.ondataavailable = e => mediaChunks.push(e.data);
+  mediaRecorder.onstop = () => {
+    const blob = new Blob(mediaChunks, {type:'audio/webm'});
+    const url = URL.createObjectURL(blob);
+    const dur = fmtTime((Date.now()-recStartTime)/1000);
+    recordings.unshift({name:`Recording ${recordings.length+1}`, url, duration:dur});
+    recStream.getTracks().forEach(t=>t.stop());
+    clearInterval(recTimerInt);
+    cancelAnimationFrame(recAnimId);
+    btn.classList.remove('recording');
+    hint.textContent = 'Tap to start recording';
+    document.getElementById('recTimer').textContent = '00:00';
+    render('record');
+  };
+  mediaRecorder.start();
+  recStartTime = Date.now();
+  btn.classList.add('recording');
+  hint.textContent = 'Recording… tap to stop';
+  recTimerInt = setInterval(()=>{
+    document.getElementById('recTimer').textContent = fmtTime((Date.now()-recStartTime)/1000);
+  },200);
+  setupWave();
+};
+function setupWave(){
+  const ctx = getCtx();
+  const src = ctx.createMediaStreamSource(recStream);
+  recAnalyser = ctx.createAnalyser();
+  recAnalyser.fftSize = 64;
+  src.connect(recAnalyser);
+  recDataArr = new Uint8Array(recAnalyser.frequencyBinCount);
+  const bars = document.querySelectorAll('#recWave span');
+  function loop(){
+    recAnalyser.getByteFrequencyData(recDataArr);
+    bars.forEach((b,i)=>{
+      const v = recDataArr[i % recDataArr.length] || 0;
+      b.style.height = Math.max(4, (v/255)*38)+'px';
+    });
+    recAnimId = requestAnimationFrame(loop);
+  }
+  loop();
+}
+window.playRecording = function(i){
+  document.querySelectorAll('audio[data-rec-playing]').forEach(a=>a.pause());
+  const rec = recordings[i];
+  const audio = new Audio(rec.url);
+  audio.volume = state.masterVolume;
+  audio.setAttribute('data-rec-playing','1');
+  audio.play();
+  showToast('Playing '+rec.name);
+};
+window.deleteRecording = function(i){ recordings.splice(i,1); render('record'); };
+
+/* ============================================================
+   FM RADIO APP
+============================================================ */
+const FM_PRESETS = [
+  {freq:88.5, name:'Chill Wave'},
+  {freq:94.1, name:'Talk Now'},
+  {freq:99.7, name:'Golden Hits'},
+  {freq:104.3, name:'Deep Bass'},
+];
+let fmState = {freq:99.7, on:false, scanning:false};
+let fmNoise=null, fmNoiseGain=null, fmToneGain=null, fmToneOsc=null, fmToneInterval=null;
+
+function makeNoiseBuffer(ctx){
+  const buf = ctx.createBuffer(1, ctx.sampleRate*2, ctx.sampleRate);
+  const d = buf.getChannelData(0);
+  for(let i=0;i<d.length;i++) d[i] = (Math.random()*2-1)*0.5;
+  return buf;
+}
+function nearestPreset(freq){
+  let best=null, bd=999;
+  FM_PRESETS.forEach(p=>{ const d=Math.abs(p.freq-freq); if(d<bd){bd=d;best=p;} });
+  return {preset:best, dist:bd};
+}
+function startFM(){
+  const ctx = getCtx();
+  if(ctx.state==='suspended') ctx.resume();
+  stopMusicNodes(); musicState.playing=false;
+  const gain = getMasterGain();
+  fmNoise = ctx.createBufferSource();
+  fmNoise.buffer = makeNoiseBuffer(ctx);
+  fmNoise.loop = true;
+  fmNoiseGain = ctx.createGain();
+  fmNoiseGain.gain.value = 0.15;
+  fmNoise.connect(fmNoiseGain); fmNoiseGain.connect(gain);
+  fmNoise.start();
+  fmToneGain = ctx.createGain();
+  fmToneGain.gain.value = 0;
+  fmToneGain.connect(gain);
+  fmState.on = true;
+  updateFMSignal();
+  fmToneInterval = setInterval(()=>{
+    if(!fmState.on) return;
+    const {dist} = nearestPreset(fmState.freq);
+    if(dist < 0.15){
+      const osc = ctx.createOscillator();
+      osc.type='sine';
+      const base = 260 + (fmState.freq%10)*20;
+      osc.frequency.value = base + [0,4,7,12][Math.floor(Math.random()*4)]*3;
+      const env = ctx.createGain();
+      env.gain.setValueAtTime(0, ctx.currentTime);
+      env.gain.linearRampToValueAtTime(.25, ctx.currentTime+0.05);
+      env.gain.linearRampToValueAtTime(0, ctx.currentTime+0.5);
+      osc.connect(env); env.connect(fmToneGain);
+      osc.start(); osc.stop(ctx.currentTime+0.55);
+    }
+  }, 550);
+}
+function stopFM(){
+  if(!fmState.on) return;
+  fmState.on = false;
+  try{ fmNoise && fmNoise.stop(); }catch(e){}
+  clearInterval(fmToneInterval);
+}
+function updateFMSignal(){
+  const {dist} = nearestPreset(fmState.freq);
+  if(fmNoiseGain) fmNoiseGain.gain.value = Math.min(0.16, 0.02 + dist*0.35);
+  if(fmToneGain) fmToneGain.gain.value = dist<0.15 ? 0.9 : 0.15;
+}
+function toggleFMPower(){
+  if(fmState.on){ stopFM(); } else { startFM(); }
+  render('fm');
+}
+function setFreq(f){
+  fmState.freq = Math.min(108.0, Math.max(87.5, Math.round(f*10)/10));
+  updateFMSignal();
+  render('fm');
+}
+function fmStep(d){ setFreq(fmState.freq + d); }
+function fmScan(){
+  if(fmState.scanning || !fmState.on) return;
+  fmState.scanning = true;
+  let f = fmState.freq;
+  const iv = setInterval(()=>{
+    f += 0.3; if(f>108.0) f=87.5;
+    fmState.freq = Math.round(f*10)/10;
+    updateFMSignal();
+    const bar = document.getElementById('fmFreqEl');
+    if(bar) bar.textContent = fmState.freq.toFixed(1);
+    const needle = document.getElementById('fmNeedle');
+    if(needle) needle.style.left = freqToPct(fmState.freq)+'%';
+    const {dist} = nearestPreset(fmState.freq);
+    if(dist < 0.1){
+      clearInterval(iv); fmState.scanning=false; render('fm'); showToast('Station found');
+    }
+  }, 70);
+}
+function freqToPct(f){ return ((f-87.5)/(108.0-87.5))*100; }
+
+VIEWS.fm = () => {
+  const {preset,dist} = nearestPreset(fmState.freq);
+  const stationName = dist<0.15 ? preset.name : '';
+  return `
+  <div class="view">
+    <div class="app-header">
+      <div class="back-btn" onclick="stopFMandBack()">${ICONS.back}</div>
+      <div class="app-title">FM Radio</div>
+    </div>
+    <div class="app-body">
+      <div class="fm-display">
+        <div class="fm-freq" id="fmFreqWrap"><span id="fmFreqEl">${fmState.freq.toFixed(1)}</span><span>MHz</span></div>
+        <div class="fm-station">${stationName}</div>
+      </div>
+      <div class="fm-dial">
+        <div class="fm-ticks">${Array.from({length:22}).map((_,i)=>`<div class="${i%3===0?'major':''}"></div>`).join('')}</div>
+        <div class="fm-needle" id="fmNeedle" style="left:${freqToPct(fmState.freq)}%"></div>
+      </div>
+      <div class="fm-seekrow">
+        <div class="ctrl-btn" onclick="fmStep(-0.1)">${ICONS.chevL}</div>
+        <div class="power-pill" onclick="fmScan()" style="cursor:pointer;">Scan</div>
+        <div class="ctrl-btn" onclick="fmStep(0.1)">${ICONS.chevR}</div>
+      </div>
+      <div class="fm-presets">
+        ${FM_PRESETS.map(p=>`
+          <div class="preset ${Math.abs(p.freq-fmState.freq)<0.05?'active':''}" onclick="setFreq(${p.freq})">
+            <div class="pf">${p.freq.toFixed(1)}</div>
+            <div class="pn">${p.name}</div>
+          </div>`).join('')}
+      </div>
+      <div class="fm-power">
+        <div class="power-pill ${fmState.on?'on':''}" onclick="toggleFMPower()">
+          <div class="dotpulse"></div> ${fmState.on?'ON AIR':'Turn On'}
+        </div>
+      </div>
+      <div class="vol-row">
+        ${ICONS.volLoud}
+        <input type="range" min="0" max="1" step="0.01" value="${state.masterVolume}" oninput="setVolume(this.value)">
+      </div>
+    </div>
+  </div>`;
+};
+window.stopFMandBack = function(){ stopFM(); goBack(); };
+window.toggleFMPower = toggleFMPower;
+window.setFreq = setFreq;
+window.fmStep = fmStep;
+window.fmScan = fmScan;
+
+/* ============================================================
+   SETTINGS / ALARM / CALCULATOR / ABOUT
+============================================================ */
+let settingsState = {wifi:false, bt:false, autolock:true, shuffle:false};
+VIEWS.settings = () => `
+  <div class="view">
+    <div class="app-header">
+      <div class="back-btn" onclick="goBack()">${ICONS.back}</div>
+      <div class="app-title">Settings</div>
+    </div>
+    <div class="app-body">
+      <div class="setting-row"><div><div class="label">Wi-Fi</div><div class="sub">For firmware updates</div></div><div class="switch ${settingsState.wifi?'on':''}" onclick="toggleSetting('wifi')"><div class="knob"></div></div></div>
+      <div class="setting-row"><div><div class="label">Bluetooth</div><div class="sub">Connect headphones</div></div><div class="switch ${settingsState.bt?'on':''}" onclick="toggleSetting('bt')"><div class="knob"></div></div></div>
+      <div class="setting-row"><div><div class="label">Shuffle playback</div><div class="sub">Randomize the music queue</div></div><div class="switch ${settingsState.shuffle?'on':''}" onclick="toggleSetting('shuffle')"><div class="knob"></div></div></div>
+      <div class="setting-row"><div><div class="label">Auto-lock</div><div class="sub">Lock screen when idle</div></div><div class="switch ${settingsState.autolock?'on':''}" onclick="toggleSetting('autolock')"><div class="knob"></div></div></div>
+      <div class="setting-row"><div><div class="label">Master volume</div></div><div style="width:110px;"><input type="range" min="0" max="1" step="0.01" value="${state.masterVolume}" oninput="setVolume(this.value)"></div></div>
+      <div class="setting-row" onclick="navigate('about')" style="cursor:pointer;"><div><div class="label">About this device</div></div><div>${ICONS.chevR}</div></div>
+    </div>
+  </div>`;
+window.toggleSetting = function(k){ settingsState[k] = !settingsState[k]; render('settings'); };
+
+VIEWS.about = () => `
+  <div class="view">
+    <div class="app-header">
+      <div class="back-btn" onclick="goBack()">${ICONS.back}</div>
+      <div class="app-title">About</div>
+    </div>
+    <div class="app-body">
+      <div class="about-logo"><div class="badge">🎧</div><div style="font-weight:600;">M300 Music Player</div><div style="font-size:11px;color:var(--dim);">Simulated Device</div></div>
+      <div class="about-row"><span class="k">Firmware</span><span>2.4.1</span></div>
+      <div class="about-row"><span class="k">Storage</span><span>32 GB (18.6 GB free)</span></div>
+      <div class="about-row"><span class="k">Battery health</span><span>Good</span></div>
+      <div class="about-row"><span class="k">Serial</span><span>M3-SIM-0007</span></div>
+      <div class="about-row"><span class="k">Build</span><span>Single-file HTML demo</span></div>
+    </div>
+  </div>`;
+
+let alarms = [{time:'07:00', label:'Wake up', on:true}, {time:'13:30', label:'Lunch break', on:false}];
+VIEWS.alarm = () => `
+  <div class="view">
+    <div class="app-header">
+      <div class="back-btn" onclick="goBack()">${ICONS.back}</div>
+      <div class="app-title">Alarms</div>
+    </div>
+    <div class="app-body">
+      ${alarms.map((a,i)=>`
+        <div class="alarm-card">
+          <div><div class="alarm-time">${a.time}</div><div class="alarm-sub">${a.label}</div></div>
+          <div class="switch ${a.on?'on':''}" onclick="toggleAlarm(${i})"><div class="knob"></div></div>
+        </div>`).join('')}
+      <div class="add-alarm" onclick="addAlarm()">+ Add alarm</div>
+    </div>
+  </div>`;
+window.toggleAlarm = function(i){ alarms[i].on=!alarms[i].on; render('alarm'); };
+window.addAlarm = function(){
+  const d = new Date(); d.setMinutes(d.getMinutes()+1);
+  const t = String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+  alarms.push({time:t, label:'New alarm', on:true}); render('alarm');
+};
+
+let calc = {display:'0', prev:null, op:null, resetNext:false};
+VIEWS.calc = () => `
+  <div class="view">
+    <div class="app-header">
+      <div class="back-btn" onclick="goBack()">${ICONS.back}</div>
+      <div class="app-title">Calculator</div>
+    </div>
+    <div class="app-body">
+      <div class="calc-display">${calc.display}</div>
+      <div class="calc-grid">
+        <div class="calc-btn op" onclick="calcClear()">AC</div>
+        <div class="calc-btn op" onclick="calcSign()">±</div>
+        <div class="calc-btn op" onclick="calcPercent()">%</div>
+        <div class="calc-btn op" onclick="calcOp('÷')">÷</div>
+        <div class="calc-btn" onclick="calcNum('7')">7</div>
+        <div class="calc-btn" onclick="calcNum('8')">8</div>
+        <div class="calc-btn" onclick="calcNum('9')">9</div>
+        <div class="calc-btn op" onclick="calcOp('×')">×</div>
+        <div class="calc-btn" onclick="calcNum('4')">4</div>
+        <div class="calc-btn" onclick="calcNum('5')">5</div>
+        <div class="calc-btn" onclick="calcNum('6')">6</div>
+        <div class="calc-btn op" onclick="calcOp('−')">−</div>
+        <div class="calc-btn" onclick="calcNum('1')">1</div>
+        <div class="calc-btn" onclick="calcNum('2')">2</div>
+        <div class="calc-btn" onclick="calcNum('3')">3</div>
+        <div class="calc-btn op" onclick="calcOp('+')">+</div>
+        <div class="calc-btn zero" onclick="calcNum('0')">0</div>
+        <div class="calc-btn" onclick="calcDot()">.</div>
+        <div class="calc-btn eq" onclick="calcEq()">=</div>
+      </div>
+    </div>
+  </div>`;
+window.calcNum = function(n){
+  if(calc.resetNext){ calc.display='0'; calc.resetNext=false; }
+  calc.display = calc.display==='0' ? n : calc.display+n;
+  render('calc');
+};
+window.calcDot = function(){ if(!calc.display.includes('.')) calc.display+='.'; render('calc'); };
+window.calcSign = function(){ calc.display = (parseFloat(calc.display)*-1).toString(); render('calc'); };
+window.calcPercent = function(){ calc.display = (parseFloat(calc.display)/100).toString(); render('calc'); };
+window.calcClear = function(){ calc = {display:'0', prev:null, op:null, resetNext:false}; render('calc'); };
+window.calcOp = function(op){
+  calc.prev = parseFloat(calc.display); calc.op = op; calc.resetNext = true; render('calc');
+};
+window.calcEq = function(){
+  if(calc.op===null) return;
+  const cur = parseFloat(calc.display);
+  let res = cur;
+  switch(calc.op){
+    case '+': res = calc.prev+cur; break;
+    case '−': res = calc.prev-cur; break;
+    case '×': res = calc.prev*cur; break;
+    case '÷': res = cur===0 ? 0 : calc.prev/cur; break;
+  }
+  calc.display = (Math.round(res*10000)/10000).toString();
+  calc.op = null; calc.prev = null; calc.resetNext = true;
+  render('calc');
+};
+
+/* ============================================================
+   LOCK SCREEN + SIDE BUTTONS
+============================================================ */
+function showLock(){
+  state.locked = true;
+  const root = document.getElementById('screen');
+  const d = new Date();
+  const overlay = document.createElement('div');
+  overlay.className = 'lock-screen';
+  overlay.id = 'lockOverlay';
+  overlay.innerHTML = `
+    <div class="lock-time" id="lockTime">${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}</div>
+    <div class="lock-date" id="lockDate">${d.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'})}</div>
+    <div class="lock-hint">👆 tap to unlock</div>`;
+  overlay.onclick = hideLock;
+  root.appendChild(overlay);
+}
+function hideLock(){
+  state.locked = false;
+  const o = document.getElementById('lockOverlay');
+  if(o) o.remove();
+}
+document.getElementById('btnPower').addEventListener('click', ()=>{
+  if(state.locked) hideLock(); else showLock();
+});
+let osdTimeout=null;
+function showOSD(){
+  const osd = document.getElementById('osd');
+  document.getElementById('osdFill').style.width = (state.masterVolume*100)+'%';
+  osd.classList.add('show');
+  clearTimeout(osdTimeout);
+  osdTimeout = setTimeout(()=>osd.classList.remove('show'), 1100);
+}
+document.getElementById('btnVolUp').addEventListener('click', ()=>{
+  state.masterVolume = Math.min(1, Math.round((state.masterVolume+0.1)*10)/10);
+  applyVolume(); showOSD();
+  const slider = document.querySelector('input[type=range]');
+  if(slider) slider.value = state.masterVolume;
+});
+document.getElementById('btnVolDown').addEventListener('click', ()=>{
+  state.masterVolume = Math.max(0, Math.round((state.masterVolume-0.1)*10)/10);
+  applyVolume(); showOSD();
+  const slider = document.querySelector('input[type=range]');
+  if(slider) slider.value = state.masterVolume;
+});
+
+/* ============================================================
+   BOOTSTRAP
+============================================================ */
+VIEWS.home = VIEWS_HOME;
+render('home');
+</script>
+</body>
+</html>

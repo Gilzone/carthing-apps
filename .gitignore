@@ -1,0 +1,5 @@
+﻿__pycache__/
+kiosk-env/
+*.zip
+*.exe
+.DS_Store

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=800, height=480, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Clock</title>
+  <link rel="stylesheet" href="tools.css">
+  <style>
+    .tabs { display: flex; gap: 8px; }
+    .big { font: 700 92px/1 system-ui; letter-spacing: .04em; text-align: center; margin: 24px 0 18px; }
+    .sub { text-align: center; color: #9ca3af; font-size: 18px; margin-bottom: 18px; }
+    .row { display: flex; justify-content: center; gap: 12px; }
+    .btn { min-width: 120px; height: 56px; }
+  </style>
+</head>
+<body>
+  <div class="top">
+    <button class="chip" id="home" type="button">HOME</button>
+    <div class="title">Clock</div>
+    <div class="grow"></div>
+    <div class="tabs">
+      <button class="chip" data-tab="clock" type="button">TIME</button>
+      <button class="chip off" data-tab="watch" type="button">WATCH</button>
+      <button class="chip off" data-tab="timer" type="button">TIMER</button>
+    </div>
+  </div>
+  <div class="stage">
+    <div class="big" id="big">00:00:00</div>
+    <div class="sub" id="sub">Local time</div>
+    <div class="row" id="row"></div>
+  </div>
+  <script>
+    var HOME = "file:///opt/nocturne/webapps/player/index.html#tools";
+    document.getElementById("home").onclick = function () { location.href = HOME; };
+    var tab = "clock", watch = 0, running = false, t0 = 0, acc = 0, timerLeft = 5 * 60 * 1000, timerRun = false, timerEnd = 0;
+    var big = document.getElementById("big");
+    var sub = document.getElementById("sub");
+    var row = document.getElementById("row");
+    function pad(n) { return String(n).padStart(2, "0"); }
+    function fmt(ms) {
+      ms = Math.max(0, ms | 0);
+      var s = Math.floor(ms / 1000);
+      return pad(Math.floor(s / 3600)) + ":" + pad(Math.floor(s / 60) % 60) + ":" + pad(s % 60);
+    }
+    function setTab(name) {
+      tab = name;
+      [].forEach.call(document.querySelectorAll("[data-tab]"), function (el) {
+        el.classList.toggle("off", el.getAttribute("data-tab") !== name);
+      });
+      row.innerHTML = "";
+      if (name === "watch") {
+        addBtn("START", function () { if (!running) { running = true; t0 = Date.now(); } });
+        addBtn("STOP", function () { if (running) { acc += Date.now() - t0; running = false; } });
+        addBtn("RESET", function () { running = false; acc = 0; t0 = 0; });
+      }
+      if (name === "timer") {
+        addBtn("-1m", function () { timerLeft = Math.max(0, timerLeft - 60000); timerRun = false; });
+        addBtn("+1m", function () { timerLeft += 60000; timerRun = false; });
+        addBtn("+5m", function () { timerLeft += 300000; timerRun = false; });
+        addBtn("START", function () { if (timerLeft > 0) { timerRun = true; timerEnd = Date.now() + timerLeft; } });
+        addBtn("RESET", function () { timerRun = false; timerLeft = 5 * 60000; });
+      }
+    }
+    function addBtn(label, fn) {
+      var b = document.createElement("button");
+      b.className = "btn"; b.textContent = label; b.onclick = fn; row.appendChild(b);
+    }
+    [].forEach.call(document.querySelectorAll("[data-tab]"), function (el) {
+      el.onclick = function () { setTab(el.getAttribute("data-tab")); };
+    });
+    setInterval(function () {
+      if (tab === "clock") {
+        var d = new Date();
+        big.textContent = pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
+        sub.textContent = d.toDateString();
+      } else if (tab === "watch") {
+        var ms = acc + (running ? Date.now() - t0 : 0);
+        big.textContent = fmt(ms);
+        sub.textContent = running ? "Running" : "Stopped";
+      } else {
+        var left = timerRun ? timerEnd - Date.now() : timerLeft;
+        if (timerRun) {
+          timerLeft = Math.max(0, left);
+          if (left <= 0) { timerRun = false; sub.textContent = "Done"; }
+        }
+        big.textContent = fmt(timerLeft);
+        if (!timerRun && timerLeft > 0) sub.textContent = "Timer";
+      }
+    }, 200);
+    setTab("clock");
+  </script>
+</body>
+</html>

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=800, height=480, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Notes</title>
+  <link rel="stylesheet" href="tools.css">
+  <style>
+    .stage { display: flex; flex-direction: column; gap: 8px; padding-bottom: 8px; }
+    .row { display: flex; gap: 8px; height: 220px; }
+    .lib { width: 180px; overflow: auto; display: flex; flex-direction: column; gap: 6px; }
+    .item { text-align: left; padding: 8px 10px; border-radius: 10px; border: 2px solid rgba(255,255,255,.1); background: #14161c; color: #e5e7eb; font: 700 13px system-ui; }
+    .item.on { border-color: #60a5fa; }
+    textarea {
+      flex: 1; resize: none; background: #101217; color: #f3f4f6; border: 2px solid #1f2937;
+      border-radius: 12px; padding: 10px; font: 16px/1.4 system-ui;
+    }
+    .kb { display: flex; flex-direction: column; gap: 4px; }
+    .kb .r { display: flex; justify-content: center; gap: 4px; }
+    .k {
+      min-width: 42px; height: 36px; border-radius: 8px; border: 0; background: #1f2937; color: #fff; font: 700 14px system-ui;
+    }
+    .k.wide { min-width: 72px; }
+    .k.space { min-width: 220px; }
+  </style>
+</head>
+<body>
+  <div class="top">
+    <button class="chip" id="home" type="button">HOME</button>
+    <div class="title">Notes</div>
+    <div class="grow"></div>
+    <button class="chip" id="newn" type="button">NEW</button>
+    <button class="chip" id="save" type="button">SAVE</button>
+    <button class="chip danger" id="del" type="button">DEL</button>
+  </div>
+  <div class="stage">
+    <div class="row">
+      <div class="lib" id="lib"></div>
+      <textarea id="ed" placeholder="Type with the keyboard below…"></textarea>
+    </div>
+    <div class="kb" id="kb"></div>
+  </div>
+  <script>
+    var HOME = "file:///opt/nocturne/webapps/player/index.html#tools";
+    document.getElementById("home").onclick = function () { location.href = HOME; };
+    var notes = [], cur = -1;
+    var ed = document.getElementById("ed");
+    function openDb() {
+      return new Promise(function (resolve, reject) {
+        var r = indexedDB.open("ct-tools", 1);
+        r.onupgradeneeded = function () {
+          var db = r.result;
+          if (!db.objectStoreNames.contains("recordings")) db.createObjectStore("recordings", { keyPath: "id" });
+          if (!db.objectStoreNames.contains("notes")) db.createObjectStore("notes", { keyPath: "id" });
+          if (!db.objectStoreNames.contains("books")) db.createObjectStore("books", { keyPath: "id" });
+        };
+        r.onsuccess = function () { resolve(r.result); };
+        r.onerror = function () { reject(r.error); };
+      });
+    }
+    function loadNotes() {
+      return openDb().then(function (db) {
+        return new Promise(function (resolve) {
+          var out = [];
+          db.transaction("notes").objectStore("notes").openCursor(null, "prev").onsuccess = function (e) {
+            var c = e.target.result;
+            if (c) { out.push(c.value); c.continue(); }
+            else resolve(out);
+          };
+        });
+      }).catch(function () { return []; });
+    }
+    function putNote(n) {
+      return openDb().then(function (db) {
+        return new Promise(function (resolve) {
+          db.transaction("notes", "readwrite").objectStore("notes").put(n).onsuccess = function () { resolve(); };
+        });
+      });
+    }
+    function delNote(id) {
+      return openDb().then(function (db) {
+        return new Promise(function (resolve) {
+          db.transaction("notes", "readwrite").objectStore("notes").delete(id).onsuccess = function () { resolve(); };
+        });
+      });
+    }
+    function titleOf(t) { return (t.split("\n")[0] || "Note").slice(0, 28); }
+    function renderLib() {
+      var lib = document.getElementById("lib");
+      lib.innerHTML = "";
+      notes.forEach(function (n, i) {
+        var el = document.createElement("button");
+        el.className = "item" + (i === cur ? " on" : "");
+        el.textContent = titleOf(n.body);
+        el.onclick = function () { cur = i; ed.value = n.body; renderLib(); };
+        lib.appendChild(el);
+      });
+    }
+    document.getElementById("newn").onclick = function () {
+      cur = -1; ed.value = "";
+      renderLib();
+    };
+    document.getElementById("save").onclick = async function () {
+      var body = ed.value;
+      if (cur >= 0) { notes[cur].body = body; notes[cur].updated = Date.now(); await putNote(notes[cur]); }
+      else {
+        var n = { id: Date.now(), body: body, updated: Date.now() };
+        notes.unshift(n); cur = 0; await putNote(n);
+      }
+      renderLib();
+    };
+    document.getElementById("del").onclick = async function () {
+      if (cur < 0) { ed.value = ""; return; }
+      await delNote(notes[cur].id);
+      notes.splice(cur, 1); cur = notes.length ? 0 : -1;
+      ed.value = cur >= 0 ? notes[cur].body : "";
+      renderLib();
+    };
+
+    var rows = ["qwertyuiop", "asdfghjkl", "zxcvbnm"];
+    var kb = document.getElementById("kb");
+    rows.forEach(function (row, ri) {
+      var r = document.createElement("div");
+      r.className = "r";
+      if (ri === 2) {
+        var sh = document.createElement("button");
+        sh.className = "k wide"; sh.textContent = "SHIFT";
+        sh.onclick = function () { kb.classList.toggle("up"); };
+        r.appendChild(sh);
+      }
+      row.split("").forEach(function (ch) {
+        var k = document.createElement("button");
+        k.className = "k"; k.textContent = ch;
+        k.onclick = function () {
+          var c = kb.classList.contains("up") ? ch.toUpperCase() : ch;
+          var s = ed.selectionStart || ed.value.length;
+          ed.value = ed.value.slice(0, s) + c + ed.value.slice(ed.selectionEnd || s);
+          ed.selectionStart = ed.selectionEnd = s + 1;
+        };
+        r.appendChild(k);
+      });
+      if (ri === 2) {
+        var bs = document.createElement("button");
+        bs.className = "k wide"; bs.textContent = "DEL";
+        bs.onclick = function () {
+          var s = ed.selectionStart || ed.value.length;
+          if (s !== (ed.selectionEnd || s)) {
+            ed.value = ed.value.slice(0, s) + ed.value.slice(ed.selectionEnd);
+          } else if (s > 0) {
+            ed.value = ed.value.slice(0, s - 1) + ed.value.slice(s);
+            s -= 1;
+          }
+          ed.selectionStart = ed.selectionEnd = s;
+        };
+        r.appendChild(bs);
+      }
+      kb.appendChild(r);
+    });
+    var r4 = document.createElement("div");
+    r4.className = "r";
+    [[".", "k"], [",", "k"], [" ", "k space"], ["'", "k"], ["enter", "k wide"]].forEach(function (pair) {
+      var k = document.createElement("button");
+      k.className = pair[1]; k.textContent = pair[0] === " " ? "SPACE" : pair[0].toUpperCase();
+      k.onclick = function () {
+        var ins = pair[0] === "enter" ? "\n" : pair[0];
+        var s = ed.selectionStart || ed.value.length;
+        ed.value = ed.value.slice(0, s) + ins + ed.value.slice(ed.selectionEnd || s);
+        ed.selectionStart = ed.selectionEnd = s + ins.length;
+      };
+      r4.appendChild(k);
+    });
+    kb.appendChild(r4);
+
+    loadNotes().then(function (rows) {
+      notes = rows;
+      if (notes.length) { cur = 0; ed.value = notes[0].body; }
+      renderLib();
+    });
+  </script>
+</body>
+</html>

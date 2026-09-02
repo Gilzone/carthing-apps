@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=800, height=480, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Add HTML</title>
+  <link rel="stylesheet" href="../tools/tools.css">
+  <style>
+    .stage { display: flex; gap: 14px; }
+    .col { flex: 1; overflow: auto; display: flex; flex-direction: column; gap: 8px; }
+    .row {
+      display: flex; align-items: center; gap: 10px;
+      background: #14161c; border: 2px solid rgba(255,255,255,.08);
+      border-radius: 14px; padding: 10px 12px;
+    }
+    .sw { width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font: 700 12px system-ui; color: #0b0c0f; }
+    .btn { height: 40px; padding: 0 12px; font-size: 14px; }
+    .drop {
+      border: 2px dashed #34d399; border-radius: 16px; padding: 18px;
+      text-align: center; color: #6ee7b7; font: 700 16px system-ui;
+    }
+    input[type=file] { display: none; }
+    h3 { margin: 0 0 8px; font-size: 15px; letter-spacing: .08em; color: #9ca3af; }
+  </style>
+</head>
+<body>
+  <div class="top">
+    <button class="chip" id="home" type="button">HOME</button>
+    <div class="title">Add HTML</div>
+    <div class="grow"></div>
+    <label class="chip">IMPORT FILE<input id="file" type="file" accept=".html,.htm,text/html"></label>
+  </div>
+  <div class="stage">
+    <div class="col">
+      <h3>ON THIS DEVICE</h3>
+      <label class="drop">TAP TO IMPORT A .HTML PAGE
+        <input id="file2" type="file" accept=".html,.htm,text/html">
+      </label>
+      <div class="muted" id="msg">Self-contained HTML works best. Saved in the Apps tab.</div>
+      <div id="user"></div>
+    </div>
+    <div class="col">
+      <h3>FROM YOUR PC</h3>
+      <div class="muted">On the computer, drop a file into the Apps tab with:</div>
+      <div class="row" style="display:block;font:14px/1.45 ui-monospace,monospace;color:#d1d5db">
+        python add_project.py path\to\app.html --deploy
+      </div>
+      <div id="disk"></div>
+    </div>
+  </div>
+  <script src="catalog.js"></script>
+  <script>
+    var HOME = "file:///opt/nocturne/webapps/player/index.html#apps";
+    document.getElementById("home").onclick = function () { location.href = HOME; };
+    var COLORS = ["#34d399","#60a5fa","#fbbf24","#f43f5e","#c084fc","#fb923c","#22d3ee","#a3e635"];
+    var msg = document.getElementById("msg");
+
+    function openDb() {
+      return new Promise(function (resolve, reject) {
+        var r = indexedDB.open("ct-apps", 1);
+        r.onupgradeneeded = function () { r.result.createObjectStore("apps", { keyPath: "id" }); };
+        r.onsuccess = function () { resolve(r.result); };
+        r.onerror = function () { reject(r.error); };
+      });
+    }
+    function allApps() {
+      return openDb().then(function (db) {
+        return new Promise(function (resolve) {
+          var out = [];
+          db.transaction("apps").objectStore("apps").openCursor(null, "prev").onsuccess = function (e) {
+            var c = e.target.result;
+            if (c) { out.push(c.value); c.continue(); }
+            else resolve(out);
+          };
+        });
+      }).catch(function () { return []; });
+    }
+    function putApp(row) {
+      return openDb().then(function (db) {
+        return new Promise(function (resolve) {
+          db.transaction("apps", "readwrite").objectStore("apps").put(row).onsuccess = function () { resolve(); };
+        });
+      });
+    }
+    function delApp(id) {
+      return openDb().then(function (db) {
+        return new Promise(function (resolve) {
+          db.transaction("apps", "readwrite").objectStore("apps").delete(id).onsuccess = function () { resolve(); };
+        });
+      });
+    }
+
+    var HOME_SNIP = '<style id="ct-home-style">#ct-home{position:fixed;top:8px;left:8px;z-index:2147483647;background:#0b0c0f;color:#e5e7eb;border:2px solid #34d399;border-radius:999px;padding:7px 14px;font:700 13px system-ui;letter-spacing:.08em}</style><button id="ct-home" type="button">HOME</button><script>(function(){var H="file:///opt/nocturne/webapps/player/index.html#apps";var b=document.getElementById("ct-home");if(b)b.onclick=function(){location.href=H;};})();<\/script>';
+
+    function injectHome(html) {
+      var low = html.toLowerCase();
+      var idx = low.lastIndexOf("</body>");
+      if (idx >= 0) return html.slice(0, idx) + HOME_SNIP + html.slice(idx);
+      return html + HOME_SNIP;
+    }
+
+    function onFile(f) {
+      if (!f) return;
+      if (f.size > 8 * 1024 * 1024) {
+        msg.textContent = "File is " + Math.round(f.size / 1048576) + " MB. Keep it under 8 MB.";
+        return;
+      }
+      var reader = new FileReader();
+      reader.onload = async function () {
+        var title = f.name.replace(/\.[^.]+$/, "").replace(/[_-]+/g, " ");
+        var row = {
+          id: Date.now(),
+          name: title.slice(0, 28),
+          hint: "Imported HTML",
+          mark: title.slice(0, 2).toUpperCase() || "APP",
+          color: COLORS[Math.floor(Math.random() * COLORS.length)],
+          html: injectHome(String(reader.result || ""))
+        };
+        await putApp(row);
+        msg.textContent = "Saved “" + row.name + "”. Open it from the Apps tab.";
+        render();
+      };
+      reader.readAsText(f);
+    }
+    document.getElementById("file").onchange = function (e) { onFile(e.target.files && e.target.files[0]); };
+    document.getElementById("file2").onchange = function (e) { onFile(e.target.files && e.target.files[0]); };
+
+    function rowEl(item, imported) {
+      var el = document.createElement("div");
+      el.className = "row";
+      el.innerHTML = '<div class="sw" style="background:' + item.color + '">' + item.mark + '</div><div class="grow"><b>' + item.name + '</b><div class="muted">' + (item.hint || "") + '</div></div>';
+      var open = document.createElement("button");
+      open.className = "btn"; open.textContent = "OPEN";
+      open.onclick = function () {
+        if (imported) location.href = "open.html#" + item.id;
+        else location.href = "../" + item.file;
+      };
+      el.appendChild(open);
+      if (imported) {
+        var del = document.createElement("button");
+        del.className = "btn"; del.textContent = "DEL";
+        del.onclick = async function () { await delApp(item.id); render(); };
+        el.appendChild(del);
+      }
+      return el;
+    }
+
+    async function render() {
+      var user = document.getElementById("user");
+      var disk = document.getElementById("disk");
+      user.innerHTML = "";
+      disk.innerHTML = "";
+      var imported = await allApps();
+      if (!imported.length) user.innerHTML = '<div class="muted">None imported yet.</div>';
+      imported.forEach(function (it) { user.appendChild(rowEl(it, true)); });
+      var diskItems = window.DISK_PROJECTS || [];
+      if (!diskItems.length) disk.innerHTML = '<div class="muted">None copied from the PC yet.</div>';
+      diskItems.forEach(function (it) { disk.appendChild(rowEl(it, false)); });
+    }
+    render();
+  </script>
+</body>
+</html>

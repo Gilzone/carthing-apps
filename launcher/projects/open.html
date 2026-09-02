@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=800, height=480, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Open app</title>
+  <style>
+    html, body { margin: 0; width: 800px; height: 480px; background: #07080a; color: #9ca3af; font: 16px system-ui; }
+    #msg { padding: 24px; }
+    a { color: #34d399; }
+  </style>
+</head>
+<body>
+  <div id="msg">Opening…</div>
+  <script>
+    var HOME = "file:///opt/nocturne/webapps/player/index.html#apps";
+    var id = parseInt(String(location.hash || "").replace("#", ""), 10);
+    function fail(t) {
+      document.getElementById("msg").innerHTML = t + ' <a href="' + HOME + '">Back to Apps</a>';
+    }
+    if (!id) { fail("No app id."); throw 0; }
+    var r = indexedDB.open("ct-apps", 1);
+    r.onerror = function () { fail("Storage unavailable."); };
+    r.onsuccess = function () {
+      var q = r.result.transaction("apps").objectStore("apps").get(id);
+      q.onsuccess = function () {
+        var row = q.result;
+        if (!row || !row.html) { fail("App missing."); return; }
+        var blob = new Blob([row.html], { type: "text/html" });
+        location.replace(URL.createObjectURL(blob));
+      };
+      q.onerror = function () { fail("Could not read app."); };
+    };
+  </script>
+</body>
+</html>
