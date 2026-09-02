@@ -163,25 +163,34 @@ The automated installer will:
 
 ---
 
-## 🚀 Quick Start & Manual Guide
+## 🛠️ Complete Setup Guide (From Scratch to Gaming)
 
-### Requirements
-- A Spotify Car Thing (flashed with Nocturne image v4.x).
-- Windows PC with Python 3.10+ (installer will auto-install Python if missing).
-- USB-C data cable connected to the PC.
-
-### Installation
-1. Clone this repository:
+### Scenario A: Your Car Thing Already Has Nocturne Linux
+If your Car Thing already boots into Nocturne OS:
+1. Clone this repo:
    ```bash
    git clone https://github.com/Gilzone/carthing-apps.git
    cd carthing-apps
    ```
-2. Double-click `1-Click-Install.bat`
-3. Launch the desktop manager anytime from your Desktop or via:
-   ```bash
-   python carthing_apps.py
-   ```
-   *(Or double click `Car Thing Apps.bat`)*
+2. Double-click **`1-Click-Install.bat`**. You're done!
+
+---
+
+### Scenario B: Starting from a Stock or Bricked Car Thing
+Everything needed to revive a stock or bricked device is provided directly in this repository and our official release:
+
+1. **Download the Nocturne OS Image:**
+   - Download **[`nocturne_image_v4.1.3.zip`](https://github.com/Gilzone/carthing-apps/releases/tag/v1.0.0)** directly from the **[Releases](https://github.com/Gilzone/carthing-apps/releases/tag/v1.0.0)** page.
+2. **Install Bootloader Driver (Windows):**
+   - Run `tools/flashing/install-driver.ps1` (or use Zadig) to install the WinUSB driver for Amlogic device `1B8E:C003`.
+3. **Flash the Firmware:**
+   - Put your Car Thing into USB Burn Mode (hold buttons `1` + `4` while plugging into USB).
+   - Flash using the included `tools/flashing/flashthing-cli.exe` or the web flasher:
+     ```bash
+     tools\flashing\flashthing-cli.exe flash path\to\nocturne_image_v4.1.3.zip
+     ```
+4. **Deploy Apps:**
+   - Once the Car Thing reboots into Nocturne, double-click **`1-Click-Install.bat`** to deploy the complete launcher, games, and tools suite!
 
 ### Command Line Usage (`add_project.py`)
 ```bash
