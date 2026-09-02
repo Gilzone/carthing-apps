@@ -11,9 +11,7 @@
       --text: #f1f5f9;
       --muted: #94a3b8;
       --accent: #3b82f6;
-      --btn-a: #10b981;
       --btn-b: #f43f5e;
-      --btn-l: #475569;
       --dpad-bg: #1e293b;
       --dpad-border: #334155;
     }
@@ -213,13 +211,13 @@
     }
 
     .meta-pill-left {
-      width: 100px;
-      height: 38px;
+      width: 110px;
+      height: 40px;
       background: #1e293b;
       border: 2px solid #334155;
       color: #cbd5e1;
-      border-radius: 19px;
-      font-size: 12px;
+      border-radius: 20px;
+      font-size: 13px;
       font-weight: 800;
       display: flex;
       align-items: center;
@@ -297,7 +295,7 @@
       transform: scale(0.96);
     }
 
-    /* Right Control Wing */
+    /* Right Control Wing: R, B Button, Knob A Hint, START */
     .right-wing {
       width: 160px;
       height: 100%;
@@ -308,55 +306,54 @@
       padding: 10px 0 16px;
       z-index: 20;
     }
-    .action-cluster {
-      position: relative;
-      width: 140px;
-      height: 130px;
-      margin-top: 6px;
-    }
-    .round-btn {
-      position: absolute;
-      width: 62px;
-      height: 62px;
+    .round-btn-b-large {
+      width: 76px;
+      height: 76px;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 24px;
+      font-size: 32px;
       font-weight: 900;
       color: white;
-      box-shadow: 0 6px 14px rgba(0,0,0,0.6), inset 0 2px 4px rgba(255,255,255,0.4);
-      cursor: pointer;
-    }
-    .round-btn-b {
-      left: 4px;
-      bottom: 8px;
       background: var(--btn-b);
-      border: 3px solid #be123c;
+      border: 4px solid #be123c;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.6), inset 0 2px 4px rgba(255,255,255,0.4);
+      cursor: pointer;
+      margin-top: 8px;
     }
-    .round-btn-b.active {
+    .round-btn-b-large.active {
       background: #9f1239 !important;
       transform: translateY(2px);
     }
-    .round-btn-a {
-      right: 4px;
-      top: 8px;
-      background: var(--btn-a);
-      border: 3px solid #047857;
+
+    .knob-hint-badge {
+      font-size: 11px;
+      font-weight: 800;
+      color: #34d399;
+      background: #064e3b;
+      border: 1px solid #059669;
+      padding: 4px 10px;
+      border-radius: 12px;
+      text-align: center;
+      letter-spacing: 0.5px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      transition: all 0.15s;
     }
-    .round-btn-a.active {
-      background: #065f46 !important;
-      transform: translateY(2px);
+    .knob-hint-badge.active {
+      background: #10b981;
+      color: #000;
+      transform: scale(1.06);
     }
 
     .meta-pill-right {
-      width: 100px;
-      height: 38px;
+      width: 110px;
+      height: 40px;
       background: #1e293b;
       border: 2px solid #334155;
       color: #cbd5e1;
-      border-radius: 19px;
-      font-size: 12px;
+      border-radius: 20px;
+      font-size: 13px;
       font-weight: 800;
       display: flex;
       align-items: center;
@@ -392,7 +389,7 @@
 
   <!-- Top Status Bar -->
   <div class="top-bar">
-    <button class="back-btn" id="btn-back" type="button">← Launcher</button>
+    <button class="back-btn" id="btn-back" type="button">← Tools</button>
     <div class="title-area">
       <span class="game-badge" id="lbl-title">Loading...</span>
       <span class="fps-badge" id="lbl-fps">GBA 60 FPS</span>
@@ -436,13 +433,11 @@
       </div>
     </div>
 
-    <!-- Right Controls: R, A/B, START -->
+    <!-- Right Controls: R, B Button, Knob Push A Hint, START -->
     <div class="right-wing">
       <button class="trigger-btn" id="btn-r" type="button">R</button>
-      <div class="action-cluster">
-        <button class="round-btn round-btn-b" id="btn-b" type="button">B</button>
-        <button class="round-btn round-btn-a" id="btn-a" type="button">A</button>
-      </div>
+      <button class="round-btn-b-large" id="btn-b" type="button">B</button>
+      <div class="knob-hint-badge" id="knob-hint">🔘 Knob Push = A</div>
       <button class="meta-pill-right" id="btn-start" type="button">START</button>
     </div>
   </div>
@@ -507,7 +502,6 @@
 
     // UI Element References for visual active feedback
     const BTN_ELS = {
-      a: document.getElementById('btn-a'),
       b: document.getElementById('btn-b'),
       select: document.getElementById('btn-select'),
       start: document.getElementById('btn-start'),
@@ -519,11 +513,17 @@
       r: document.getElementById('btn-r')
     };
 
+    const knobBadge = document.getElementById('knob-hint');
     const PRESS_TIMERS = {};
 
     function updateInput(key, down) {
       const bit = BIT_MAP[key];
       const el = BTN_ELS[key];
+
+      if (key === 'a' && knobBadge) {
+        if (down) knobBadge.classList.add('active');
+        else setTimeout(() => knobBadge.classList.remove('active'), 140);
+      }
 
       if (down) {
         if (el) el.classList.add('active');
@@ -567,37 +567,45 @@
       if (BTN_ELS[k]) bindControl(BTN_ELS[k], k);
     });
 
-    // Hardware Button Bindings on Car Thing
-    // Top 1: L trigger, Top 4: R trigger, Top 2: SELECT, Top 3: START, Dial Click Enter: A
+    // Hardware Button Bindings on Car Thing:
+    // Knob Push (Enter, MediaPlayPause, Space) -> Button A!
+    // Physical Back Button (Escape, Backspace, BrowserBack, b, x, k) -> Button B!
+    // Top Button 1: L trigger, Top Button 4: R trigger
+    // Top Button 2: SELECT, Top Button 3: START
     window.addEventListener('keydown', (e) => {
       const k = e.key;
-      if (k === '1') updateInput('l', true);
+      if (k === 'Enter' || k === ' ' || k === 'MediaPlayPause') {
+        e.preventDefault();
+        updateInput('a', true);
+      } else if (k === 'Escape' || k === 'Backspace' || k === 'BrowserBack' || k === 'b' || k === 'x' || k === 'k') {
+        e.preventDefault();
+        updateInput('b', true);
+      } else if (k === '1') updateInput('l', true);
       else if (k === '4') updateInput('r', true);
       else if (k === '2') updateInput('select', true);
       else if (k === '3') updateInput('start', true);
-      else if (k === 'Enter') updateInput('a', true);
       else if (k === 'ArrowUp' || k === 'w') updateInput('up', true);
       else if (k === 'ArrowDown' || k === 's') updateInput('down', true);
       else if (k === 'ArrowLeft' || k === 'a') updateInput('left', true);
       else if (k === 'ArrowRight' || k === 'd') updateInput('right', true);
-      else if (k === 'z' || k === 'j') updateInput('a', true);
-      else if (k === 'x' || k === 'k') updateInput('b', true);
-      else if (k === 'Escape') window.location.href = '../index.html#games';
     });
 
     window.addEventListener('keyup', (e) => {
       const k = e.key;
-      if (k === '1') updateInput('l', false);
+      if (k === 'Enter' || k === ' ' || k === 'MediaPlayPause') {
+        e.preventDefault();
+        updateInput('a', false);
+      } else if (k === 'Escape' || k === 'Backspace' || k === 'BrowserBack' || k === 'b' || k === 'x' || k === 'k') {
+        e.preventDefault();
+        updateInput('b', false);
+      } else if (k === '1') updateInput('l', false);
       else if (k === '4') updateInput('r', false);
       else if (k === '2') updateInput('select', false);
       else if (k === '3') updateInput('start', false);
-      else if (k === 'Enter') updateInput('a', false);
       else if (k === 'ArrowUp' || k === 'w') updateInput('up', false);
       else if (k === 'ArrowDown' || k === 's') updateInput('down', false);
       else if (k === 'ArrowLeft' || k === 'a') updateInput('left', false);
       else if (k === 'ArrowRight' || k === 'd') updateInput('right', false);
-      else if (k === 'z' || k === 'j') updateInput('a', false);
-      else if (k === 'x' || k === 'k') updateInput('b', false);
     });
 
     // Rotary Dial Wheel: Fast-Forward Speed Toggle
@@ -608,7 +616,6 @@
       dialDebounce = now;
       isFastFwd = !isFastFwd;
       if (gba) {
-        // Turbo frame advance
         gba.waitFrame = isFastFwd ? false : true;
       }
       showOsd(isFastFwd ? "Fast-Forward ON (2x)" : "Fast-Forward OFF (1x)");
@@ -630,8 +637,8 @@
 
       gba = new GameBoyAdvance();
       
-      // CRITICAL FIX: Use setCanvasDirect so the 240x160 buffer is rendered
-      // directly without indirect downscaling or 2x zoom distortion
+      // CRITICAL FIX: setCanvasDirect renders the 240x160 buffer directly
+      // without indirect downscaling or 2x zoom distortion
       gba.setCanvasDirect(canvas);
       gba.setBios(getBiosBuffer());
 
@@ -729,9 +736,9 @@
       }
     });
 
-    // Back to Launcher
+    // Back to Launcher Tools
     document.getElementById('btn-back').addEventListener('pointerdown', () => {
-      window.location.href = '../index.html#games';
+      window.location.href = '../index.html#tools';
     });
 
     // Boot default: Zelda (Anguna: Warriors of the Demisun)
