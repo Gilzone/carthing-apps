@@ -191,10 +191,10 @@
     {
       "tab": "tools",
       "file": "tools/retro_player.html",
-      "name": "Game Boy Advance",
-      "hint": "Zelda, Pok\u00e9mon & GBA Player",
-      "mark": "GBA",
-      "color": "#6366f1"
+      "name": "Game Boy Color",
+      "hint": "Zelda DX, Pok\u00e9mon & Tetris",
+      "mark": "GB",
+      "color": "#8b5cf6"
     },
     {
       "tab": "tools",
