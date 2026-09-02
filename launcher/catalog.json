@@ -198,6 +198,14 @@
     },
     {
       "tab": "tools",
+      "file": "tools/youtube.html",
+      "name": "GIL STUDIO",
+      "hint": "YouTube Channel & Stats",
+      "mark": "YT",
+      "color": "#ef4444"
+    },
+    {
+      "tab": "tools",
       "file": "tools/recorder.html",
       "name": "Recorder",
       "hint": "Mic memos, saved here",
