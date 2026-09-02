@@ -110,14 +110,18 @@
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
           throw new Error("This kiosk build has no getUserMedia");
         }
-        stream = await navigator.mediaDevices.getUserMedia({
-          audio: { echoCancellation: true, noiseSuppression: true, channelCount: 1 }
-        });
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        } catch (e1) {
+          stream = await navigator.mediaDevices.getUserMedia({
+            audio: { echoCancellation: false, noiseSuppression: false, channelCount: 1 }
+          });
+        }
         status.textContent = "Microphone allowed. Tap REC to start.";
         document.getElementById("perm").textContent = "MIC ON";
         document.getElementById("perm").classList.remove("off");
       } catch (err) {
-        status.textContent = "Mic blocked or busy (" + (err.name || "error") + "). Nocturne may already be using the mic. Clips already saved still play.";
+        status.textContent = "Mic error (" + (err.name || "error") + "): " + (err.message || "Device busy or unavailable");
       }
     }
 
