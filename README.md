@@ -135,26 +135,43 @@ A desktop companion GUI built with Python and Tkinter:
 
 ---
 
-## 🚀 Quick Start Guide
+## ⚡ 1-Click Complete Installer
+
+Getting everything onto your Car Thing takes just **one double-click**:
+
+1. Plug your Car Thing into your PC via USB.
+2. Double-click **`1-Click-Install.bat`** (or run `python install.py`).
+
+The automated installer will:
+- [x] Detect your Car Thing on the USB network (`10.42.1.242`).
+- [x] Deploy the 3D coverflow launcher, catalog, and touchscreen fixing scripts.
+- [x] Deploy all **23 games** (including optimized Among Us) and the **Tools suite** (Reader, Voice Recorder, Notes, Clock, Lamp).
+- [x] Deploy **KolibriOS x86 PC emulation** with the touch trackpad and on-screen keyboard.
+- [x] Configure ALSA dual-link microphone capture in `/etc/asound.conf`.
+- [x] Create a **`Car Thing Apps`** shortcut on your Windows Desktop.
+- [x] Restart the kiosk on the device so it immediately lights up with your new system!
+
+---
+
+## 🚀 Quick Start & Manual Guide
 
 ### Requirements
 - A Spotify Car Thing (flashed with Nocturne image v4.x).
-- Windows PC with Python 3.10+.
+- Windows PC with Python 3.10+ (installer will auto-install Python if missing).
 - USB-C data cable connected to the PC.
 
 ### Installation
 1. Clone this repository:
    ```bash
-   git clone https://github.com/<your-username>/carthing-apps.git
+   git clone https://github.com/Gilzone/carthing-apps.git
    cd carthing-apps
    ```
-2. Plug the Car Thing into your PC via USB.
-3. Launch the desktop manager:
+2. Double-click `1-Click-Install.bat`
+3. Launch the desktop manager anytime from your Desktop or via:
    ```bash
    python carthing_apps.py
    ```
-   *(Or double click `Car Thing Apps.bat` / the Desktop shortcut)*
-4. Once the indicator turns green (`Car Thing connected`), select your tab and click **Sync to Car Thing**.
+   *(Or double click `Car Thing Apps.bat`)*
 
 ### Command Line Usage (`add_project.py`)
 ```bash
