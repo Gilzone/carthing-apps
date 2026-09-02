@@ -33,17 +33,23 @@ The custom Chromium kiosk shell runs native 800×480 with GPU hardware accelerat
 
 ---
 
-### 🕹️ Standalone Game Boy Advance (GBA) Player & 2D RPG Suite
-- **Pixel-Perfect Scaling:** Native $240 \times 160$ scanline renderer directly scaled $2\times$ to $480 \times 320$ inside a crisp bezel, centered between ergonomic on-screen touch controls.
-- **Hardware & Touch Controls:** Large tactile D-Pad (left), arcade-style A/B action buttons (right), and wide 100px START & SELECT pills with a 140ms touch latch filter ensuring no missed inputs. Top buttons `1` & `4` act as L & R triggers, and the rotary dial clicks for `A` and turns for 2x Fast-Forward.
+### 🕹️ Dedicated Game Boy (GB) Player (Tools Tab)
+- **Authentic DMG Emulation:** Built with the high-performance, cycle-accurate `GameBoyCore` engine. Zero input latency, locked at 60 FPS, with authentic monochrome/green tint palettes.
+- **Hardware-Integrated Controls:**
+  - **🔘 Knob Push (Click Dial):** Triggers **Button A** (Jump, Attack, Confirm) with a green HUD status badge.
+  - **🔴 Dedicated Thumb Button:** Large 82px Coral Red **Button B** (Cancel, Run, Inhale) comfortably positioned for your right thumb.
+  - **Physical Back Button:** Also wired directly to **Button B**.
+  - **Tactile D-Pad & Top Buttons:** Full capacitive 4-way cross pad on the left, with Top Button `2` for **SELECT** and Top Button `3` for **START**.
 - **Pre-Loaded Classics:**
-  - 🗡️ **Zelda (Anguna: Warriors of the Demisun):** Full 2D top-down Action RPG with overworld exploration, sword combat, and dungeons.
-  - 🔴 **Pokémon FireRed:** Complete 2D Pokémon adventure running locked at 60 FPS.
-  - 🧱 **Advancetris:** Modern GBA block stacker.
+  - 🗡️ **The Legend of Zelda: Link's Awakening:** Classic top-down dungeon crawler and island adventure.
+  - ⭐ **Kirby's Dream Land 2:** Iconic platforming with Rick, Kine, and Coo.
+  - 🔴 **Pokémon Red Version:** The definitive original monster-catching RPG.
+  - ➕ **Custom ROMs:** Tap `📂 ROM` to load any `.gb` or `.gbc` file directly from device storage.
 
 <p align="center">
-  <img src="docs/screenshots/retro_pokemon_title.png" width="48%" alt="Pokemon FireRed on Car Thing" />
-  <img src="docs/screenshots/retro_anguna_live.png" width="48%" alt="Zelda Anguna Gameplay on Car Thing" />
+  <img src="docs/screenshots/gb_zelda_user_live.png" width="32%" alt="Zelda Link's Awakening on Car Thing" />
+  <img src="docs/screenshots/gb_kirby_user_live.png" width="32%" alt="Kirby's Dream Land 2 on Car Thing" />
+  <img src="docs/screenshots/gb_pokemon_red_user_live.png" width="32%" alt="Pokemon Red on Car Thing" />
 </p>
 
 ---
