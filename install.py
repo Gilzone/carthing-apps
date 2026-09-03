@@ -51,10 +51,11 @@ def print_banner():
     banner = r"""
 ========================================================================
    [+] SPOTIFY CAR THING -- 1-CLICK ALL-IN-ONE INSTALLER
-   Custom Nocturne OS Webapps, 23 Games & Tools Suite
+   Custom Nocturne OS Webapps, Voice AI Games, 25 Games & Tools Suite
 ========================================================================
 """
     print(banner)
+
 
 def log_step(step, total, msg):
     print(f"[{step}/{total}] [..] {msg}...")
@@ -197,7 +198,8 @@ def main():
     log_ok("Launcher core files deployed")
 
     # STEP 5: Deploy Games & Tools Suite
-    log_step(5, TOTAL_STEPS, "Deploying 23 Games & Tools Suite (Optimized Among Us, KolibriOS)")
+    log_step(5, TOTAL_STEPS, "Deploying Voice AI Suite (Tetrix, Pawn, Cyber Drive), Games & Tools")
+
     # Games (including nested amongus directory)
     sync_directory(LAUNCHER_DIR / "games", "/opt/nocturne/webapps/player/games")
     # Tools

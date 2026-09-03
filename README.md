@@ -16,7 +16,8 @@ When Spotify discontinued the Car Thing in late 2024 and scheduled the bricking 
 > ### 🔌 100% On-Device Execution — No PC, Server, or Internet Required!
 > Unlike many other Car Thing projects that require a host PC or server streaming content in the background, **every app, game, tool, and emulator in this repository runs 100% locally on the Car Thing hardware itself**:
 > - **No Host PC Running in the Background:** Once installed via the 1-Click Installer, you can unplug the Car Thing from your computer and power it from any standard USB port, car charger, or power bank.
-> - **Zero Servers or Cloud APIs:** All 23 games, tools, audio recordings, and the KolibriOS x86 virtual machine execute directly on the Car Thing's internal quad-core Amlogic processor and eMMC storage.
+> - **Zero Servers or Cloud APIs:** All 25 games, Voice AI Suite (Voice Tetrix, Voice Pawn, Cyber Drive), tools, audio recordings, and the KolibriOS x86 virtual machine execute directly on the Car Thing's internal quad-core Amlogic processor and eMMC storage.
+
 > - **100% Offline:** Fully operational with zero internet or Wi-Fi connection. Take it on road trips, off-grid, or keep it on your desk as an independent gadget.
 
 ---
