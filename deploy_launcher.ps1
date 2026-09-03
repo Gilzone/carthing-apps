@@ -1,13 +1,12 @@
 $ErrorActionPreference = 'Continue'
-$py = 'C:\Users\Gilzh\AppData\Local\Programs\Python\Python312\python.exe'
-if (-not (Test-Path $py)) { $py = 'python' }
-& $py 'C:\Users\Gilzh\carthing-handshake\nocturne\make_launcher.py'
+$py = 'python'
+& $py "$PSScriptRoot\make_launcher.py"
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-$src = 'C:\Users\Gilzh\carthing-handshake\nocturne\launcher'
-$envf = 'C:\Users\Gilzh\carthing-handshake\nocturne\kiosk-env'
+$src = "$PSScriptRoot\launcher"
+$envf = "$PSScriptRoot\kiosk-env"
 $ssh = @('-o','StrictHostKeyChecking=no','-o','UserKnownHostsFile=NUL','-o','ConnectTimeout=8')
-$ip = '10.42.1.242'
+$ip = if ($env:CARTHING_IP) { $env:CARTHING_IP } else { '10.42.1.242' }
 
 Write-Host "Waiting for Car Thing at $ip ..."
 $deadline = (Get-Date).AddMinutes(8)

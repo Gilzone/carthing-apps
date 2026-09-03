@@ -1,8 +1,8 @@
 $ErrorActionPreference = 'Continue'
-$src = 'C:\Users\Gilzh\carthing-handshake\nocturne\launcher'
-$envf = 'C:\Users\Gilzh\carthing-handshake\nocturne\kiosk-env'
+$src = "$PSScriptRoot\launcher"
+$envf = "$PSScriptRoot\kiosk-env"
 $ssh = @('-o','StrictHostKeyChecking=no','-o','UserKnownHostsFile=NUL','-o','ConnectTimeout=8')
-$ip = '10.42.1.242'
+$ip = if ($env:CARTHING_IP) { $env:CARTHING_IP } else { '10.42.1.242' }
 
 Write-Host "Waiting for Car Thing at $ip ..."
 $deadline = (Get-Date).AddMinutes(8)
@@ -21,11 +21,9 @@ if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 & scp @ssh "$src\index.html" "root@${ip}:/opt/nocturne/webapps/player/index.html"
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-Get-ChildItem "$src\tools" -File | ForEach-Object {
-    Write-Host ("copy tools/" + $_.Name)
-    & scp @ssh $_.FullName ("root@${ip}:/opt/nocturne/webapps/player/tools/" + $_.Name)
-    if ($LASTEXITCODE -ne 0) { throw ("scp failed " + $_.Name) }
-}
+Write-Host "Copying tools recursively..."
+& scp @ssh -r "$src\tools\*" "root@${ip}:/opt/nocturne/webapps/player/tools/"
+if ($LASTEXITCODE -ne 0) { throw "scp failed copying tools" }
 
 & scp @ssh $envf "root@${ip}:/opt/nocturne/kiosk-env"
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

@@ -1,5 +1,12 @@
-﻿__pycache__/
+__pycache__/
 kiosk-env/
 *.zip
 *.exe
 .DS_Store
+scratch/
+launcher/tools/roms/*.gb
+launcher/tools/roms/*.gbc
+launcher/tools/roms/*Pokemon*
+launcher/tools/roms/*Kirby*
+
+
