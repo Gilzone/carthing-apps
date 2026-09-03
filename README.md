@@ -82,13 +82,20 @@ The custom Chromium kiosk shell runs native 800×480 with GPU hardware accelerat
 
 ---
 
-### 📖 Dial-Controlled E-Reader & 🎙️ Voice Memo Recorder
+### 📖 Dial-Controlled E-Reader, 🎙️ Voice Memo Recorder & 📡 Optical Transfer (Decimen)
 - **E-Reader:** Uses the physical rotary dial to flip book pages. Reconstructs reflowable EPUBs into clean paginated views.
 - **Voice Recorder:** Taps directly into the Car Thing’s onboard microphone array to record voice notes saved locally to flash storage.
+- **Optical Transfer (Decimen Beam):** Air-gapped wireless file transfer that beams audio recordings, notes, and text directly from the Car Thing's screen to any smartphone camera via [decimen.app](https://decimen.app/) using Luby Transform (LT) fountain codes. No cables, no Wi-Fi, and no Bluetooth pairing needed!
+- **Camera-Balanced Optical Density:** Custom-tuned for the Car Thing's 800×480 display (250 bytes/frame, 12 FPS, 0.74 viewport budget) to eliminate dense micro-dots and generate chunky, high-contrast QR modules (~7px) that any smartphone camera locks onto in milliseconds.
+- **Deep System Integration:** One-tap `BEAM 📡` button next to every memo in the Recorder app, direct IndexedDB clip picker, and standalone launcher card.
 
 <p align="center">
-  <img src="docs/screenshots/tool_reader.png" width="48%" alt="E-Reader" />
-  <img src="docs/screenshots/tool_recorder.png" width="48%" alt="Voice Recorder" />
+  <img src="docs/screenshots/tool_recorder_beam_buttons.png" width="48%" alt="Recorder with BEAM Buttons on Car Thing" />
+  <img src="docs/screenshots/tool_decimen_menu_live.png" width="48%" alt="Decimen Optical Beam Menu on Car Thing" />
+</p>
+<p align="center">
+  <img src="docs/screenshots/tool_decimen_beam_live.png" width="48%" alt="Decimen Optical Stream on Car Thing" />
+  <img src="docs/screenshots/launcher_tools_with_beam.png" width="48%" alt="Optical Beam Card in Launcher" />
 </p>
 
 ---

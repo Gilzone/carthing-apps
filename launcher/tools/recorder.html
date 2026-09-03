@@ -30,8 +30,8 @@
 <body>
   <div class="top">
     <button class="chip" id="home" type="button">HOME</button>
-    <div class="title">Recorder</div>
     <div class="grow"></div>
+    <button class="chip" id="btn-open-beam" type="button" style="background:#0284c7; color:#fff; border-color:#38bdf8;" onclick="location.href='decimen.html'">BEAM 📡</button>
     <button class="chip off" id="perm" type="button">ASK MIC</button>
   </div>
   <div class="stage">
@@ -196,6 +196,15 @@
         del.className = "btn tiny";
         del.textContent = "DEL";
         del.onclick = async function () { await delClip(row.id); renderList(); };
+        var beam = document.createElement("button");
+        beam.className = "btn tiny";
+        beam.style.background = "#0284c7";
+        beam.style.borderColor = "#38bdf8";
+        beam.textContent = "BEAM 📡";
+        beam.onclick = function () {
+          location.href = "decimen.html?clip=" + row.id;
+        };
+        el.appendChild(beam);
         el.appendChild(play);
         el.appendChild(del);
         list.appendChild(el);

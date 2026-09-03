@@ -214,6 +214,14 @@
     },
     {
       "tab": "tools",
+      "file": "tools/decimen.html",
+      "name": "Optical Beam",
+      "hint": "Decimen Transfer with Light",
+      "mark": "BEAM",
+      "color": "#0284c7"
+    },
+    {
+      "tab": "tools",
       "file": "tools/reader.html",
       "name": "Reader",
       "hint": "Wheel turns pages",
