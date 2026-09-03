@@ -205,14 +205,18 @@ Bringing true edge-AI Machine Translation to the Spotify Car Thing without inter
 - **Opposite Day**
 - **Age of War**
 
-### 🛠️ Tools Suite
-- 🌐 **Translator:** 100% offline bidirectional Neural Machine Translation (English ↔ Spanish) powered by Mozilla Bergamot / Marian NMT WASM. Zero internet or companion PC needed.
-- 🎙️ **Recorder:** Mic memo recorder saving directly to device storage.
-- 📖 **Reader:** Turn pages using the dial wheel.
-- 📝 **Notes:** Touch notepad with full virtual QWERTY keyboard.
-- ⏰ **Clock:** Real-time clock, stopwatch, and countdown timer.
-- 🧮 **Calculator:** Touch-friendly calculation pad.
-- 💡 **Lamp:** Ambient light with White, Night-Vision Red, and Dim modes.
+### 🛠️ Complete Tools & Applications Suite
+- 📡 **Optical Beam (Decimen):** 100% offline file and voice memo transfer using screen light and smartphone camera at [decimen.app](https://decimen.app/). Zero cables, zero Wi-Fi, zero Bluetooth pairing.
+- 🎙️ **Voice Memo Recorder:** Direct on-device microphone memo recording with real-time bouncing VU soundwave visualizer, rotary dial push-to-record, hardware debounce, and direct `BEAM 📡` integration.
+- 🕹️ **Morse Learn (Google Creative Lab Edition):** Full visual mnemonic Morse code trainer with Web Audio sidetones, rotary dial DOT/DASH telegraph input, and Words training.
+- 🏎️ **Automotive HUD Clock & Car Unit Converter:** High-contrast Cyber/Amber/Night-Vision Red HUD clock, precision stopwatch, and automotive conversions ($km/h \leftrightarrow mph$, $PSI \leftrightarrow Bar$, $^\circ C \leftrightarrow ^\circ F$, $MPG \leftrightarrow L/100km$).
+- 🎮 **Game Boy & GBA Retro Player:** High-performance `binjgb` WebAssembly Game Boy Color engine with cycle-accurate 60 FPS video/audio, battery SRAM auto-saving, and preloaded homebrew games (`Celeste Classic`, `Advancetris`, `Anguna`).
+- 🌐 **Offline Neural Translator:** 100% on-device bidirectional Neural Machine Translation (English ↔ Spanish) powered by Mozilla Bergamot / Marian NMT WASM and bundled neural models.
+- 📖 **E-Reader:** Paginated reflowable book reader with physical rotary dial page turning.
+- 🖥️ **KolibriOS x86 PC:** Real 32-bit x86 desktop operating system running in a virtual machine with custom touch trackpad and on-screen keyboard.
+- 📝 **Notes:** Persistent touch notepad with full debounced on-screen keyboard.
+- 💡 **Lamp:** Multi-mode ambient light with White, Amber, and Night-Vision Red modes.
+- 🧮 **Calculator:** Automotive and general touch calculation pad.
 
 ---
 
@@ -237,8 +241,8 @@ Getting everything onto your Car Thing takes just **one double-click**:
 The automated installer will:
 - [x] Detect your Car Thing on the USB network (`10.42.1.242`).
 - [x] Deploy the 3D coverflow launcher, catalog, and touchscreen fixing scripts.
-- [x] Deploy all **23 games** (including optimized Among Us) and the **Tools suite** (Reader, Voice Recorder, Notes, Clock, Lamp).
-- [x] Deploy **KolibriOS x86 PC emulation** with the touch trackpad and on-screen keyboard.
+- [x] Deploy all **23 games** (including optimized Among Us and retro homebrew) and the **complete Tools suite** (Optical Beam, Voice Recorder, Morse Learn, HUD Clock, Translator, Reader, Notes, KolibriOS).
+- [x] Deploy all **WebAssembly engines and offline neural models** (`binjgb.wasm`, `bergamot-translator-worker.wasm`, translation models).
 - [x] Configure ALSA dual-link microphone capture in `/etc/asound.conf`.
 - [x] Create a **`Car Thing Apps`** shortcut on your Windows Desktop.
 - [x] Restart the kiosk on the device so it immediately lights up with your new system!
