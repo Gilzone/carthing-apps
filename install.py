@@ -41,7 +41,7 @@ pcm.mic_hw {
     slave {
         pcm "hw:0,1"
         rate 48000
-        channels 1
+        channels 4
         format S16_LE
     }
 }
