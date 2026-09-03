@@ -378,8 +378,8 @@ This repository provides an application suite, 3D coverflow launcher, and offlin
   - **[bridgething](https://github.com/JoeyEamigh/bridgething)** & **[nixos-superbird](https://github.com/JoeyEamigh/nixos-superbird)**.
 
 ### 🐧 Nocturne OS Firmware & System Architecture
-- **[Nocturne Team (Brandon Saldan & Dominic Frye)](https://github.com/usenocturne/nocturne):**
-  - Creators of **[Nocturne OS](https://usenocturne.com/)** ([usenocturne/nocturne](https://github.com/usenocturne/nocturne)), the custom firmware, background daemon (`nocturned`), Bluetooth iAP2/SPP stack, and Chromium Wayland kiosk environment that revived the Car Thing as an independent Bluetooth controller and smart display.
+- **[Nocturne Team (Brandon Saldan, Neel Patel, and Dominic Frye)](https://github.com/usenocturne/nocturne):**
+  - Creators of **[Nocturne OS](https://usenocturne.com/)** ([usenocturne/nocturne](https://github.com/usenocturne/nocturne)), the custom firmware, background daemon (`nocturned`), Bluetooth iAP2/SPP stack, and Chromium Wayland kiosk environment that revived the Car Thing as an independent Bluetooth controller and smart display. Licensed under **GPL-3.0** and subject to the Nocturne API terms.
 
 ### 🔌 Hardware Reverse Engineering & Bootloader Toolchain
 - **[frederic (superbird-bulkcmd)](https://github.com/frederic/superbird-bulkcmd):** Groundbreaking reverse engineering of the Amlogic bootloader, u-boot commands, and initial memory dumps.
@@ -401,8 +401,24 @@ This repository provides an application suite, 3D coverflow launcher, and offlin
 
 ---
 
-## 📜 Open Source License Compliance & Disclaimer
+## 📜 Open Source License Inventory & Disclaimer
 
-- **Car Thing Apps Scope:** The custom web applications, launcher code, scripts, and audio tools developed specifically for this repository are licensed under the **MIT License**.
-- **Upstream Firmware & Kernel:** This repository does NOT claim copyright or authorship over Nocturne OS, Joey Eamigh's `yocto-superbird` Linux kernel, or upstream system binaries. All upstream components retain their original licenses (GPLv2 for Linux kernel, MIT for `flashthing`, Apache-2.0 for Chromium). Source code for the underlying operating system and toolchains is available at the upstream repositories linked above.
+This project is organized as a multi-licensed repository. The table below delineates the exact licensing terms for each component:
+
+| Component | Project / Author | License | Notes / Upstream Link |
+| :--- | :--- | :--- | :--- |
+| **Original Code & Launcher** | Gilzone | **MIT License** | Custom launcher, tools, audio scripts, installers |
+| **FlashThing CLI** | Joey Eamigh | **MIT License** | See `tools/flashing/LICENSE-FLASHTHING.txt` |
+| **Yocto-Superbird BSP** | Joey Eamigh & contributors | **GPL-2.0 / MIT** | [JoeyEamigh/yocto-superbird](https://github.com/JoeyEamigh/yocto-superbird) |
+| **Nocturne OS** | Brandon Saldan, Neel Patel, Dominic Frye | **GPL-3.0** | [usenocturne/nocturne](https://github.com/usenocturne/nocturne) |
+| **v86 x86 PC Emulator** | Fabian Hemmer (`copy`) | **BSD-2-Clause** | [copy/v86](https://github.com/copy/v86) |
+| **KolibriOS** | KolibriOS Team | **GPL-2.0** | [kolibrios.org](https://kolibrios.org/) |
+| **Bergamot Translator** | The Bergamot Project | **MPL-2.0** | [browser.mt](https://browser.mt/) |
+| **TensorFlow.js / KWS** | Google LLC | **Apache 2.0** | [tensorflow/tfjs-models](https://github.com/tensorflow/tfjs-models) |
+| **Binjgb GameBoyCore** | Ben Smith (`binji`) | **MIT License** | [binji/binjgb](https://github.com/binji/binjgb) |
+| **2048 Game** | Gabriele Cirulli | **MIT License** | [gabrielecirulli/2048](https://github.com/gabrielecirulli/2048) |
+| **Game Preservation Assets** | Respective Original Studios | **Fair Use / Preservation** | All trademarks belong to original creators |
+
+See the complete [LICENSE](LICENSE) file in the root directory for full legal notices.
+
 

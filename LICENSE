@@ -1,0 +1,82 @@
+MIT License
+
+Copyright (c) 2026 Gilzone (https://github.com/Gilzone/carthing-apps)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+==============================================================================
+THIRD-PARTY COMPONENTS AND OPEN SOURCE LICENSES
+==============================================================================
+
+This repository includes, interfaces with, or references third-party open-source
+components, each governed by its own respective license:
+
+1. FlashThing CLI (tools/flashing/flashthing-cli.exe)
+   - Author: Joey Eamigh (https://github.com/JoeyEamigh/flashthing)
+   - License: MIT License (see tools/flashing/LICENSE-FLASHTHING.txt)
+   - Copyright (c) 2024 Joey Eamigh
+
+2. Yocto-Superbird (Foundational Linux Board Support Package & Image)
+   - Author: Joey Eamigh (https://github.com/JoeyEamigh/yocto-superbird)
+   - License: GPL-2.0 / MIT
+   - Copyright (c) Joey Eamigh and contributors
+
+3. Nocturne OS (Base System Firmware, Daemon & Kiosk Environment)
+   - Authors: Brandon Saldan, Neel Patel, Dominic Frye
+   - Repository: https://github.com/usenocturne/nocturne
+   - Website: https://usenocturne.com/
+   - License: GNU General Public License v3.0 (GPL-3.0) & Nocturne API License
+   - Copyright (c) Nocturne Team
+
+4. v86 (x86 Virtual PC Emulator)
+   - Author: Fabian Hemmer / copy (https://github.com/copy/v86)
+   - License: BSD 2-Clause "Simplified" License
+   - Copyright (c) 2012-2024, Fabian Hemmer
+
+5. KolibriOS (32-bit x86 Graphical Operating System)
+   - Authors: KolibriOS Team (https://kolibrios.org/)
+   - License: GNU General Public License v2.0 (GPL-2.0)
+   - Copyright (c) KolibriOS Team
+
+6. Bergamot Translator (tools/translator/)
+   - Project: The Bergamot Project (https://browser.mt/)
+   - License: Mozilla Public License 2.0 (MPL-2.0)
+
+7. TensorFlow.js & Speech Commands (tools/kws/)
+   - Project: Google LLC / TensorFlow (https://github.com/tensorflow/tfjs-models)
+   - License: Apache License 2.0
+   - Copyright (c) Google LLC
+
+8. Binjgb / GameBoyCore (tools/retro_player.html)
+   - Author: Ben Smith / binji (https://github.com/binji/binjgb)
+   - License: MIT License
+   - Copyright (c) 2016 Ben Smith
+
+9. 2048
+   - Author: Gabriele Cirulli (https://github.com/gabrielecirulli/2048)
+   - License: MIT License
+   - Copyright (c) 2014 Gabriele Cirulli
+
+10. Superbird Toolchain & Reverse Engineering
+    - Authors: Frederic (superbird-bulkcmd), Bishop Dynamics (superbird-tool), Superna9999 (pyamlboot), Pete Batard (libwdi)
+    - Licenses: MIT / GPLv2 / LGPL-2.1
+
+11. Third-Party Game Preservation Assets
+    - Original trademarks, character designs, and assets remain the property of their
+      respective creators (Innersloth, Hipster Whale, Google, Halfbrick, Lima Sky, New Star Games).
