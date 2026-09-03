@@ -6,34 +6,34 @@
   <title>Recorder</title>
   <link rel="stylesheet" href="tools.css">
   <style>
-    .stage { display: flex; gap: 16px; padding: 12px 16px; }
+    .stage { display: flex; gap: 16px; padding: 10px 16px; }
     .left {
       width: 290px;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 10px;
+      gap: 8px;
       background: #0f172a;
       border: 1px solid #1e293b;
       border-radius: 16px;
-      padding: 16px 12px;
+      padding: 12px;
     }
     .rec {
-      width: 130px;
-      height: 130px;
+      width: 120px;
+      height: 120px;
       border-radius: 50%;
-      border: 6px solid #f43f5e;
+      border: 5px solid #f43f5e;
       background: #1a0a0e;
       color: #fda4af;
-      font: 800 22px system-ui;
+      font: 800 20px system-ui;
       letter-spacing: .08em;
       cursor: pointer;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 4px;
+      gap: 2px;
       box-shadow: 0 0 24px rgba(244, 63, 94, 0.2);
       transition: transform 0.15s, background 0.2s;
     }
@@ -53,27 +53,45 @@
       text-align: center;
       font-size: 13px;
       color: #94a3b8;
-      min-height: 38px;
+      min-height: 36px;
       line-height: 1.35;
-      padding: 0 6px;
+      padding: 0 4px;
     }
     .status.live { color: #38bdf8; font-weight: 700; }
     .status.saved { color: #4ade80; font-weight: 700; }
     .status.warn { color: #f59e0b; font-weight: 600; }
 
     #timer {
-      font: 900 32px monospace;
+      font: 900 30px monospace;
       color: #f8fafc;
       letter-spacing: 2px;
     }
 
     #vu {
       width: 250px;
-      height: 36px;
+      height: 34px;
       border-radius: 8px;
       background: #020617;
       border: 1px solid #1e293b;
     }
+
+    .dsp-bar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 2px;
+    }
+    .gain-btn {
+      background: #1e293b;
+      color: #38bdf8;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .gain-btn:active { background: #334155; }
 
     .list-container {
       flex: 1;
@@ -148,7 +166,6 @@
       font-size: 11px;
       color: #64748b;
       text-align: center;
-      margin-top: 2px;
     }
   </style>
 </head>
@@ -168,7 +185,11 @@
         <span id="rec-label">REC</span>
       </button>
       <div id="timer">0:00</div>
-      <canvas id="vu" width="250" height="36"></canvas>
+      <canvas id="vu" width="250" height="34"></canvas>
+      <div class="dsp-bar">
+        <span style="font-size:11px; color:#64748b;">DSP:</span>
+        <button class="gain-btn" id="btn-gain" type="button">Studio Boost (+14dB)</button>
+      </div>
       <div class="status" id="status">Tap REC or push Dial to start.<br>Clips are saved to internal flash.</div>
       <div class="bottom-hint">Dial Push = REC/STOP · Dial Turn = Scroll</div>
     </div>
@@ -186,7 +207,7 @@
     var HOME = "file:///opt/nocturne/webapps/player/index.html#tools";
     document.getElementById("home").onclick = function () { location.href = HOME; };
 
-    var stream = null, rec = null, chunks = [], t0 = 0, tick = 0, dbp = null;
+    var stream = null, processedStream = null, rec = null, chunks = [], t0 = 0, tick = 0, dbp = null;
     var recBtn = document.getElementById("rec");
     var recLabel = document.getElementById("rec-label");
     var statusEl = document.getElementById("status");
@@ -195,7 +216,24 @@
     var clipCountEl = document.getElementById("clip-count");
     var vuCanvas = document.getElementById("vu");
     var vuCtx = vuCanvas.getContext("2d");
-    var audioCtx = null, analyser = null, animId = null;
+    var btnGain = document.getElementById("btn-gain");
+    
+    // DSP nodes
+    var audioCtx = null, sourceNode = null, filterNode = null, gainNode = null, compressorNode = null, analyser = null, destNode = null, animId = null;
+
+    var GAIN_MODES = [
+      { label: "Studio Boost (+14dB)", val: 5.0 },
+      { label: "High Sensitivity (+22dB)", val: 12.0 },
+      { label: "Raw Bypass (0dB)", val: 1.0 }
+    ];
+    var currentGainIdx = 0;
+
+    btnGain.onclick = function () {
+      currentGainIdx = (currentGainIdx + 1) % GAIN_MODES.length;
+      var m = GAIN_MODES[currentGainIdx];
+      btnGain.textContent = m.label;
+      if (gainNode) gainNode.gain.value = m.val;
+    };
 
     var lastActionTime = 0;
 
@@ -263,18 +301,49 @@
       return "";
     }
 
-    function setupVisualizer() {
+    // Set up Studio DSP pipeline: High-pass + Pre-amp Gain + Compressor
+    function setupAudioGraph() {
       if (!stream) return;
       try {
         if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         if (audioCtx.state === "suspended") audioCtx.resume();
-        var source = audioCtx.createMediaStreamSource(stream);
+
+        sourceNode = audioCtx.createMediaStreamSource(stream);
+
+        // 1. High-Pass Filter: Cuts sub-85Hz mechanical vibration & electrical hum
+        filterNode = audioCtx.createBiquadFilter();
+        filterNode.type = "highpass";
+        filterNode.frequency.value = 85;
+
+        // 2. Studio Pre-Amp Gain (+14dB boost for quiet MEMS mic)
+        gainNode = audioCtx.createGain();
+        gainNode.gain.value = GAIN_MODES[currentGainIdx].val;
+
+        // 3. Studio Dynamics Compressor: Prevents clipping, levels whispered words
+        compressorNode = audioCtx.createDynamicsCompressor();
+        compressorNode.threshold.value = -24;
+        compressorNode.knee.value = 30;
+        compressorNode.ratio.value = 4;
+        compressorNode.attack.value = 0.003;
+        compressorNode.release.value = 0.25;
+
+        // 4. Analyser for VU meter
         analyser = audioCtx.createAnalyser();
         analyser.fftSize = 64;
-        source.connect(analyser);
+
+        // 5. Destination stream for MediaRecorder
+        destNode = audioCtx.createMediaStreamDestination();
+
+        sourceNode.connect(filterNode);
+        filterNode.connect(gainNode);
+        gainNode.connect(compressorNode);
+        compressorNode.connect(analyser);
+        compressorNode.connect(destNode);
+
+        processedStream = destNode.stream;
         drawVu();
       } catch (err) {
-        console.warn("Visualizer init error:", err);
+        console.warn("DSP init error:", err);
       }
     }
 
@@ -305,9 +374,9 @@
 
       for (var i = 0; i < bufferLength; i++) {
         var barHeight = (dataArray[i] / 255) * h;
-        var r = Math.min(255, 50 + dataArray[i] * 1.2);
-        var g = Math.max(20, 200 - dataArray[i] * 0.5);
-        var b = Math.max(100, 255 - dataArray[i] * 0.3);
+        var r = Math.min(255, 40 + dataArray[i] * 1.3);
+        var g = Math.max(20, 210 - dataArray[i] * 0.4);
+        var b = Math.max(80, 255 - dataArray[i] * 0.2);
         vuCtx.fillStyle = "rgb(" + Math.round(r) + "," + Math.round(g) + "," + Math.round(b) + ")";
         vuCtx.fillRect(x, h - barHeight, barWidth - 1, barHeight);
         x += barWidth + 1;
@@ -322,10 +391,19 @@
           statusEl.textContent = "Mic API not supported in browser.";
           return;
         }
-        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        setupVisualizer();
+        // Critical: disable WebRTC destructive noise gate and echo cancellation
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: false,
+            noiseSuppression: false,
+            autoGainControl: false,
+            channelCount: 1,
+            sampleRate: 48000
+          }
+        });
+        setupAudioGraph();
         statusEl.className = "status";
-        statusEl.textContent = "Mic ready! Tap REC or push Dial to record.";
+        statusEl.textContent = "Mic ready (DSP Active)! Tap REC or push Dial.";
       } catch (err) {
         statusEl.className = "status warn";
         statusEl.textContent = "Mic error: " + (err.message || err.name);
@@ -354,15 +432,17 @@
 
     function startRecording() {
       chunks = [];
-      var opts = {};
+      var opts = { audioBitsPerSecond: 128000 };
       var m = mime();
       if (m) opts.mimeType = m;
 
+      var targetStream = processedStream || stream;
+
       try {
-        rec = new MediaRecorder(stream, opts);
+        rec = new MediaRecorder(targetStream, opts);
       } catch (e) {
         try {
-          rec = new MediaRecorder(stream);
+          rec = new MediaRecorder(targetStream);
         } catch (e2) {
           statusEl.className = "status warn";
           statusEl.textContent = "MediaRecorder unavailable.";
@@ -414,7 +494,7 @@
         recLabel.textContent = "STOP";
         document.getElementById("rec-icon").textContent = "■";
         statusEl.className = "status live";
-        statusEl.textContent = "● RECORDING LIVE… Tap STOP when done.";
+        statusEl.textContent = "● RECORDING STUDIO AUDIO… Tap STOP when done.";
         tick = setInterval(function () {
           timerEl.textContent = fmt(Date.now() - t0);
         }, 150);
