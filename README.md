@@ -139,6 +139,24 @@ The custom Chromium kiosk shell runs native 800×480 with GPU hardware accelerat
   <img src="docs/screenshots/tool_voice_cmds_live.png" width="70%" alt="Voice Commands on Car Thing" />
 </p>
 
+---
+
+### 🏎️ Cyber Drive: Hands-Free Voice Racer (Extras Tab)
+- **100% Hands-Free Racing on Your Dashboard:** Pilot a glowing cyberpunk cyber vehicle down an 800×480 synthwave grid highway purely by shouting commands:
+  - **"LEFT!" / "RIGHT!"** ➔ Instant lane drift dodge
+  - **"UP!"** ➔ Hydraulic leap over roadblocks & spike barriers
+  - **"GO!"** ➔ Hyperdrive Nitro Boost with particle thrusters
+  - **"STOP!"** ➔ Matrix bullet-time drift brake
+  - **"DOWN!"** ➔ Activate EMP energy shield
+  - **"YES!"** ➔ Say "YES" to instantly restart after a crash!
+- **Hardware-Accelerated 3D Synthwave Engine:** Locked at a silky-smooth 60 FPS on the Mali-G31 GPU with procedural retro synthesizer sound effects and chiptune engine hum.
+- **Hybrid Controls:** Steer with your voice, or turn the physical rotary dial and tap the screen for silent play.
+
+<p align="center">
+  <img src="docs/screenshots/game_cyberdrive_live.png" width="70%" alt="Cyber Drive Hands-Free Voice Racer on Car Thing" />
+</p>
+
+
 
 ---
 

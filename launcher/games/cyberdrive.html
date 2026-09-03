@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=800, height=480, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Cyber Drive: Voice Racer</title>
+  <style>
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body {
+      margin: 0; padding: 0; width: 800px; height: 480px; overflow: hidden;
+      background: #05050d; color: #fff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      user-select: none; -webkit-user-select: none;
+    }
+    #c { display: block; width: 800px; height: 480px; }
+    
+    /* Overlay HUD */
+    #hud {
+      position: absolute; inset: 0; pointer-events: none;
+      display: flex; flex-direction: column; justify-content: space-between; padding: 16px 20px;
+    }
+    .hud-top {
+      display: flex; justify-content: space-between; align-items: flex-start;
+    }
+    .score-box {
+      background: rgba(15, 23, 42, 0.85); border: 2px solid #0284c7; border-radius: 14px;
+      padding: 8px 16px; backdrop-filter: blur(8px);
+    }
+    .score-label { font-size: 11px; font-weight: 700; color: #38bdf8; text-transform: uppercase; letter-spacing: 1px; }
+    .score-val { font-size: 26px; font-weight: 900; color: #f8fafc; font-variant-numeric: tabular-nums; }
+    
+    /* Voice Command Callout */
+    .voice-callout {
+      background: rgba(15, 23, 42, 0.9); border: 2px solid #38bdf8; border-radius: 20px;
+      padding: 6px 18px; display: flex; align-items: center; gap: 8px; box-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
+      transition: transform 0.15s ease, border-color 0.15s ease;
+    }
+    .voice-callout.lit {
+      transform: scale(1.15); border-color: #10b981; box-shadow: 0 0 30px rgba(16, 185, 129, 0.7);
+    }
+    .voice-dot { width: 12px; height: 12px; border-radius: 50%; background: #10b981; }
+    .voice-text { font-size: 18px; font-weight: 900; color: #38bdf8; letter-spacing: 1px; }
+
+    .speed-box {
+      background: rgba(15, 23, 42, 0.85); border: 2px solid #f43f5e; border-radius: 14px;
+      padding: 8px 16px; text-align: right; backdrop-filter: blur(8px);
+    }
+    .speed-val { font-size: 26px; font-weight: 900; color: #f43f5e; font-variant-numeric: tabular-nums; }
+
+    /* Overlay Screens (Start & Game Over) */
+    .overlay {
+      position: absolute; inset: 0; background: rgba(5, 5, 13, 0.88); backdrop-filter: blur(10px);
+      display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+      padding: 20px; pointer-events: auto;
+    }
+    .overlay h1 {
+      font-size: 48px; font-weight: 900; margin: 0 0 6px 0;
+      background: linear-gradient(135deg, #38bdf8, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      text-shadow: 0 0 30px rgba(56,189,248,0.5); letter-spacing: 2px;
+    }
+    .overlay p { font-size: 16px; color: #94a3b8; margin: 0 0 20px 0; max-width: 580px; line-height: 1.4; }
+    .cmd-list {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 24px; width: 620px;
+    }
+    .cmd-card {
+      background: #0f172a; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 10px;
+    }
+    .cmd-word { font-size: 16px; font-weight: 900; color: #38bdf8; }
+    .cmd-desc { font-size: 11px; color: #64748b; text-transform: uppercase; margin-top: 2px; }
+    
+    .btn-play {
+      background: linear-gradient(135deg, #0284c7, #2563eb); color: #fff; border: 0; padding: 14px 36px;
+      border-radius: 30px; font-size: 18px; font-weight: 900; cursor: pointer; letter-spacing: 1px;
+      box-shadow: 0 0 25px rgba(2, 132, 199, 0.6); transition: transform 0.1s ease;
+    }
+    .btn-play:active { transform: scale(0.96); }
+
+    .btn-exit {
+      background: rgba(15, 23, 42, 0.85); border: 2px solid rgba(255,255,255,0.2);
+      color: #cbd5e1; border-radius: 14px; padding: 8px 16px; font-size: 13px; font-weight: 800;
+      cursor: pointer; pointer-events: auto; backdrop-filter: blur(8px); display: flex; align-items: center; gap: 4px;
+      height: 48px;
+    }
+    .btn-exit:active { background: #334155; }
+  </style>
+
+
+  <!-- Offline file:// fetch polyfill for TensorFlow.js Speech Commands -->
+  <script>
+    const _nativeFetch = window.fetch;
+    window.fetch = function(url, options) {
+      if (typeof url === 'string') {
+        let localPath = url;
+        if (url.includes('local-kws/')) {
+          localPath = '../tools/kws/' + url.split('local-kws/')[1];
+        }
+        if (localPath.startsWith('../tools/kws/') || localPath.startsWith('kws/') || localPath.startsWith('file://') || !localPath.startsWith('http')) {
+          return new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open('GET', localPath);
+            xhr.responseType = 'arraybuffer';
+            xhr.onload = () => {
+              if (xhr.status === 200 || xhr.status === 0) {
+                resolve(new Response(xhr.response, {
+                  status: 200,
+                  headers: { 'Content-Type': localPath.endsWith('.json') ? 'application/json' : 'application/octet-stream' }
+                }));
+              } else {
+                reject(new Error('XHR error ' + xhr.status + ' for ' + localPath));
+              }
+            };
+            xhr.onerror = () => reject(new Error('XHR network error for ' + localPath));
+            xhr.send();
+          });
+        }
+      }
+      return _nativeFetch.apply(this, arguments);
+    };
+  </script>
+
+  <!-- TensorFlow.js & Speech Commands (from tools/kws) -->
+  <script src="../tools/kws/tf.min.js"></script>
+  <script src="../tools/kws/speech-commands.min.js"></script>
+</head>
+<body>
+  <canvas id="c" width="800" height="480"></canvas>
+
+  <div id="hud">
+    <div class="hud-top">
+      <div style="display:flex; gap:12px; align-items:center;">
+        <button class="btn-exit" id="btn-exit">← EXIT</button>
+        <div class="score-box">
+          <div class="score-label">DISTANCE</div>
+          <div class="score-val" id="hud-score">0 m</div>
+        </div>
+      </div>
+      <div class="voice-callout" id="voice-hud">
+        <div class="voice-dot"></div>
+        <div class="voice-text" id="voice-hud-text">MIC ACTIVE</div>
+      </div>
+      <div class="speed-box">
+        <div class="score-label">SPEED</div>
+        <div class="speed-val" id="hud-speed">120 MPH</div>
+      </div>
+    </div>
+    <div></div>
+  </div>
+
+
+  <!-- Start Screen -->
+  <div class="overlay" id="screen-start">
+    <h1>CYBER DRIVE</h1>
+    <p>The Hands-Free Neon Voice Racer for Spotify Car Thing.<br>Steer, jump, and turbocharge purely with your voice!</p>
+    
+    <div class="cmd-list">
+      <div class="cmd-card"><div class="cmd-word">"LEFT" / "RIGHT"</div><div class="cmd-desc">Dodge Traffic & Lasers</div></div>
+      <div class="cmd-card"><div class="cmd-word">"UP"</div><div class="cmd-desc">Hydraulic Road Jump</div></div>
+      <div class="cmd-card"><div class="cmd-word">"GO"</div><div class="cmd-desc">Nitro Hyperdrive Boost</div></div>
+      <div class="cmd-card"><div class="cmd-word">"STOP"</div><div class="cmd-desc">Bullet-Time Drift Brake</div></div>
+      <div class="cmd-card"><div class="cmd-word">"DOWN"</div><div class="cmd-desc">EMP Shield Barrier</div></div>
+      <div class="cmd-card"><div class="cmd-word">"YES"</div><div class="cmd-desc">Instant Play Again</div></div>
+    </div>
+
+    <button class="btn-play" id="btn-start">START RACING 🏎️</button>
+    <div style="font-size: 12px; color: #64748b; margin-top: 14px;">(Tip: You can also turn the Dial or swipe screen)</div>
+  </div>
+
+  <!-- Game Over Screen -->
+  <div class="overlay" id="screen-gameover" style="display:none;">
+    <h1 style="background: linear-gradient(135deg, #f43f5e, #fb923c); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">SYSTEM CRITICAL</h1>
+    <p>Your cyber vehicle was decommissioned.</p>
+    
+    <div style="display:flex; gap:20px; margin-bottom: 24px;">
+      <div class="score-box" style="min-width: 140px;">
+        <div class="score-label">FINAL DISTANCE</div>
+        <div class="score-val" id="go-score">0 m</div>
+      </div>
+      <div class="score-box" style="min-width: 140px; border-color: #eab308;">
+        <div class="score-label">BEST RECORD</div>
+        <div class="score-val" id="go-best" style="color:#eab308;">0 m</div>
+      </div>
+    </div>
+
+    <button class="btn-play" id="btn-restart">SAY "YES" OR TAP TO RETRY 🔄</button>
+  </div>
+
+  <script>
+    const HOME_URL = "file:///opt/nocturne/webapps/player/index.html#extras";
+    document.getElementById("btn-exit").onclick = () => { location.href = HOME_URL; };
+
+    const canvas = document.getElementById("c");
+    const ctx = canvas.getContext("2d");
+
+    // HUD elements
+    const hudScore = document.getElementById("hud-score");
+    const hudSpeed = document.getElementById("hud-speed");
+    const voiceHud = document.getElementById("voice-hud");
+    const voiceHudText = document.getElementById("voice-hud-text");
+    const screenStart = document.getElementById("screen-start");
+    const screenGameOver = document.getElementById("screen-gameover");
+    const goScore = document.getElementById("go-score");
+    const goBest = document.getElementById("go-best");
+
+    // Audio Synthesizer (Zero asset dependencies!)
+    let audioCtx = null;
+    function playSynthBeep(freq, type, duration, vol=0.15) {
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === "suspended") audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch(e) {}
+    }
+
+    function sfxJump() {
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.25);
+        gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.25);
+      } catch(e) {}
+    }
+
+    function sfxNitro() {
+      playSynthBeep(440, "sawtooth", 0.4, 0.2);
+    }
+
+    function sfxCrash() {
+      playSynthBeep(80, "square", 0.5, 0.3);
+    }
+
+    // Lane Definitions: 4 Lanes across 800px width
+    const LANES = [190, 330, 470, 610];
+    let currentLane = 1;
+    let targetX = LANES[1];
+    let playerX = LANES[1];
+    let playerY = 390;
+    let playerZ = 0; // Jump height
+    let jumpVel = 0;
+    let isJumping = false;
+    let hasShield = false;
+    let shieldTimer = 0;
+
+    let gameState = "start"; // start, play, gameover
+    let score = 0;
+    let bestScore = parseInt(localStorage.getItem("cd_best") || "0", 10);
+    let speed = 120; // MPH
+    let baseSpeed = 120;
+    let targetSpeed = 120;
+    let roadOffset = 0;
+
+    let obstacles = [];
+    let particles = [];
+    let stars = [];
+
+    // Initialize Starfield
+    for (let s = 0; s < 40; s++) {
+      stars.push({
+        x: Math.random() * 800,
+        y: Math.random() * 200,
+        size: Math.random() * 2 + 1,
+        alpha: Math.random() * 0.8 + 0.2
+      });
+    }
+
+    // Voice Recognizer
+    let recognizer = null;
+    let voiceActive = false;
+
+    async function initVoiceRecognizer() {
+      try {
+        voiceHudText.textContent = "LOADING NEURAL MODEL...";
+        recognizer = speechCommands.create(
+          "BROWSER_FFT",
+          undefined,
+          "https://local-kws/model.json",
+          "https://local-kws/metadata.json"
+        );
+        await recognizer.ensureModelLoaded();
+        voiceHudText.textContent = "VOICE ACTIVE 🎙️";
+        voiceActive = true;
+        listenCommands();
+      } catch (err) {
+        console.error("Voice load failed:", err);
+        voiceHudText.textContent = "VOICE READY";
+      }
+    }
+
+    function listenCommands() {
+      if (!recognizer) return;
+      recognizer.listen(result => {
+        const words = recognizer.wordLabels();
+        const scores = result.scores;
+        let maxScore = -1, bestWord = "";
+        for (let i = 0; i < scores.length; i++) {
+          if (words[i] === "_background_noise_" || words[i] === "_unknown_") continue;
+          if (scores[i] > maxScore) {
+            maxScore = scores[i];
+            bestWord = words[i];
+          }
+        }
+        if (maxScore > 0.65 && bestWord) {
+          triggerVoiceCommand(bestWord, maxScore);
+        }
+      }, {
+        includeSpectrogram: false,
+        probabilityThreshold: 0.65,
+        invokeCallbackOnNoiseAndUnknown: false,
+        overlapFactor: 0.5
+      });
+    }
+
+    function triggerVoiceCommand(word, score) {
+      voiceHudText.textContent = word.toUpperCase() + `! ${(score*100).toFixed(0)}%`;
+      voiceHud.classList.add("lit");
+      setTimeout(() => voiceHud.classList.remove("lit"), 800);
+
+      if (gameState === "start") {
+        if (word === "go" || word === "yes") startGame();
+        return;
+      }
+      if (gameState === "gameover") {
+        if (word === "yes" || word === "go") restartGame();
+        return;
+      }
+
+      // In-game Actions
+      if (word === "left") {
+        shiftLane(-1);
+      } else if (word === "right") {
+        shiftLane(1);
+      } else if (word === "up") {
+        doJump();
+      } else if (word === "go") {
+        doNitro();
+      } else if (word === "stop") {
+        doBrake();
+      } else if (word === "down") {
+        doShield();
+      }
+    }
+
+    function shiftLane(dir) {
+      const next = currentLane + dir;
+      if (next >= 0 && next < LANES.length) {
+        currentLane = next;
+        targetX = LANES[currentLane];
+        playSynthBeep(dir > 0 ? 380 : 320, "triangle", 0.08);
+      }
+    }
+
+    function doJump() {
+      if (!isJumping) {
+        isJumping = true;
+        jumpVel = 14;
+        sfxJump();
+      }
+    }
+
+    function doNitro() {
+      targetSpeed = 220;
+      sfxNitro();
+      for (let i = 0; i < 20; i++) {
+        particles.push({
+          x: playerX + (Math.random() - 0.5) * 30,
+          y: playerY + 30,
+          vx: (Math.random() - 0.5) * 6,
+          vy: Math.random() * 8 + 6,
+          life: 1.0,
+          color: "#38bdf8"
+        });
+      }
+    }
+
+    function doBrake() {
+      targetSpeed = 60;
+      playSynthBeep(180, "sawtooth", 0.2);
+    }
+
+    function doShield() {
+      hasShield = true;
+      shieldTimer = 180; // 3 seconds
+      playSynthBeep(520, "sine", 0.3);
+    }
+
+    // Hardware Controls (Wheel & Touch)
+    window.addEventListener("wheel", (e) => {
+      e.preventDefault();
+      if (e.deltaY > 0) shiftLane(1);
+      else if (e.deltaY < 0) shiftLane(-1);
+    }, { passive: false });
+
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        if (gameState === "start") startGame();
+        else if (gameState === "gameover") restartGame();
+        else doNitro();
+      } else if (e.key === "ArrowLeft") shiftLane(-1);
+      else if (e.key === "ArrowRight") shiftLane(1);
+      else if (e.key === "ArrowUp") doJump();
+      else if (e.key === "ArrowDown") doBrake();
+    });
+
+    // Touch controls
+    canvas.addEventListener("pointerdown", (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      if (gameState === "play") {
+        if (clickX < 400) shiftLane(-1);
+        else shiftLane(1);
+      }
+    });
+
+    document.getElementById("btn-start").onclick = startGame;
+    document.getElementById("btn-restart").onclick = restartGame;
+
+    function startGame() {
+      gameState = "play";
+      screenStart.style.display = "none";
+      screenGameOver.style.display = "none";
+      score = 0;
+      speed = baseSpeed;
+      targetSpeed = baseSpeed;
+      currentLane = 1;
+      playerX = LANES[1];
+      targetX = LANES[1];
+      playerZ = 0;
+      isJumping = false;
+      obstacles = [];
+      particles = [];
+      hasShield = false;
+    }
+
+    function restartGame() {
+      startGame();
+    }
+
+    function gameOver() {
+      gameState = "gameover";
+      sfxCrash();
+      screenGameOver.style.display = "flex";
+      goScore.textContent = Math.floor(score) + " m";
+      if (score > bestScore) {
+        bestScore = Math.floor(score);
+        localStorage.setItem("cd_best", String(bestScore));
+      }
+      goBest.textContent = bestScore + " m";
+    }
+
+    // Spawning Obstacles
+    let spawnTimer = 0;
+    function spawnObstacle() {
+      const lane = Math.floor(Math.random() * LANES.length);
+      const type = Math.random() > 0.35 ? "barrier" : "drone";
+      obstacles.push({
+        lane: lane,
+        x: LANES[lane],
+        y: 190, // Horizon Y
+        scale: 0.15,
+        type: type,
+        speedFactor: type === "drone" ? 0.7 : 1.0,
+        color: type === "barrier" ? "#f43f5e" : "#fbbf24"
+      });
+    }
+
+    // Main Game Loop (60 FPS)
+    let lastTime = performance.now();
+
+    function update(dt) {
+      if (gameState !== "play") return;
+
+      // Smooth Speed Interpolation
+      speed += (targetSpeed - speed) * 0.05;
+      if (targetSpeed > baseSpeed) targetSpeed -= 0.5; // Drain nitro
+      if (targetSpeed < baseSpeed) targetSpeed += 0.4; // Release brake
+
+      score += (speed * dt) * 0.15;
+      roadOffset = (roadOffset + speed * dt * 0.4) % 40;
+
+      hudScore.textContent = Math.floor(score) + " m";
+      hudSpeed.textContent = Math.floor(speed) + " MPH";
+
+      // Player X interpolation
+      playerX += (targetX - playerX) * 0.22;
+
+      // Jump Physics
+      if (isJumping) {
+        playerZ += jumpVel;
+        jumpVel -= 0.85; // Gravity
+        if (playerZ <= 0) {
+          playerZ = 0;
+          isJumping = false;
+        }
+      }
+
+      // Shield timer
+      if (hasShield) {
+        shieldTimer--;
+        if (shieldTimer <= 0) hasShield = false;
+      }
+
+      // Spawning
+      spawnTimer += dt * (speed / 100);
+      if (spawnTimer > 1.4) {
+        spawnTimer = 0;
+        spawnObstacle();
+      }
+
+      // Obstacle Updates
+      for (let i = obstacles.length - 1; i >= 0; i--) {
+        const obs = obstacles[i];
+        obs.y += (speed * 0.045 * obs.speedFactor) * (obs.scale * 3.2);
+        obs.scale = 0.15 + ((obs.y - 190) / 240) * 0.85;
+
+        // Collision Check
+        if (obs.y > 360 && obs.y < 425 && Math.abs(playerX - obs.x) < 45) {
+          if (isJumping && playerZ > 45 && obs.type === "barrier") {
+            // Jumped cleanly over!
+            score += 50;
+            playSynthBeep(600, "sine", 0.05);
+          } else if (hasShield) {
+            // Shield absorbed hit
+            hasShield = false;
+            obstacles.splice(i, 1);
+            playSynthBeep(300, "square", 0.2);
+            continue;
+          } else {
+            gameOver();
+            return;
+          }
+        }
+
+        if (obs.y > 490) {
+          obstacles.splice(i, 1);
+        }
+      }
+
+      // Particle Updates
+      for (let p = particles.length - 1; p >= 0; p--) {
+        const pt = particles[p];
+        pt.x += pt.vx;
+        pt.y += pt.vy;
+        pt.life -= 0.03;
+        if (pt.life <= 0) particles.splice(p, 1);
+      }
+    }
+
+    function render() {
+      ctx.fillStyle = "#05050d";
+      ctx.fillRect(0, 0, 800, 480);
+
+      // 1. Starfield
+      ctx.fillStyle = "#fff";
+      stars.forEach(s => {
+        ctx.globalAlpha = s.alpha;
+        ctx.fillRect(s.x, s.y, s.size, s.size);
+      });
+      ctx.globalAlpha = 1.0;
+
+      // 2. Synthwave Sun on Horizon
+      const sunGrad = ctx.createLinearGradient(400, 70, 400, 210);
+      sunGrad.addColorStop(0, "#f43f5e");
+      sunGrad.addColorStop(1, "#fbbf24");
+      ctx.fillStyle = sunGrad;
+      ctx.beginPath();
+      ctx.arc(400, 190, 65, Math.PI, 0, false);
+      ctx.fill();
+
+      // Sun scanlines
+      ctx.fillStyle = "#05050d";
+      for (let sl = 140; sl < 190; sl += 8) {
+        ctx.fillRect(330, sl, 140, 3);
+      }
+
+      // 3. Mountains Silhouette
+      ctx.fillStyle = "#110e26";
+      ctx.beginPath();
+      ctx.moveTo(0, 200);
+      ctx.lineTo(120, 160);
+      ctx.lineTo(260, 195);
+      ctx.lineTo(400, 175);
+      ctx.lineTo(540, 195);
+      ctx.lineTo(680, 150);
+      ctx.lineTo(800, 200);
+      ctx.lineTo(800, 210);
+      ctx.lineTo(0, 210);
+      ctx.fill();
+
+      // 4. Perspective Neon Highway
+      const horizonY = 200;
+      const roadTopLeft = 320, roadTopRight = 480;
+      const roadBottomLeft = 60, roadBottomRight = 740;
+
+      // Road Surface
+      ctx.fillStyle = "#0a0c18";
+      ctx.beginPath();
+      ctx.moveTo(roadTopLeft, horizonY);
+      ctx.lineTo(roadTopRight, horizonY);
+      ctx.lineTo(roadBottomRight, 480);
+      ctx.lineTo(roadBottomLeft, 480);
+      ctx.fill();
+
+      // Neon Outlines
+      ctx.strokeStyle = "#a855f7";
+      ctx.lineWidth = 4;
+      ctx.shadowColor = "#a855f7";
+      ctx.shadowBlur = 14;
+      ctx.beginPath();
+      ctx.moveTo(roadTopLeft, horizonY);
+      ctx.lineTo(roadBottomLeft, 480);
+      ctx.moveTo(roadTopRight, horizonY);
+      ctx.lineTo(roadBottomRight, 480);
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+
+      // Lane Divider Lines
+      ctx.strokeStyle = "rgba(56, 189, 248, 0.4)";
+      ctx.lineWidth = 2;
+      for (let l = 1; l < 4; l++) {
+        const topLX = roadTopLeft + (roadTopRight - roadTopLeft) * (l / 4);
+        const botLX = roadBottomLeft + (roadBottomRight - roadBottomLeft) * (l / 4);
+        ctx.beginPath();
+        ctx.moveTo(topLX, horizonY);
+        ctx.lineTo(botLX, 480);
+        ctx.stroke();
+      }
+
+      // Moving Grid Horizontal Lines
+      ctx.strokeStyle = "rgba(168, 85, 247, 0.35)";
+      ctx.lineWidth = 2;
+      for (let y = horizonY + (roadOffset % 15); y < 480; y += 18 + ((y - horizonY) * 0.12)) {
+        const ratio = (y - horizonY) / (480 - horizonY);
+        const left = roadTopLeft + (roadBottomLeft - roadTopLeft) * ratio;
+        const right = roadTopRight + (roadBottomRight - roadTopRight) * ratio;
+        ctx.beginPath();
+        ctx.moveTo(left, y);
+        ctx.lineTo(right, y);
+        ctx.stroke();
+      }
+
+      // 5. Render Obstacles
+      obstacles.forEach(obs => {
+        const w = 55 * obs.scale;
+        const h = 30 * obs.scale;
+        ctx.shadowColor = obs.color;
+        ctx.shadowBlur = 16 * obs.scale;
+        ctx.fillStyle = obs.color;
+        
+        if (obs.type === "barrier") {
+          // Road Spike Barrier
+          ctx.beginPath();
+          ctx.moveTo(obs.x - w, obs.y);
+          ctx.lineTo(obs.x, obs.y - h * 1.5);
+          ctx.lineTo(obs.x + w, obs.y);
+          ctx.fill();
+        } else {
+          // Cyber Drone
+          ctx.fillRect(obs.x - w/2, obs.y - h, w, h);
+          ctx.fillStyle = "#fff";
+          ctx.fillRect(obs.x - w/4, obs.y - h/2, w/2, h/3);
+        }
+        ctx.shadowBlur = 0;
+      });
+
+      // 6. Particles
+      particles.forEach(pt => {
+        ctx.globalAlpha = pt.life;
+        ctx.fillStyle = pt.color;
+        ctx.fillRect(pt.x, pt.y, 4, 4);
+      });
+      ctx.globalAlpha = 1.0;
+
+      // 7. Player Cyber Car
+      const carY = playerY - playerZ;
+      const carW = 60, carH = 36;
+
+      // Jump Shadow
+      if (playerZ > 0) {
+        ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
+        ctx.beginPath();
+        ctx.ellipse(playerX, playerY + 20, 32 * (1 - playerZ/150), 12 * (1 - playerZ/150), 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Neon Underglow
+      ctx.shadowColor = hasShield ? "#38bdf8" : "#06b6d4";
+      ctx.shadowBlur = 24;
+      ctx.fillStyle = hasShield ? "#38bdf8" : "#06b6d4";
+      ctx.beginPath();
+      ctx.ellipse(playerX, carY + 16, 36, 14, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+
+      // Car Body (Chiseled Cyber Car)
+      ctx.fillStyle = "#0f172a";
+      ctx.strokeStyle = "#38bdf8";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(playerX - carW/2, carY + carH/2);
+      ctx.lineTo(playerX - carW/3, carY - carH/2);
+      ctx.lineTo(playerX + carW/3, carY - carH/2);
+      ctx.lineTo(playerX + carW/2, carY + carH/2);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // Cyber Windshield
+      ctx.fillStyle = "#38bdf8";
+      ctx.beginPath();
+      ctx.moveTo(playerX - carW/4, carY - 2);
+      ctx.lineTo(playerX - carW/5, carY - carH/2.5);
+      ctx.lineTo(playerX + carW/5, carY - carH/2.5);
+      ctx.lineTo(playerX + carW/4, carY - 2);
+      ctx.closePath();
+      ctx.fill();
+
+      // Neon Tail Lights
+      ctx.fillStyle = "#f43f5e";
+      ctx.shadowColor = "#f43f5e";
+      ctx.shadowBlur = 12;
+      ctx.fillRect(playerX - carW/2.2, carY + carH/3, 14, 6);
+      ctx.fillRect(playerX + carW/2.2 - 14, carY + carH/3, 14, 6);
+      ctx.shadowBlur = 0;
+
+      // Shield Aura
+      if (hasShield) {
+        ctx.strokeStyle = "#38bdf8";
+        ctx.lineWidth = 3;
+        ctx.shadowColor = "#38bdf8";
+        ctx.shadowBlur = 18;
+        ctx.beginPath();
+        ctx.arc(playerX, carY, 44, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+      }
+    }
+
+    function loop(time) {
+      const dt = Math.min((time - lastTime) / 1000, 0.1);
+      lastTime = time;
+
+      update(dt);
+      render();
+
+      requestAnimationFrame(loop);
+    }
+
+    requestAnimationFrame(loop);
+    window.onload = initVoiceRecognizer;
+  </script>
+</body>
+</html>

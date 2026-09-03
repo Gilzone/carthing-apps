@@ -305,6 +305,14 @@
       "hint": "Custom HTML",
       "mark": "KO",
       "color": "#fb923c"
+    },
+    {
+      "tab": "extras",
+      "file": "games/cyberdrive.html",
+      "name": "Cyber Drive",
+      "hint": "Hands-Free Voice Racer (Shout to Steer!)",
+      "mark": "DRV",
+      "color": "#ec4899"
     }
   ]
 }
