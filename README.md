@@ -374,8 +374,9 @@ This repository provides an application suite, 3D coverflow launcher, and offlin
 ### 🛠️ Flashing Infrastructure & Base Operating System
 - **[Joey Eamigh (@JoeyEamigh / joeyeamigh)](https://github.com/JoeyEamigh):**
   - **[flashthing](https://github.com/JoeyEamigh/flashthing):** The core Rust flashing toolkit, CLI (`flashthing-cli`), Node bindings, and WebUSB browser flasher. Licensed under the MIT License ([tools/flashing/LICENSE-FLASHTHING.txt](tools/flashing/LICENSE-FLASHTHING.txt)).
-  - **[yocto-superbird](https://github.com/JoeyEamigh/yocto-superbird):** The foundational Yocto Board Support Package (BSP) and embedded Linux system image upon which modern Car Thing firmware distributions are based.
+  - **[yocto-superbird](https://github.com/JoeyEamigh/yocto-superbird):** The foundational Yocto Board Support Package (BSP) and embedded Linux system image upon which modern Car Thing firmware distributions are based. Created and maintained by **Joey Eamigh**, **[lmore377](https://github.com/lmore377)**, and **[Neel Patel (@68p)](https://github.com/68p)**.
   - **[bridgething](https://github.com/JoeyEamigh/bridgething)** & **[nixos-superbird](https://github.com/JoeyEamigh/nixos-superbird)**.
+
 
 ### 🐧 Nocturne OS Firmware & System Architecture
 - **[Nocturne Team (Brandon Saldan, Neel Patel, and Dominic Frye)](https://github.com/usenocturne/nocturne):**
@@ -415,8 +416,9 @@ This project is organized as a multi-licensed repository. The table below deline
 | :--- | :--- | :--- | :--- |
 | **Original Code & Launcher** | Gilzone | **MIT License** | Custom launcher, tools, audio scripts, installers |
 | **FlashThing CLI** | Joey Eamigh | **MIT License** | See `tools/flashing/LICENSE-FLASHTHING.txt` |
-| **Yocto-Superbird BSP** | Joey Eamigh & contributors | **GPL-2.0 / MIT** | [JoeyEamigh/yocto-superbird](https://github.com/JoeyEamigh/yocto-superbird) |
+| **Yocto-Superbird BSP** | Joey Eamigh, lmore377, Neel Patel (@68p) | **GPL-2.0 / MIT** | [JoeyEamigh/yocto-superbird](https://github.com/JoeyEamigh/yocto-superbird) |
 | **Nocturne OS** | Brandon Saldan, Neel Patel, Dominic Frye | **GPL-3.0** | [usenocturne/nocturne](https://github.com/usenocturne/nocturne) |
+
 | **libwdi (CTDrvInst)** | Pete Batard | **LGPL-3.0-or-later** | [pbatard/libwdi](https://github.com/pbatard/libwdi) |
 | **Decimen Optical Beam** | Evan Crawley (`Bash Alarmist`) & Steve Dakh | **AGPL-3.0-or-later** | [decimen-optical-transfer](https://github.com/bashalarmistalt/decimen-optical-transfer) |
 | **Morse Learn Trainer** | Google Creative Lab & Hello Monday | **Apache 2.0** | [morse-typing-trainer](https://github.com/googlecreativelab/morse-typing-trainer) |

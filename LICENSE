@@ -33,9 +33,11 @@ software and community preservation projects, each governed by its own license:
    - Copyright (c) 2024 Joey Eamigh
 
 2. Yocto-Superbird (Foundational Linux Board Support Package & Kernel Image)
-   - Author: Joey Eamigh (https://github.com/JoeyEamigh/yocto-superbird)
+   - Authors: Joey Eamigh, lmore377, Neel Patel (@68p)
+   - Repository: https://github.com/JoeyEamigh/yocto-superbird
    - License: GPL-2.0 / MIT
-   - Copyright (c) Joey Eamigh and contributors
+   - Copyright (c) Joey Eamigh, lmore377, Neel Patel, and contributors
+
 
 3. Nocturne OS (Base System Firmware, Background Daemon & Kiosk Environment)
    - Authors: Brandon Saldan, Neel Patel, Dominic Frye
