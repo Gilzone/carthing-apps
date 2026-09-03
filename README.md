@@ -390,14 +390,20 @@ This repository provides an application suite, 3D coverflow launcher, and offlin
 ### 🧩 Emulation, Machine Learning & Web Engines
 - **[Fabian Hemmer / copy (v86)](https://github.com/copy/v86):** Open-source x86 PC hardware emulator written in WebAssembly (BSD-2-Clause License).
 - **[KolibriOS Project](https://kolibrios.org/):** The 32-bit x86 graphical operating system written in assembly (GPLv2).
+- **[Ben Smith / binji (binjgb)](https://github.com/binji/binjgb):** Cycle-accurate Game Boy emulator in WebAssembly (MIT License).
+- **[Grant Galitz (GameBoy-Online)](https://github.com/taisel/GameBoy-Online):** Pure JavaScript GameBoy Color emulator core (MIT License).
+- **[Jeffrey Pfau / endrift (gbajs)](https://github.com/endrift/gbajs):** Game Boy Advance JavaScript emulator library (BSD-2-Clause License).
+- **[Ruffle Team](https://ruffle.rs/):** Open-source Flash Player emulator in Rust / WebAssembly (MIT / Apache-2.0).
 - **[Google TensorFlow.js & Speech Commands](https://github.com/tensorflow/tfjs-models):** Deep learning speech recognition models running locally via WebGL shaders (Apache 2.0 License).
 - **[The Bergamot Project](https://browser.mt/):** Neural machine translation engine compiled to WebAssembly (MPL-2.0 / LGPLv3).
-- **[Binjgb / GameBoyCore](https://github.com/binji/binjgb):** Cycle-accurate Game Boy emulator in WebAssembly (MIT License).
+- **[Evan Crawley / Bash Alarmist & Steve Dakh (Decimen Optical Transfer)](https://github.com/bashalarmistalt/decimen-optical-transfer):** Air-gapped animated QR optical data beam (AGPL-3.0-or-later, portions MIT).
+- **[Google Creative Lab & Hello Monday (Morse Typing Trainer)](https://github.com/googlecreativelab/morse-typing-trainer):** Tactile Morse visual mnemonic learning application (Apache 2.0 License).
 
-### 🎮 Games & Assets
+### 🎮 Games & Web Preservation
 - **[Gabriele Cirulli](https://github.com/gabrielecirulli/2048):** Creator of the open-source puzzle game *2048* (MIT License).
-- **[3kh0](https://github.com/3kh0):** Open-source web game preservation and lightweight packaging.
-- Original game trademarks and copyrights belong to their respective creators (*Innersloth, Hipster Whale, Google, Halfbrick, Lima Sky, New Star Games*).
+- **[The Chromium Authors](https://chromium.googlesource.com/chromium/src):** Creators of the *Chrome Dino Runner* (BSD-3-Clause).
+- **[3kh0](https://github.com/3kh0)** & the Web Game preservation community — For curating lightweight HTML5 game archives.
+- Original game trademarks and copyrights belong to their respective creators (*Innersloth, Hipster Whale, Halfbrick, Lima Sky, New Star Games, Voodoo, Ketchapp, Mad Buffer, FG Studio, Armor Games*).
 
 ---
 
@@ -411,17 +417,22 @@ This project is organized as a multi-licensed repository. The table below deline
 | **FlashThing CLI** | Joey Eamigh | **MIT License** | See `tools/flashing/LICENSE-FLASHTHING.txt` |
 | **Yocto-Superbird BSP** | Joey Eamigh & contributors | **GPL-2.0 / MIT** | [JoeyEamigh/yocto-superbird](https://github.com/JoeyEamigh/yocto-superbird) |
 | **Nocturne OS** | Brandon Saldan, Neel Patel, Dominic Frye | **GPL-3.0** | [usenocturne/nocturne](https://github.com/usenocturne/nocturne) |
+| **libwdi (CTDrvInst)** | Pete Batard | **LGPL-3.0-or-later** | [pbatard/libwdi](https://github.com/pbatard/libwdi) |
+| **Decimen Optical Beam** | Evan Crawley (`Bash Alarmist`) & Steve Dakh | **AGPL-3.0-or-later** | [decimen-optical-transfer](https://github.com/bashalarmistalt/decimen-optical-transfer) |
+| **Morse Learn Trainer** | Google Creative Lab & Hello Monday | **Apache 2.0** | [morse-typing-trainer](https://github.com/googlecreativelab/morse-typing-trainer) |
 | **v86 x86 PC Emulator** | Fabian Hemmer (`copy`) | **BSD-2-Clause** | [copy/v86](https://github.com/copy/v86) |
 | **KolibriOS** | KolibriOS Team | **GPL-2.0** | [kolibrios.org](https://kolibrios.org/) |
 | **Bergamot Translator** | The Bergamot Project | **MPL-2.0** | [browser.mt](https://browser.mt/) |
 | **TensorFlow.js / KWS** | Google LLC | **Apache 2.0** | [tensorflow/tfjs-models](https://github.com/tensorflow/tfjs-models) |
-| **Decimen Optical Beam** | Evan Crawley (`Bash Alarmist`) & Steve Dakh | **AGPL-3.0-or-later** | [decimen-optical-transfer](https://github.com/bashalarmistalt/decimen-optical-transfer) |
-| **Morse Learn Trainer** | Google Creative Lab & Hello Monday | **Apache 2.0** | [morse-typing-trainer](https://github.com/googlecreativelab/morse-typing-trainer) |
 | **Binjgb GameBoyCore** | Ben Smith (`binji`) | **MIT License** | [binji/binjgb](https://github.com/binji/binjgb) |
+| **GameBoy-Online Core** | Grant Galitz | **MIT License** | [GameBoy-Online](https://github.com/taisel/GameBoy-Online) |
+| **gbajs** | Jeffrey Pfau (`endrift`) | **BSD-2-Clause** | [endrift/gbajs](https://github.com/endrift/gbajs) |
 | **2048 Game** | Gabriele Cirulli | **MIT License** | [gabrielecirulli/2048](https://github.com/gabrielecirulli/2048) |
+| **Chrome Dino** | The Chromium Authors | **BSD-3-Clause** | [chromium](https://chromium.googlesource.com/chromium/src) |
 | **Game Preservation Assets** | Respective Original Studios | **Fair Use / Preservation** | All trademarks belong to original creators |
 
 See the complete [LICENSE](LICENSE) file in the root directory for full legal notices.
+
 
 
 

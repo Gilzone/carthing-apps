@@ -1,0 +1,11 @@
+libwdi (CTDrvInst.exe)
+
+Author: Pete Batard (https://github.com/pbatard/libwdi)
+Project: libwdi (Windows Driver Installer library)
+Website: https://github.com/pbatard/libwdi
+
+CTDrvInst.exe is based on libwdi (wdi-simple), licensed under the
+GNU Lesser General Public License v3.0 (LGPL-3.0) or later.
+
+Source code for libwdi is freely available at:
+https://github.com/pbatard/libwdi
