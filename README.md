@@ -156,6 +156,24 @@ The custom Chromium kiosk shell runs native 800×480 with GPU hardware accelerat
   <img src="docs/screenshots/game_cyberdrive_live.png" width="70%" alt="Cyber Drive Hands-Free Voice Racer on Car Thing" />
 </p>
 
+---
+
+### 🧱 Voice Tetrix: Hands-Free Voice Controlled Tetris (Extras Tab)
+- **100% Hands-Free Tetris on Your Dashboard:** Play classic 10×20 block-stacking Tetris using purely your voice:
+  - **"LEFT!" / "RIGHT!"** ➔ Move falling piece left or right
+  - **"UP!"** ➔ Rotate tetromino 90° clockwise with full wall kicks
+  - **"DOWN!"** ➔ Soft drop piece down
+  - **"GO!" or "STOP!"** ➔ **HARD DROP!** (Instantly slam tetromino to the bottom with bass impact!)
+  - **"YES!"** ➔ Say "YES" to immediately restart when the matrix fills up!
+- **Tactical Ghost Piece & Next Preview:** Displays projected landing ghost silhouette and upcoming piece preview.
+- **8-Bit Chiptune Audio:** Procedural line clear arpeggios, rotate clicks, and drop sound effects synthesized 100% in code via the Web Audio API.
+- **Rotary Dial & Touch:** Spin the physical wheel to fine-tune placement; push dial to drop or rotate.
+
+<p align="center">
+  <img src="docs/screenshots/game_voicetetrix_live.png" width="70%" alt="Voice Tetrix Hands-Free Game on Car Thing" />
+</p>
+
+
 
 
 ---

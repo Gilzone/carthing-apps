@@ -313,6 +313,14 @@
       "hint": "Hands-Free Voice Racer (Shout to Steer!)",
       "mark": "DRV",
       "color": "#ec4899"
+    },
+    {
+      "tab": "extras",
+      "file": "games/voicetetrix.html",
+      "name": "Voice Tetrix",
+      "hint": "Hands-Free Voice Tetris (Speak to Drop)",
+      "mark": "TTR",
+      "color": "#06b6d4"
     }
   ]
 }
