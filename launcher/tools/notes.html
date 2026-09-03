@@ -117,6 +117,20 @@
       renderLib();
     };
 
+    var lastTap = 0;
+    function bindKey(btn, fn) {
+      function run(e) {
+        if (e) { e.preventDefault(); e.stopPropagation(); }
+        var now = performance.now();
+        if (now - lastTap < 150) return;
+        lastTap = now;
+        fn();
+      }
+      btn.addEventListener("pointerdown", run);
+      btn.addEventListener("touchstart", run, { passive: false });
+      btn.addEventListener("click", function(e) { e.preventDefault(); e.stopPropagation(); });
+    }
+
     var rows = ["qwertyuiop", "asdfghjkl", "zxcvbnm"];
     var kb = document.getElementById("kb");
     rows.forEach(function (row, ri) {
@@ -125,24 +139,24 @@
       if (ri === 2) {
         var sh = document.createElement("button");
         sh.className = "k wide"; sh.textContent = "SHIFT";
-        sh.onclick = function () { kb.classList.toggle("up"); };
+        bindKey(sh, function () { kb.classList.toggle("up"); });
         r.appendChild(sh);
       }
       row.split("").forEach(function (ch) {
         var k = document.createElement("button");
         k.className = "k"; k.textContent = ch;
-        k.onclick = function () {
+        bindKey(k, function () {
           var c = kb.classList.contains("up") ? ch.toUpperCase() : ch;
           var s = ed.selectionStart || ed.value.length;
           ed.value = ed.value.slice(0, s) + c + ed.value.slice(ed.selectionEnd || s);
           ed.selectionStart = ed.selectionEnd = s + 1;
-        };
+        });
         r.appendChild(k);
       });
       if (ri === 2) {
         var bs = document.createElement("button");
         bs.className = "k wide"; bs.textContent = "DEL";
-        bs.onclick = function () {
+        bindKey(bs, function () {
           var s = ed.selectionStart || ed.value.length;
           if (s !== (ed.selectionEnd || s)) {
             ed.value = ed.value.slice(0, s) + ed.value.slice(ed.selectionEnd);
@@ -151,7 +165,7 @@
             s -= 1;
           }
           ed.selectionStart = ed.selectionEnd = s;
-        };
+        });
         r.appendChild(bs);
       }
       kb.appendChild(r);
@@ -161,12 +175,12 @@
     [[".", "k"], [",", "k"], [" ", "k space"], ["'", "k"], ["enter", "k wide"]].forEach(function (pair) {
       var k = document.createElement("button");
       k.className = pair[1]; k.textContent = pair[0] === " " ? "SPACE" : pair[0].toUpperCase();
-      k.onclick = function () {
+      bindKey(k, function () {
         var ins = pair[0] === "enter" ? "\n" : pair[0];
         var s = ed.selectionStart || ed.value.length;
         ed.value = ed.value.slice(0, s) + ins + ed.value.slice(ed.selectionEnd || s);
         ed.selectionStart = ed.selectionEnd = s + ins.length;
-      };
+      });
       r4.appendChild(k);
     });
     kb.appendChild(r4);

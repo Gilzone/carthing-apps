@@ -578,7 +578,12 @@
       }
     }
 
+    let lastInputTime = 0;
     function handleInput(char) {
+      const now = performance.now();
+      if (now - lastInputTime < 140) return;
+      lastInputTime = now;
+
       if (char === '.') playDot();
       else if (char === '-') playDash();
 
@@ -627,12 +632,21 @@
       }
     }
 
-    // Touch & Click Handlers
+    // Touch & Click Handlers with Double-Tap Debounce
     const bindBtn = (id, fn) => {
       const el = document.getElementById(id);
       if (el) {
-        el.addEventListener('pointerdown', (e) => { e.preventDefault(); fn(); });
-        el.addEventListener('click', (e) => { e.preventDefault(); fn(); });
+        el.addEventListener('pointerdown', (e) => {
+          if (e) { e.preventDefault(); e.stopPropagation(); }
+          fn();
+        });
+        el.addEventListener('touchstart', (e) => {
+          if (e) { e.preventDefault(); e.stopPropagation(); }
+          fn();
+        }, { passive: false });
+        el.addEventListener('click', (e) => {
+          if (e) { e.preventDefault(); e.stopPropagation(); }
+        });
       }
     };
 
