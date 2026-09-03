@@ -6,50 +6,198 @@
   <title>Recorder</title>
   <link rel="stylesheet" href="tools.css">
   <style>
-    .stage { display: flex; gap: 14px; }
-    .left { width: 280px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; }
+    .stage { display: flex; gap: 16px; padding: 12px 16px; }
+    .left {
+      width: 290px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      border-radius: 16px;
+      padding: 16px 12px;
+    }
     .rec {
-      width: 150px; height: 150px; border-radius: 50%;
-      border: 6px solid #f43f5e; background: #1a0a0e;
-      color: #fda4af; font: 700 22px system-ui; letter-spacing: .08em;
+      width: 130px;
+      height: 130px;
+      border-radius: 50%;
+      border: 6px solid #f43f5e;
+      background: #1a0a0e;
+      color: #fda4af;
+      font: 800 22px system-ui;
+      letter-spacing: .08em;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      box-shadow: 0 0 24px rgba(244, 63, 94, 0.2);
+      transition: transform 0.15s, background 0.2s;
     }
-    .rec.live { background: #f43f5e; color: #fff; animation: pulse 1s infinite; }
-    @keyframes pulse { 50% { transform: scale(.96); } }
-    .status { text-align: center; font-size: 15px; min-height: 40px; }
-    .list { flex: 1; overflow: auto; display: flex; flex-direction: column; gap: 8px; }
+    .rec:active { transform: scale(0.94); }
+    .rec.live {
+      background: #e11d48;
+      border-color: #fda4af;
+      color: #fff;
+      animation: pulse 1s infinite ease-in-out;
+      box-shadow: 0 0 35px rgba(225, 29, 72, 0.6);
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(0.95); }
+    }
+    .status {
+      text-align: center;
+      font-size: 13px;
+      color: #94a3b8;
+      min-height: 38px;
+      line-height: 1.35;
+      padding: 0 6px;
+    }
+    .status.live { color: #38bdf8; font-weight: 700; }
+    .status.saved { color: #4ade80; font-weight: 700; }
+    .status.warn { color: #f59e0b; font-weight: 600; }
+
+    #timer {
+      font: 900 32px monospace;
+      color: #f8fafc;
+      letter-spacing: 2px;
+    }
+
+    #vu {
+      width: 250px;
+      height: 36px;
+      border-radius: 8px;
+      background: #020617;
+      border: 1px solid #1e293b;
+    }
+
+    .list-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      background: #0b0f19;
+      border: 1px solid #1e293b;
+      border-radius: 16px;
+      padding: 12px;
+      min-width: 0;
+    }
+    .list-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #1e293b;
+      font-size: 13px;
+      font-weight: 700;
+      color: #94a3b8;
+    }
+    .list {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding-right: 4px;
+      max-height: 360px;
+    }
     .clip {
-      display: flex; align-items: center; gap: 10px;
-      background: #14161c; border-radius: 14px; padding: 10px 12px;
-      border: 2px solid rgba(255,255,255,.08);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #141b2d;
+      border-radius: 12px;
+      padding: 10px 12px;
+      border: 1px solid #1e293b;
+      transition: border-color 0.15s;
     }
-    .clip b { font-size: 15px; }
-    .clip .meta { font-size: 12px; color: #9ca3af; }
-    .tiny { padding: 8px 12px; font-size: 13px; border-radius: 10px; }
+    .clip.highlight {
+      border-color: #38bdf8;
+      background: #0c4a6e;
+    }
+    .clip b { font-size: 14px; color: #fff; }
+    .clip .meta { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+    .tiny {
+      padding: 8px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      border-radius: 8px;
+      cursor: pointer;
+      border: none;
+    }
+    .btn-beam {
+      background: #0284c7;
+      color: #fff;
+    }
+    .btn-beam:active { background: #0369a1; }
+    .btn-info {
+      background: #334155;
+      color: #e2e8f0;
+    }
+    .btn-del {
+      background: #451a1a;
+      color: #f87171;
+    }
+    .btn-del:active { background: #7f1d1d; }
+
+    .bottom-hint {
+      font-size: 11px;
+      color: #64748b;
+      text-align: center;
+      margin-top: 2px;
+    }
   </style>
 </head>
 <body>
   <div class="top">
-    <button class="chip" id="home" type="button">HOME</button>
+    <button class="chip" id="home" type="button">← TOOLS</button>
+    <div style="font-weight: 800; font-size: 15px; color: #fff; margin-left: 8px;">Voice Recorder</div>
     <div class="grow"></div>
-    <button class="chip" id="btn-open-beam" type="button" style="background:#0284c7; color:#fff; border-color:#38bdf8;" onclick="location.href='decimen.html'">BEAM 📡</button>
-    <button class="chip off" id="perm" type="button">ASK MIC</button>
+    <button class="chip" id="btn-open-beam" type="button" style="background:#0284c7; color:#fff; border-color:#38bdf8;" onclick="location.href='decimen.html'">BEAM ALL 📡</button>
+    <button class="chip" id="perm" type="button" style="background:#065f46; color:#34d399; border-color:#10b981;">MIC READY</button>
   </div>
+
   <div class="stage">
     <div class="left">
-      <button class="rec" id="rec" type="button">REC</button>
-      <div class="status muted" id="status">Tap ASK MIC, then REC.<br>Clips are saved on this device.</div>
-      <div id="timer" style="font:700 28px system-ui">0:00</div>
+      <button class="rec" id="rec" type="button">
+        <span id="rec-icon">●</span>
+        <span id="rec-label">REC</span>
+      </button>
+      <div id="timer">0:00</div>
+      <canvas id="vu" width="250" height="36"></canvas>
+      <div class="status" id="status">Tap REC or push Dial to start.<br>Clips are saved to internal flash.</div>
+      <div class="bottom-hint">Dial Push = REC/STOP · Dial Turn = Scroll</div>
     </div>
-    <div class="list" id="list"></div>
+
+    <div class="list-container">
+      <div class="list-header">
+        <span>SAVED VOICE MEMOS</span>
+        <span id="clip-count">0 clips</span>
+      </div>
+      <div class="list" id="list">Loading recordings...</div>
+    </div>
   </div>
+
   <script>
     var HOME = "file:///opt/nocturne/webapps/player/index.html#tools";
     document.getElementById("home").onclick = function () { location.href = HOME; };
+
     var stream = null, rec = null, chunks = [], t0 = 0, tick = 0, dbp = null;
     var recBtn = document.getElementById("rec");
-    var status = document.getElementById("status");
-    var timer = document.getElementById("timer");
-    var list = document.getElementById("list");
+    var recLabel = document.getElementById("rec-label");
+    var statusEl = document.getElementById("status");
+    var timerEl = document.getElementById("timer");
+    var listEl = document.getElementById("list");
+    var clipCountEl = document.getElementById("clip-count");
+    var vuCanvas = document.getElementById("vu");
+    var vuCtx = vuCanvas.getContext("2d");
+    var audioCtx = null, analyser = null, animId = null;
+
+    var lastActionTime = 0;
 
     function openDb() {
       if (dbp) return dbp;
@@ -66,9 +214,11 @@
       });
       return dbp;
     }
+
     function tx(store, mode) {
       return openDb().then(function (db) { return db.transaction(store, mode).objectStore(store); });
     }
+
     function allClips() {
       return tx("recordings", "readonly").then(function (s) {
         return new Promise(function (resolve) {
@@ -81,14 +231,22 @@
         });
       });
     }
+
     function putClip(row) {
       return tx("recordings", "readwrite").then(function (s) {
-        return new Promise(function (resolve) { s.put(row).onsuccess = function () { resolve(); }; });
+        return new Promise(function (resolve, reject) {
+          var req = s.put(row);
+          req.onsuccess = function () { resolve(); };
+          req.onerror = function (e) { reject(e); };
+        });
       });
     }
+
     function delClip(id) {
       return tx("recordings", "readwrite").then(function (s) {
-        return new Promise(function (resolve) { s.delete(id).onsuccess = function () { resolve(); }; });
+        return new Promise(function (resolve) {
+          s.delete(id).onsuccess = function () { resolve(); };
+        });
       });
     }
 
@@ -96,121 +254,271 @@
       var s = Math.floor(ms / 1000);
       return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
     }
+
     function mime() {
-      var types = ["audio/webm;codecs=opus", "audio/webm", "audio/ogg;codecs=opus", "audio/mp4"];
+      var types = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4"];
       for (var i = 0; i < types.length; i++) {
         try { if (window.MediaRecorder && MediaRecorder.isTypeSupported(types[i])) return types[i]; } catch (e) {}
       }
       return "";
     }
 
-    async function askMic() {
-      status.textContent = "Requesting microphone…";
+    function setupVisualizer() {
+      if (!stream) return;
       try {
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-          throw new Error("This kiosk build has no getUserMedia");
-        }
-        try {
-          stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        } catch (e1) {
-          stream = await navigator.mediaDevices.getUserMedia({
-            audio: { echoCancellation: false, noiseSuppression: false, channelCount: 1 }
-          });
-        }
-        status.textContent = "Microphone allowed. Tap REC to start.";
-        document.getElementById("perm").textContent = "MIC ON";
-        document.getElementById("perm").classList.remove("off");
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === "suspended") audioCtx.resume();
+        var source = audioCtx.createMediaStreamSource(stream);
+        analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 64;
+        source.connect(analyser);
+        drawVu();
       } catch (err) {
-        status.textContent = "Mic error (" + (err.name || "error") + "): " + (err.message || "Device busy or unavailable");
+        console.warn("Visualizer init error:", err);
       }
     }
 
-    function stopTracks() {
-      if (stream) stream.getTracks().forEach(function (t) { t.stop(); });
-    }
+    function drawVu() {
+      if (!vuCanvas) return;
+      var w = vuCanvas.width;
+      var h = vuCanvas.height;
+      vuCtx.clearRect(0, 0, w, h);
 
-    recBtn.onclick = async function () {
-      if (rec && rec.state === "recording") {
-        rec.stop();
+      var isLive = rec && rec.state === "recording";
+
+      if (!analyser || !isLive) {
+        vuCtx.strokeStyle = "#1e293b";
+        vuCtx.lineWidth = 2;
+        vuCtx.beginPath();
+        vuCtx.moveTo(0, h / 2);
+        vuCtx.lineTo(w, h / 2);
+        vuCtx.stroke();
         return;
       }
-      if (!stream || !stream.active) await askMic();
+
+      var bufferLength = analyser.frequencyBinCount;
+      var dataArray = new Uint8Array(bufferLength);
+      analyser.getByteFrequencyData(dataArray);
+
+      var barWidth = (w / bufferLength) * 1.5;
+      var x = 0;
+
+      for (var i = 0; i < bufferLength; i++) {
+        var barHeight = (dataArray[i] / 255) * h;
+        var r = Math.min(255, 50 + dataArray[i] * 1.2);
+        var g = Math.max(20, 200 - dataArray[i] * 0.5);
+        var b = Math.max(100, 255 - dataArray[i] * 0.3);
+        vuCtx.fillStyle = "rgb(" + Math.round(r) + "," + Math.round(g) + "," + Math.round(b) + ")";
+        vuCtx.fillRect(x, h - barHeight, barWidth - 1, barHeight);
+        x += barWidth + 1;
+      }
+
+      animId = requestAnimationFrame(drawVu);
+    }
+
+    async function initMic() {
+      try {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          statusEl.textContent = "Mic API not supported in browser.";
+          return;
+        }
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        setupVisualizer();
+        statusEl.className = "status";
+        statusEl.textContent = "Mic ready! Tap REC or push Dial to record.";
+      } catch (err) {
+        statusEl.className = "status warn";
+        statusEl.textContent = "Mic error: " + (err.message || err.name);
+      }
+    }
+
+    async function toggleRec() {
+      var now = Date.now();
+      if (now - lastActionTime < 350) return;
+      lastActionTime = now;
+
+      if (rec && rec.state === "recording") {
+        stopRecording();
+        return;
+      }
+
+      if (!stream || !stream.active) {
+        statusEl.className = "status live";
+        statusEl.textContent = "Connecting microphone…";
+        await initMic();
+      }
       if (!stream) return;
+
+      startRecording();
+    }
+
+    function startRecording() {
       chunks = [];
       var opts = {};
       var m = mime();
       if (m) opts.mimeType = m;
-      try { rec = new MediaRecorder(stream, opts); }
-      catch (e) { try { rec = new MediaRecorder(stream); } catch (e2) { status.textContent = "Recorder API missing."; return; } }
-      rec.ondataavailable = function (e) { if (e.data && e.data.size) chunks.push(e.data); };
+
+      try {
+        rec = new MediaRecorder(stream, opts);
+      } catch (e) {
+        try {
+          rec = new MediaRecorder(stream);
+        } catch (e2) {
+          statusEl.className = "status warn";
+          statusEl.textContent = "MediaRecorder unavailable.";
+          return;
+        }
+      }
+
+      rec.ondataavailable = function (e) {
+        if (e.data && e.data.size) chunks.push(e.data);
+      };
+
       rec.onstop = async function () {
         clearInterval(tick);
         recBtn.classList.remove("live");
-        recBtn.textContent = "REC";
+        recLabel.textContent = "REC";
+        document.getElementById("rec-icon").textContent = "●";
+
+        if (chunks.length === 0) {
+          statusEl.className = "status warn";
+          statusEl.textContent = "No audio recorded.";
+          return;
+        }
+
         var blob = new Blob(chunks, { type: rec.mimeType || "audio/webm" });
+        var duration = Math.max(500, Date.now() - t0);
         var row = {
           id: Date.now(),
           created: Date.now(),
-          duration: Date.now() - t0,
+          duration: duration,
           mime: blob.type,
           blob: blob
         };
-        await putClip(row);
-        status.textContent = "Saved " + fmt(row.duration) + " clip.";
-        renderList();
+
+        try {
+          await putClip(row);
+          statusEl.className = "status saved";
+          statusEl.textContent = "✓ Saved " + fmt(row.duration) + " clip! Tap BEAM 📡 to download.";
+          renderList();
+        } catch (dbErr) {
+          statusEl.className = "status warn";
+          statusEl.textContent = "Storage error: " + dbErr;
+        }
       };
-      rec.start(250);
-      t0 = Date.now();
-      recBtn.classList.add("live");
-      recBtn.textContent = "STOP";
-      status.textContent = "Recording… tap STOP to save.";
-      tick = setInterval(function () { timer.textContent = fmt(Date.now() - t0); }, 200);
+
+      try {
+        rec.start(200);
+        t0 = Date.now();
+        recBtn.classList.add("live");
+        recLabel.textContent = "STOP";
+        document.getElementById("rec-icon").textContent = "■";
+        statusEl.className = "status live";
+        statusEl.textContent = "● RECORDING LIVE… Tap STOP when done.";
+        tick = setInterval(function () {
+          timerEl.textContent = fmt(Date.now() - t0);
+        }, 150);
+        drawVu();
+      } catch (startErr) {
+        statusEl.className = "status warn";
+        statusEl.textContent = "Start error: " + startErr.message;
+      }
+    }
+
+    function stopRecording() {
+      if (rec && rec.state === "recording") {
+        rec.stop();
+      }
+    }
+
+    recBtn.addEventListener("pointerdown", function (e) {
+      e.preventDefault();
+      toggleRec();
+    });
+
+    document.getElementById("perm").onclick = function () {
+      initMic();
     };
 
-    document.getElementById("perm").onclick = askMic;
+    window.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" || e.code === "Space" || e.key === "1") {
+        e.preventDefault();
+        toggleRec();
+      } else if (e.key === "2") {
+        location.href = "decimen.html";
+      } else if (e.key === "Escape" || e.key === "Backspace") {
+        if (rec && rec.state === "recording") {
+          stopRecording();
+        } else {
+          location.href = HOME;
+        }
+      } else if (e.key === "ArrowDown" || e.key === "ArrowRight") {
+        listEl.scrollTop += 60;
+      } else if (e.key === "ArrowUp" || e.key === "ArrowLeft") {
+        listEl.scrollTop -= 60;
+      }
+    });
+
+    window.addEventListener("wheel", function (e) {
+      listEl.scrollTop += (e.deltaY > 0 ? 60 : -60);
+    });
 
     async function renderList() {
       var rows = [];
-      try { rows = await allClips(); } catch (e) { list.textContent = "Storage unavailable."; return; }
-      list.innerHTML = "";
-      if (!rows.length) {
-        list.innerHTML = '<div class="muted">No clips yet.</div>';
+      try {
+        rows = await allClips();
+      } catch (e) {
+        listEl.innerHTML = '<div style="color:#ef4444; padding:10px;">Storage unavailable.</div>';
         return;
       }
+
+      clipCountEl.textContent = rows.length + " clips";
+      listEl.innerHTML = "";
+
+      if (!rows.length) {
+        listEl.innerHTML = '<div style="color:#64748b; padding:24px; text-align:center;">No recordings yet.<br>Tap REC or push Dial to record a memo.</div>';
+        return;
+      }
+
       rows.forEach(function (row) {
         var el = document.createElement("div");
         el.className = "clip";
         var d = new Date(row.created);
+        var sizeKb = row.blob?.size ? (row.blob.size / 1024).toFixed(1) + " KB" : "";
+
         el.innerHTML =
-          "<div class='grow'><b>" + d.toLocaleString() + "</b><div class='meta'>" + fmt(row.duration) + " · " + (row.mime || "audio") + "</div></div>";
-        var play = document.createElement("button");
-        play.className = "btn tiny";
-        play.textContent = "PLAY";
-        play.onclick = function () {
-          var url = URL.createObjectURL(row.blob);
-          var a = new Audio(url);
-          a.play().catch(function () { status.textContent = "Playback blocked (kiosk has audio output off). Clip is still saved."; });
-          a.onended = function () { URL.revokeObjectURL(url); };
-        };
-        var del = document.createElement("button");
-        del.className = "btn tiny";
-        del.textContent = "DEL";
-        del.onclick = async function () { await delClip(row.id); renderList(); };
-        var beam = document.createElement("button");
-        beam.className = "btn tiny";
-        beam.style.background = "#0284c7";
-        beam.style.borderColor = "#38bdf8";
-        beam.textContent = "BEAM 📡";
-        beam.onclick = function () {
+          "<div style='flex:1; min-width:0;'>" +
+            "<b>🎙️ Memo (" + fmt(row.duration) + ")</b>" +
+            "<div class='meta'>" + d.toLocaleDateString() + " " + d.toLocaleTimeString() + " · " + sizeKb + "</div>" +
+          "</div>" +
+          "<button class='tiny btn-beam' type='button'>BEAM 📡</button>" +
+          "<button class='tiny btn-info' type='button'>LISTEN ℹ️</button>" +
+          "<button class='tiny btn-del' type='button'>DEL</button>";
+
+        el.querySelector(".btn-beam").onclick = function () {
           location.href = "decimen.html?clip=" + row.id;
         };
-        el.appendChild(beam);
-        el.appendChild(play);
-        el.appendChild(del);
-        list.appendChild(el);
+
+        el.querySelector(".btn-info").onclick = function () {
+          el.classList.add("highlight");
+          statusEl.className = "status warn";
+          statusEl.innerHTML = "ℹ️ <b>Car Thing has no speaker!</b><br>Tap <b>BEAM 📡</b> to beam to your phone to listen.";
+          setTimeout(function () { el.classList.remove("highlight"); }, 2500);
+        };
+
+        el.querySelector(".btn-del").onclick = async function () {
+          await delClip(row.id);
+          renderList();
+        };
+
+        listEl.appendChild(el);
       });
     }
-    renderList();
+
+    window.addEventListener("DOMContentLoaded", function () {
+      initMic();
+      renderList();
+    });
   </script>
 </body>
 </html>
