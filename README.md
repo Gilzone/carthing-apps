@@ -123,6 +123,23 @@ The custom Chromium kiosk shell runs native 800×480 with GPU hardware accelerat
 
 ---
 
+### ⚡ Voice Commands & Keyword Spotting (KWS) (Tools Tab)
+- **100% On-Device Neural Audio:** Powered by TensorFlow.js and Google's Speech Commands model running hardware-accelerated on the Mali-G31 GPU shaders.
+- **Instant Speech Recognition:** Recognizes 18 distinct voice commands in real time with ~50ms latency:
+  - **Confirmations:** `YES`, `NO`
+  - **Actions:** `GO`, `STOP`
+  - **Directions:** `UP`, `DOWN`, `LEFT`, `RIGHT`
+  - **Digits:** `ZERO` through `NINE`
+- **Zero Internet / Zero Server:** All neural weights and model architectures (~7 MB) are stored directly on the Car Thing's internal flash storage.
+- **Hardware Dial Push:** Click the physical rotary dial to toggle the microphone on or off with instant visual HUD feedback.
+
+<p align="center">
+  <img src="docs/screenshots/tool_voice_cmds_live.png" width="70%" alt="Voice Commands on Car Thing" />
+</p>
+
+
+---
+
 ## 🔍 How Everything Was Engineered (Honest Technical Breakdown)
 
 ### 1. The Bootloader & Driver Handshake Layer

@@ -214,6 +214,14 @@
     },
     {
       "tab": "tools",
+      "file": "tools/voice.html",
+      "name": "Voice Cmds",
+      "hint": "Keyword Spotter (Offline)",
+      "mark": "VOX",
+      "color": "#06b6d4"
+    },
+    {
+      "tab": "tools",
       "file": "tools/decimen.html",
       "name": "Optical Beam",
       "hint": "Decimen Transfer with Light",

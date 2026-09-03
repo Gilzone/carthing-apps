@@ -15,8 +15,9 @@ while ((Get-Date) -lt $deadline) {
 if (-not $ok) { Write-Host 'TIMEOUT no SSH'; exit 1 }
 Write-Host 'SSH_OK'
 
-& ssh @ssh "root@$ip" 'mkdir -p /opt/nocturne/webapps/player/tools'
+& ssh @ssh "root@$ip" 'mkdir -p /opt/nocturne/webapps/player/tools && mkdir -p /var/nocturne-data/kws && ln -sfn /var/nocturne-data/kws /opt/nocturne/webapps/player/tools/kws'
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
 
 & scp @ssh "$src\index.html" "root@${ip}:/opt/nocturne/webapps/player/index.html"
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

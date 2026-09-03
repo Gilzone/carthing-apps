@@ -168,8 +168,11 @@ def main():
         "mkdir -p /opt/nocturne/webapps/player/games "
         "/opt/nocturne/webapps/player/tools "
         "/opt/nocturne/webapps/player/tabs "
-        "/opt/nocturne/webapps/player/projects/files/kolibri"
+        "/opt/nocturne/webapps/player/projects/files/kolibri "
+        "&& mkdir -p /var/nocturne-data/kws "
+        "&& ln -sfn /var/nocturne-data/kws /opt/nocturne/webapps/player/tools/kws"
     )
+
     ok, _, err = run_ssh(prepare_cmd)
     if not ok:
         log_fail(f"Failed to create directories: {err}")

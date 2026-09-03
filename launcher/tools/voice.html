@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=800, height=480, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Voice Commands (KWS)</title>
+  <link rel="stylesheet" href="tools.css">
+  <style>
+    body {
+      background: #090d16; color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      margin: 0; padding: 14px 20px; box-sizing: border-box; user-select: none; -webkit-user-select: none;
+      display: flex; flex-direction: column; height: 100vh; overflow: hidden;
+    }
+    .top-bar { display: flex; align-items: center; gap: 14px; margin-bottom: 12px; }
+    .btn {
+      background: #1e293b; color: #f1f5f9; border: 1px solid rgba(255,255,255,.1); padding: 8px 18px;
+      border-radius: 20px; font-weight: 700; font-size: 14px; cursor: pointer; display: flex; align-items: center; gap: 6px;
+    }
+    .btn:active { background: #334155; }
+    .btn.active { background: #059669; border-color: #10b981; }
+    .title { font-weight: 800; font-size: 18px; color: #38bdf8; display: flex; align-items: center; gap: 8px; }
+    
+    .hero-card {
+      background: #0f172a; border: 2px solid #1e293b; border-radius: 16px; padding: 16px 24px;
+      display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;
+    }
+    .hero-left { display: flex; flex-direction: column; gap: 4px; }
+    .hero-status { font-size: 13px; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+    .hero-word { font-size: 42px; font-weight: 900; color: #38bdf8; min-height: 52px; line-height: 1.2; text-shadow: 0 0 20px rgba(56,189,248,.3); }
+    .hero-score { font-size: 14px; color: #10b981; font-weight: 700; }
+    
+    .pulse-dot {
+      width: 20px; height: 20px; border-radius: 50%; background: #64748b;
+      box-shadow: 0 0 0 rgba(16,185,129,.4); transition: all .3s ease;
+    }
+    .pulse-dot.listening {
+      background: #10b981; animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(16,185,129,.7); }
+      70% { box-shadow: 0 0 0 16px rgba(16,185,129,0); }
+      100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); }
+    }
+
+    .grid-container {
+      flex: 1; display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; overflow: hidden;
+    }
+    .chip-word {
+      background: #141a29; border: 1px solid rgba(255,255,255,.07); border-radius: 12px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 10px 4px; text-align: center; transition: all .15s ease;
+    }
+    .chip-word .label { font-size: 15px; font-weight: 800; color: #cbd5e1; letter-spacing: .5px; }
+    .chip-word .type { font-size: 10px; font-weight: 600; color: #64748b; text-transform: uppercase; margin-top: 2px; }
+    
+    .chip-word.lit {
+      background: #0284c7; border-color: #38bdf8; transform: scale(1.08); box-shadow: 0 0 18px rgba(56,189,248,.5);
+    }
+    .chip-word.lit .label { color: #fff; }
+    .chip-word.lit .type { color: #e0f2fe; }
+  </style>
+
+  <!-- Offline file:// fetch polyfill -->
+  <script>
+    const _nativeFetch = window.fetch;
+    window.fetch = function(url, options) {
+      if (typeof url === 'string') {
+        let localPath = url;
+        if (url.includes('local-kws/')) {
+          localPath = 'kws/' + url.split('local-kws/')[1];
+        }
+        if (localPath.startsWith('kws/') || localPath.startsWith('file://') || !localPath.startsWith('http')) {
+          return new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open('GET', localPath);
+            xhr.responseType = 'arraybuffer';
+            xhr.onload = () => {
+              if (xhr.status === 200 || xhr.status === 0) {
+                resolve(new Response(xhr.response, {
+                  status: 200,
+                  headers: { 'Content-Type': localPath.endsWith('.json') ? 'application/json' : 'application/octet-stream' }
+                }));
+              } else {
+                reject(new Error('XHR error ' + xhr.status + ' for ' + localPath));
+              }
+            };
+            xhr.onerror = () => reject(new Error('XHR network error for ' + localPath));
+            xhr.send();
+          });
+        }
+      }
+      return _nativeFetch.apply(this, arguments);
+    };
+  </script>
+
+  <!-- Local TensorFlow.js & Speech Commands -->
+  <script src="kws/tf.min.js"></script>
+  <script src="kws/speech-commands.min.js"></script>
+</head>
+<body>
+  <div class="top-bar">
+    <button class="btn" onclick="location.href='file:///opt/nocturne/webapps/player/index.html#tools'">← HOME</button>
+    <div class="title">⚡ Voice Commands (KWS)</div>
+    <div style="flex:1;"></div>
+    <button class="btn active" id="btn-toggle">MIC ACTIVE 🎙️</button>
+  </div>
+
+  <div class="hero-card">
+    <div class="hero-left">
+      <div class="hero-status" id="status-label">Initializing On-Device Neural Model...</div>
+      <div class="hero-word" id="active-word">Say a command...</div>
+      <div class="hero-score" id="active-score">Waiting for speech...</div>
+    </div>
+    <div class="pulse-dot listening" id="pulse"></div>
+  </div>
+
+  <div class="grid-container" id="chips-grid"></div>
+
+  <script>
+    const WORDS = [
+      { name: "yes", type: "confirm" },
+      { name: "no", type: "confirm" },
+      { name: "go", type: "action" },
+      { name: "stop", type: "action" },
+      { name: "up", type: "direction" },
+      { name: "down", type: "direction" },
+      { name: "left", type: "direction" },
+      { name: "right", type: "direction" },
+      { name: "zero", type: "digit" },
+      { name: "one", type: "digit" },
+      { name: "two", type: "digit" },
+      { name: "three", type: "digit" },
+      { name: "four", type: "digit" },
+      { name: "five", type: "digit" },
+      { name: "six", type: "digit" },
+      { name: "seven", type: "digit" },
+      { name: "eight", type: "digit" },
+      { name: "nine", type: "digit" }
+    ];
+
+    const grid = document.getElementById("chips-grid");
+    const chips = {};
+
+    WORDS.forEach(w => {
+      const el = document.createElement("div");
+      el.className = "chip-word";
+      el.id = "chip-" + w.name;
+      el.innerHTML = `<span class="label">${w.name.toUpperCase()}</span><span class="type">${w.type}</span>`;
+      grid.appendChild(el);
+      chips[w.name] = el;
+    });
+
+    const statusLabel = document.getElementById("status-label");
+    const activeWord = document.getElementById("active-word");
+    const activeScore = document.getElementById("active-score");
+    const pulse = document.getElementById("pulse");
+    const btnToggle = document.getElementById("btn-toggle");
+
+    let recognizer = null;
+    let isListening = false;
+    let clearTimer = null;
+
+    async function initKWS() {
+      try {
+        statusLabel.textContent = "Loading offline model weights (7 MB)...";
+
+        recognizer = speechCommands.create(
+          "BROWSER_FFT",
+          undefined,
+          "https://local-kws/model.json",
+          "https://local-kws/metadata.json"
+        );
+
+
+        await recognizer.ensureModelLoaded();
+        statusLabel.textContent = "Model Loaded! Connecting Microphones...";
+
+        startListening();
+      } catch (err) {
+        statusLabel.textContent = "Error: " + (err.message || err);
+        pulse.classList.remove("listening");
+      }
+    }
+
+    function startListening() {
+      if (!recognizer || isListening) return;
+
+      recognizer.listen(result => {
+        const words = recognizer.wordLabels();
+        const scores = result.scores;
+
+        let maxScore = -1;
+        let bestWord = "";
+
+        for (let i = 0; i < scores.length; i++) {
+          const w = words[i];
+          if (w === "_background_noise_" || w === "_unknown_") continue;
+          if (scores[i] > maxScore) {
+            maxScore = scores[i];
+            bestWord = w;
+          }
+        }
+
+        if (maxScore > 0.65 && bestWord) {
+          onKeywordDetected(bestWord, maxScore);
+        }
+      }, {
+        includeSpectrogram: false,
+        probabilityThreshold: 0.65,
+        invokeCallbackOnNoiseAndUnknown: false,
+        overlapFactor: 0.5
+      });
+
+      isListening = true;
+      statusLabel.textContent = "● LISTENING LIVE (18 COMMANDS READY)";
+      pulse.classList.add("listening");
+      btnToggle.textContent = "MIC ACTIVE 🎙️";
+      btnToggle.classList.add("active");
+    }
+
+    function stopListening() {
+      if (recognizer && isListening) {
+        recognizer.stopListening();
+        isListening = false;
+        statusLabel.textContent = "MIC MUTED (TAP TO RESUME)";
+        pulse.classList.remove("listening");
+        btnToggle.textContent = "MIC MUTED 🔇";
+        btnToggle.classList.remove("active");
+      }
+    }
+
+    function onKeywordDetected(word, score) {
+      activeWord.textContent = word.toUpperCase();
+      activeScore.textContent = `Confidence: ${(score * 100).toFixed(1)}%`;
+
+      // Highlight corresponding chip
+      Object.values(chips).forEach(c => c.classList.remove("lit"));
+      if (chips[word]) {
+        chips[word].classList.add("lit");
+      }
+
+      clearTimeout(clearTimer);
+      clearTimer = setTimeout(() => {
+        if (chips[word]) chips[word].classList.remove("lit");
+      }, 1200);
+    }
+
+    btnToggle.onclick = () => {
+      if (isListening) stopListening();
+      else startListening();
+    };
+
+    // Hardware Rotary Dial Push to toggle
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        btnToggle.click();
+      }
+    });
+
+    window.onload = initKWS;
+  </script>
+</body>
+</html>
