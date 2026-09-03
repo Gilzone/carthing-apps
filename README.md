@@ -415,10 +415,13 @@ This project is organized as a multi-licensed repository. The table below deline
 | **KolibriOS** | KolibriOS Team | **GPL-2.0** | [kolibrios.org](https://kolibrios.org/) |
 | **Bergamot Translator** | The Bergamot Project | **MPL-2.0** | [browser.mt](https://browser.mt/) |
 | **TensorFlow.js / KWS** | Google LLC | **Apache 2.0** | [tensorflow/tfjs-models](https://github.com/tensorflow/tfjs-models) |
+| **Decimen Optical Beam** | Evan Crawley (`Bash Alarmist`) & Steve Dakh | **AGPL-3.0-or-later** | [decimen-optical-transfer](https://github.com/bashalarmistalt/decimen-optical-transfer) |
+| **Morse Learn Trainer** | Google Creative Lab & Hello Monday | **Apache 2.0** | [morse-typing-trainer](https://github.com/googlecreativelab/morse-typing-trainer) |
 | **Binjgb GameBoyCore** | Ben Smith (`binji`) | **MIT License** | [binji/binjgb](https://github.com/binji/binjgb) |
 | **2048 Game** | Gabriele Cirulli | **MIT License** | [gabrielecirulli/2048](https://github.com/gabrielecirulli/2048) |
 | **Game Preservation Assets** | Respective Original Studios | **Fair Use / Preservation** | All trademarks belong to original creators |
 
 See the complete [LICENSE](LICENSE) file in the root directory for full legal notices.
+
 
 

@@ -44,39 +44,50 @@ components, each governed by its own respective license:
    - License: GNU General Public License v3.0 (GPL-3.0) & Nocturne API License
    - Copyright (c) Nocturne Team
 
-4. v86 (x86 Virtual PC Emulator)
+4. Decimen Optical Transfer (launcher/tools/decimen.html)
+   - Author: Evan Crawley / Bash Alarmist (https://github.com/bashalarmistalt/decimen-optical-transfer)
+   - Website: https://decimen.app
+   - License: GNU Affero General Public License v3.0 or later (AGPL-3.0-or-later)
+   - Portions: MIT License, Copyright (c) 2026 Steve Dakh; Emscripten
+
+5. Morse Typing Trainer (launcher/tools/morse.html)
+   - Project: Google Creative Lab & Hello Monday (https://github.com/googlecreativelab/morse-typing-trainer)
+   - License: Apache License 2.0
+   - Copyright (c) Google LLC
+
+6. v86 (x86 Virtual PC Emulator)
    - Author: Fabian Hemmer / copy (https://github.com/copy/v86)
    - License: BSD 2-Clause "Simplified" License
    - Copyright (c) 2012-2024, Fabian Hemmer
 
-5. KolibriOS (32-bit x86 Graphical Operating System)
+7. KolibriOS (32-bit x86 Graphical Operating System)
    - Authors: KolibriOS Team (https://kolibrios.org/)
    - License: GNU General Public License v2.0 (GPL-2.0)
    - Copyright (c) KolibriOS Team
 
-6. Bergamot Translator (tools/translator/)
+8. Bergamot Translator (launcher/tools/translator/)
    - Project: The Bergamot Project (https://browser.mt/)
    - License: Mozilla Public License 2.0 (MPL-2.0)
 
-7. TensorFlow.js & Speech Commands (tools/kws/)
+9. TensorFlow.js & Speech Commands (launcher/tools/kws/)
    - Project: Google LLC / TensorFlow (https://github.com/tensorflow/tfjs-models)
    - License: Apache License 2.0
    - Copyright (c) Google LLC
 
-8. Binjgb / GameBoyCore (tools/retro_player.html)
-   - Author: Ben Smith / binji (https://github.com/binji/binjgb)
-   - License: MIT License
-   - Copyright (c) 2016 Ben Smith
+10. Binjgb / GameBoyCore (launcher/tools/retro_player.html)
+    - Author: Ben Smith / binji (https://github.com/binji/binjgb)
+    - License: MIT License
+    - Copyright (c) 2016 Ben Smith
 
-9. 2048
-   - Author: Gabriele Cirulli (https://github.com/gabrielecirulli/2048)
-   - License: MIT License
-   - Copyright (c) 2014 Gabriele Cirulli
+11. 2048 Game
+    - Author: Gabriele Cirulli (https://github.com/gabrielecirulli/2048)
+    - License: MIT License
+    - Copyright (c) 2014 Gabriele Cirulli
 
-10. Superbird Toolchain & Reverse Engineering
+12. Superbird Reverse Engineering & Bootloader Toolchain
     - Authors: Frederic (superbird-bulkcmd), Bishop Dynamics (superbird-tool), Superna9999 (pyamlboot), Pete Batard (libwdi)
     - Licenses: MIT / GPLv2 / LGPL-2.1
 
-11. Third-Party Game Preservation Assets
+13. Third-Party Game Preservation Assets
     - Original trademarks, character designs, and assets remain the property of their
       respective creators (Innersloth, Hipster Whale, Google, Halfbrick, Lima Sky, New Star Games).
