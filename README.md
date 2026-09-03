@@ -27,9 +27,11 @@ When Spotify discontinued the Car Thing in late 2024 and scheduled the bricking 
 The custom Chromium kiosk shell runs native 800×480 with GPU hardware acceleration. The rotary dial scrolls through a 3D animated card deck with a 70ms hardware debounce lock.
 
 <p align="center">
-  <img src="docs/screenshots/launcher_games.png" width="48%" alt="Car Thing Games Launcher" />
-  <img src="docs/screenshots/launcher_tools.png" width="48%" alt="Car Thing Tools Menu" />
+  <img src="docs/screenshots/launcher_games.png" width="32%" alt="Car Thing Games Launcher" />
+  <img src="docs/screenshots/launcher_tools.png" width="32%" alt="Car Thing Tools Menu" />
+  <img src="docs/screenshots/launcher_extras_tab_live.png" width="32%" alt="Car Thing Extras Tab" />
 </p>
+
 
 ---
 
@@ -123,7 +125,7 @@ The custom Chromium kiosk shell runs native 800×480 with GPU hardware accelerat
 
 ---
 
-### ⚡ Voice Commands & Keyword Spotting (KWS) (Tools Tab)
+### ⚡ Voice Commands & Keyword Spotting (KWS) (Extras Tab)
 - **100% On-Device Neural Audio:** Powered by TensorFlow.js and Google's Speech Commands model running hardware-accelerated on the Mali-G31 GPU shaders.
 - **Instant Speech Recognition:** Recognizes 18 distinct voice commands in real time with ~50ms latency:
   - **Confirmations:** `YES`, `NO`

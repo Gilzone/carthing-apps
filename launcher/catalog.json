@@ -17,6 +17,12 @@
       "name": "APPS",
       "label": "Apps",
       "hint": "Your HTML and other projects"
+    },
+    {
+      "id": "extras",
+      "name": "EXTRAS",
+      "label": "Extras",
+      "hint": "On-Device AI, Voice & Experiments"
     }
   ],
   "items": [
@@ -213,10 +219,10 @@
       "color": "#f43f5e"
     },
     {
-      "tab": "tools",
+      "tab": "extras",
       "file": "tools/voice.html",
       "name": "Voice Cmds",
-      "hint": "Keyword Spotter (Offline)",
+      "hint": "Neural Keyword Spotter (18 Words)",
       "mark": "VOX",
       "color": "#06b6d4"
     },
