@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=800, height=480, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Morse Learn - Car Thing Edition</title>
+  <style>
+    :root {
+      --bg: #090c15;
+      --card-bg: #121827;
+      --border: #1f293d;
+      --accent: #ef4136;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --dot-color: #38bdf8;
+      --dash-color: #f59e0b;
+      --success: #10b981;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body {
+      width: 800px;
+      height: 480px;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top Bar */
+    .top-bar {
+      height: 50px;
+      background: #0f1524;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      flex-shrink: 0;
+      z-index: 20;
+    }
+    .left-nav {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .btn-back {
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: var(--text);
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-weight: 800;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .btn-back:active { background: #334155; }
+
+    .logo-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .logo-icon {
+      width: 28px;
+      height: 28px;
+      background: var(--accent);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 16px;
+      color: white;
+    }
+    .app-title {
+      font-size: 16px;
+      font-weight: 900;
+      letter-spacing: 0.5px;
+    }
+    .credit-tag {
+      font-size: 10px;
+      color: var(--muted);
+      background: #192237;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 700;
+    }
+
+    .mode-tabs {
+      display: flex;
+      gap: 6px;
+      background: #090c16;
+      padding: 3px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+    .mode-tab {
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      padding: 6px 14px;
+      border-radius: 7px;
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .mode-tab.active {
+      background: var(--accent);
+      color: white;
+    }
+
+    /* Main Content */
+    .main-body {
+      flex: 1;
+      height: 430px;
+      display: flex;
+      padding: 12px 16px;
+      gap: 14px;
+    }
+
+    /* Left: Visual Mnemonic Card */
+    .left-card {
+      width: 360px;
+      height: 100%;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px;
+      position: relative;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
+    .card-top-meta {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .prog-pill {
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--muted);
+      background: #192237;
+      padding: 3px 8px;
+      border-radius: 6px;
+    }
+    .btn-audio-demo {
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: #38bdf8;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .mnemonic-img-wrap {
+      width: 220px;
+      height: 220px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    .mnemonic-img {
+      max-width: 200px;
+      max-height: 200px;
+      object-fit: contain;
+      filter: drop-shadow(0 4px 12px rgba(0,0,0,0.6));
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .mnemonic-info {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+    .letter-title {
+      font-size: 42px;
+      font-weight: 900;
+      line-height: 1;
+      color: #ffffff;
+    }
+    .word-subtitle {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* Pattern Pills */
+    .pattern-display {
+      display: flex;
+      gap: 8px;
+      margin-top: 4px;
+    }
+    .morse-glyph {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      font-weight: 900;
+      transition: all 0.15s;
+    }
+    .morse-glyph.dot {
+      width: 20px;
+      height: 20px;
+      background: #334155;
+      border-radius: 50%;
+    }
+    .morse-glyph.dash {
+      width: 44px;
+      height: 20px;
+      background: #334155;
+    }
+    .morse-glyph.active {
+      box-shadow: 0 0 12px currentColor;
+    }
+    .morse-glyph.dot.active { background: var(--dot-color); color: var(--dot-color); }
+    .morse-glyph.dash.active { background: var(--dash-color); color: var(--dash-color); }
+
+    /* Right: Input Console */
+    .right-console {
+      flex: 1;
+      height: 100%;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      display: flex;
+      flex-direction: column;
+      padding: 16px;
+      justify-content: space-between;
+    }
+
+    .console-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .console-label {
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    /* Real-Time Telegraph Tape */
+    .tape-display {
+      height: 68px;
+      background: #090c16;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      gap: 12px;
+      overflow: hidden;
+      position: relative;
+    }
+    .input-buffer {
+      font-size: 32px;
+      font-weight: 900;
+      letter-spacing: 4px;
+      color: #38bdf8;
+      font-family: monospace;
+      min-width: 80px;
+    }
+    .feedback-badge {
+      font-size: 13px;
+      font-weight: 900;
+      padding: 5px 12px;
+      border-radius: 8px;
+      margin-left: auto;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .feedback-badge.success {
+      opacity: 1;
+      background: #064e3b;
+      color: #34d399;
+      border: 1px solid #059669;
+    }
+    .feedback-badge.fail {
+      opacity: 1;
+      background: #450a0a;
+      color: #f87171;
+      border: 1px solid #b91c1c;
+    }
+
+    /* Huge Tactile Input Keys */
+    .keys-container {
+      display: flex;
+      gap: 16px;
+      height: 150px;
+    }
+    .morse-btn {
+      flex: 1;
+      height: 100%;
+      border-radius: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+      border: 2px solid transparent;
+      transition: transform 0.08s ease, filter 0.08s ease;
+    }
+    .morse-btn:active {
+      transform: scale(0.96);
+      filter: brightness(1.2);
+    }
+    .btn-dot {
+      background: linear-gradient(135deg, #0284c7, #0369a1);
+      border-color: #38bdf8;
+      color: white;
+    }
+    .btn-dash {
+      background: linear-gradient(135deg, #d97706, #b45309);
+      border-color: #f59e0b;
+      color: white;
+    }
+    .btn-icon-shape {
+      font-size: 38px;
+      line-height: 1;
+      font-weight: 900;
+      margin-bottom: 6px;
+    }
+    .btn-text-label {
+      font-size: 15px;
+      font-weight: 900;
+      letter-spacing: 1px;
+    }
+    .btn-sub-hint {
+      font-size: 10px;
+      opacity: 0.75;
+      margin-top: 2px;
+      font-weight: 700;
+    }
+
+    /* Hardware Hint Footer */
+    .hardware-hint {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+      padding-top: 10px;
+    }
+    .hardware-hint b { color: #38bdf8; }
+    .btn-skip {
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: var(--text);
+      padding: 5px 12px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <div class="left-nav">
+      <button class="btn-back" id="btn-back" type="button">← Tools</button>
+      <div class="logo-badge">
+        <div class="logo-icon">•−</div>
+        <span class="app-title">Morse Learn</span>
+        <span class="credit-tag">Google Creative Lab</span>
+      </div>
+    </div>
+
+    <div class="mode-tabs">
+      <button class="mode-tab active" id="tab-learn" type="button">LEARN A-Z</button>
+      <button class="mode-tab" id="tab-words" type="button">WORDS</button>
+      <button class="mode-tab" id="tab-telegraph" type="button">TELEGRAPH</button>
+    </div>
+  </div>
+
+  <!-- Main Body -->
+  <div class="main-body">
+
+    <!-- Left: Google Visual Mnemonic Card -->
+    <div class="left-card">
+      <div class="card-top-meta">
+        <span class="prog-pill" id="lbl-progress">Letter 1 of 26</span>
+        <button class="btn-audio-demo" id="btn-demo" type="button">🔊 Listen</button>
+      </div>
+
+      <div class="mnemonic-img-wrap">
+        <img class="mnemonic-img" id="img-card" src="morse_assets/Archery.png" alt="Mnemonic">
+      </div>
+
+      <div class="mnemonic-info">
+        <div class="letter-title" id="lbl-letter">A</div>
+        <div class="word-subtitle" id="lbl-word">Archery</div>
+        <div class="pattern-display" id="pattern-wrap">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Tactile Input Console -->
+    <div class="right-console">
+      <div class="console-header">
+        <span class="console-label">Your Morse Input</span>
+        <span id="lbl-target-prompt" style="font-size:12px; font-weight:800; color:#38bdf8;">Type: • ━</span>
+      </div>
+
+      <!-- Real-Time Input Buffer -->
+      <div class="tape-display">
+        <div class="input-buffer" id="txt-buffer">_</div>
+        <div class="feedback-badge" id="badge-feedback">CORRECT!</div>
+      </div>
+
+      <!-- Big On-Screen Tactile Keys -->
+      <div class="keys-container">
+        <!-- DOT Button -->
+        <button class="morse-btn btn-dot" id="btn-dot" type="button">
+          <div class="btn-icon-shape">•</div>
+          <div class="btn-text-label">DOT</div>
+          <div class="btn-sub-hint">Push Knob or Tap</div>
+        </button>
+
+        <!-- DASH Button -->
+        <button class="morse-btn btn-dash" id="btn-dash" type="button">
+          <div class="btn-icon-shape">━</div>
+          <div class="btn-text-label">DASH</div>
+          <div class="btn-sub-hint">Back Button or Tap</div>
+        </button>
+      </div>
+
+      <!-- Hardware Hint Footer -->
+      <div class="hardware-hint">
+        <div>
+          🔘 <b>Push Knob</b> = DOT &nbsp;|&nbsp; <b>Back Button</b> = DASH &nbsp;|&nbsp; 🔄 <b>Turn Knob</b> = Next/Prev
+        </div>
+        <button class="btn-skip" id="btn-next" type="button">Next →</button>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // 26 Letters with Google Creative Lab Mnemonic Artwork
+    const ALPHABET = [
+      { letter: 'A', word: 'Archery', morse: '.-', img: 'morse_assets/Archery.png' },
+      { letter: 'B', word: 'Banjo', morse: '-...', img: 'morse_assets/Banjo.png' },
+      { letter: 'C', word: 'Candy', morse: '-.-.', img: 'morse_assets/Candy.png' },
+      { letter: 'D', word: 'Dog', morse: '-..', img: 'morse_assets/Dog.png' },
+      { letter: 'E', word: 'Eye', morse: '.', img: 'morse_assets/Eye.png' },
+      { letter: 'F', word: 'Firetruck', morse: '..-.', img: 'morse_assets/Firetruck.png' },
+      { letter: 'G', word: 'Giraffe', morse: '--.', img: 'morse_assets/Giraffe.png' },
+      { letter: 'H', word: 'Hippo', morse: '....', img: 'morse_assets/Hippo.png' },
+      { letter: 'I', word: 'Insect', morse: '..', img: 'morse_assets/Insect.png' },
+      { letter: 'J', word: 'Jet', morse: '.---', img: 'morse_assets/Jet.png' },
+      { letter: 'K', word: 'Kite', morse: '-.-', img: 'morse_assets/Kite.png' },
+      { letter: 'L', word: 'Laboratory', morse: '.-..', img: 'morse_assets/Laboratory.png' },
+      { letter: 'M', word: 'Mustache', morse: '--', img: 'morse_assets/Mustache.png' },
+      { letter: 'N', word: 'Net', morse: '-.', img: 'morse_assets/Net.png' },
+      { letter: 'O', word: 'Orchestra', morse: '---', img: 'morse_assets/Orchestra.png' },
+      { letter: 'P', word: 'Paddle', morse: '.--.', img: 'morse_assets/Paddle.png' },
+      { letter: 'Q', word: 'Quarterback', morse: '--.-', img: 'morse_assets/Quarterback.png' },
+      { letter: 'R', word: 'Robot', morse: '.-.', img: 'morse_assets/Robot.png' },
+      { letter: 'S', word: 'Submarine', morse: '...', img: 'morse_assets/Submarine.png' },
+      { letter: 'T', word: 'Tape', morse: '-', img: 'morse_assets/Tape.png' },
+      { letter: 'U', word: 'Unicorn', morse: '..-', img: 'morse_assets/Unicorn.png' },
+      { letter: 'V', word: 'Vacuum', morse: '...-', img: 'morse_assets/Vacuum.png' },
+      { letter: 'W', word: 'Wand', morse: '.--', img: 'morse_assets/Wand.png' },
+      { letter: 'X', word: 'X-ray', morse: '-..-', img: 'morse_assets/X-ray.png' },
+      { letter: 'Y', word: 'Yard', morse: '-.--', img: 'morse_assets/Yard.png' },
+      { letter: 'Z', word: 'Zebra', morse: '--..', img: 'morse_assets/Zebra.png' }
+    ];
+
+    const WORDS = ['EAT', 'TEA', 'ATE', 'TIE', 'TEAM', 'MEAT', 'HOME', 'RADIO', 'CAR'];
+
+    let mode = 'learn'; // 'learn', 'words', 'telegraph'
+    let currentIdx = 0;
+    let wordIdx = 0;
+    let inputBuffer = "";
+
+    const imgCard = document.getElementById('img-card');
+    const lblLetter = document.getElementById('lbl-letter');
+    const lblWord = document.getElementById('lbl-word');
+    const patternWrap = document.getElementById('pattern-wrap');
+    const txtBuffer = document.getElementById('txt-buffer');
+    const badgeFeedback = document.getElementById('badge-feedback');
+    const lblProgress = document.getElementById('lbl-progress');
+    const lblPrompt = document.getElementById('lbl-target-prompt');
+
+    // Web Audio Synthesizer
+    let audioCtx = null;
+    function getAudioCtx() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      return audioCtx;
+    }
+
+    function playTone(durationMs) {
+      try {
+        const ctx = getAudioCtx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(750, ctx.currentTime);
+        gain.gain.setValueAtTime(0.2, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + (durationMs / 1000));
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + (durationMs / 1000));
+      } catch(e) {}
+    }
+
+    function playDot() { playTone(60); }
+    function playDash() { playTone(180); }
+
+    function updateCard() {
+      inputBuffer = "";
+      txtBuffer.textContent = "_";
+      badgeFeedback.className = "feedback-badge";
+
+      if (mode === 'learn') {
+        const item = ALPHABET[currentIdx];
+        lblProgress.textContent = `Letter ${currentIdx + 1} of 26`;
+        lblLetter.textContent = item.letter;
+        lblWord.textContent = item.word;
+        imgCard.src = item.img;
+        imgCard.style.display = 'block';
+
+        // Render target dots/dashes
+        patternWrap.innerHTML = "";
+        for (let ch of item.morse) {
+          const g = document.createElement('div');
+          g.className = 'morse-glyph ' + (ch === '.' ? 'dot' : 'dash');
+          patternWrap.appendChild(g);
+        }
+        lblPrompt.textContent = "Type: " + item.morse.replace(/\./g, '• ').replace(/-/g, '━ ');
+      } else if (mode === 'words') {
+        const targetWord = WORDS[wordIdx];
+        lblProgress.textContent = `Word ${wordIdx + 1} of ${WORDS.length}`;
+        lblLetter.textContent = targetWord;
+        lblWord.textContent = "Spell the word";
+        imgCard.style.display = 'none';
+        patternWrap.innerHTML = "";
+        lblPrompt.textContent = "Spell in Morse: " + targetWord;
+      } else if (mode === 'telegraph') {
+        lblProgress.textContent = "Telegraph Mode";
+        lblLetter.textContent = "KEY";
+        lblWord.textContent = "Freeform Morse";
+        imgCard.style.display = 'none';
+        patternWrap.innerHTML = "";
+        lblPrompt.textContent = "Tap any code to decode";
+      }
+    }
+
+    function handleInput(char) {
+      if (char === '.') playDot();
+      else if (char === '-') playDash();
+
+      inputBuffer += char;
+      txtBuffer.textContent = inputBuffer.replace(/\./g, '•').replace(/-/g, '━');
+
+      if (mode === 'learn') {
+        const item = ALPHABET[currentIdx];
+        // Highlight active glyphs
+        const glyphs = patternWrap.children;
+        for (let i = 0; i < glyphs.length; i++) {
+          if (i < inputBuffer.length && inputBuffer[i] === item.morse[i]) {
+            glyphs[i].classList.add('active');
+          } else {
+            glyphs[i].classList.remove('active');
+          }
+        }
+
+        // Check completion
+        if (inputBuffer === item.morse) {
+          badgeFeedback.textContent = "CORRECT! ✓";
+          badgeFeedback.className = "feedback-badge success";
+          imgCard.style.transform = "scale(1.15)";
+          setTimeout(() => {
+            imgCard.style.transform = "scale(1)";
+            currentIdx = (currentIdx + 1) % ALPHABET.length;
+            updateCard();
+          }, 650);
+        } else if (!item.morse.startsWith(inputBuffer)) {
+          badgeFeedback.textContent = "TRY AGAIN ✕";
+          badgeFeedback.className = "feedback-badge fail";
+          setTimeout(() => {
+            inputBuffer = "";
+            txtBuffer.textContent = "_";
+            badgeFeedback.className = "feedback-badge";
+            for (let g of glyphs) g.classList.remove('active');
+          }, 600);
+        }
+      } else if (mode === 'telegraph') {
+        // Find matching letter
+        const match = ALPHABET.find(a => a.morse === inputBuffer);
+        if (match) {
+          badgeFeedback.textContent = `= ${match.letter} (${match.word})`;
+          badgeFeedback.className = "feedback-badge success";
+        }
+      }
+    }
+
+    // Touch & Click Handlers
+    const bindBtn = (id, fn) => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.addEventListener('pointerdown', (e) => { e.preventDefault(); fn(); });
+        el.addEventListener('click', (e) => { e.preventDefault(); fn(); });
+      }
+    };
+
+    bindBtn('btn-dot', () => handleInput('.'));
+    bindBtn('btn-dash', () => handleInput('-'));
+    bindBtn('btn-demo', () => {
+      if (mode === 'learn') {
+        const morse = ALPHABET[currentIdx].morse;
+        let delay = 0;
+        for (let ch of morse) {
+          setTimeout(() => {
+            if (ch === '.') playDot();
+            else playDash();
+          }, delay);
+          delay += (ch === '.' ? 180 : 320);
+        }
+      }
+    });
+    bindBtn('btn-next', () => {
+      if (mode === 'learn') currentIdx = (currentIdx + 1) % ALPHABET.length;
+      else if (mode === 'words') wordIdx = (wordIdx + 1) % WORDS.length;
+      updateCard();
+    });
+
+    // Hardware Rotary Knob Controls:
+    // Push knob = DOT
+    // Back button = DASH
+    // Turn knob = Next/Prev
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ' || e.key === '1') {
+        e.preventDefault();
+        handleInput('.');
+      } else if (e.key === 'Escape' || e.key === 'Backspace' || e.key === '2') {
+        e.preventDefault();
+        handleInput('-');
+      } else if (e.key === '3') {
+        currentIdx = (currentIdx + 1) % ALPHABET.length;
+        updateCard();
+      } else if (e.key === '4') {
+        document.getElementById('btn-demo').click();
+      }
+    });
+
+    window.addEventListener('wheel', (e) => {
+      const delta = (e.deltaY || e.deltaX) > 0 ? 1 : -1;
+      if (mode === 'learn') {
+        currentIdx = Math.max(0, Math.min(currentIdx + delta, ALPHABET.length - 1));
+      } else if (mode === 'words') {
+        wordIdx = Math.max(0, Math.min(wordIdx + delta, WORDS.length - 1));
+      }
+      updateCard();
+    });
+
+    // Mode Tabs
+    document.getElementById('tab-learn').onclick = () => {
+      mode = 'learn';
+      setActiveTab('tab-learn');
+      updateCard();
+    };
+    document.getElementById('tab-words').onclick = () => {
+      mode = 'words';
+      setActiveTab('tab-words');
+      updateCard();
+    };
+    document.getElementById('tab-telegraph').onclick = () => {
+      mode = 'telegraph';
+      setActiveTab('tab-telegraph');
+      updateCard();
+    };
+
+    function setActiveTab(id) {
+      document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+    }
+
+    // Back to Launcher Tools
+    document.getElementById('btn-back').onclick = () => {
+      window.location.href = '../index.html#tools';
+    };
+
+    updateCard();
+  </script>
+</body>
+</html>

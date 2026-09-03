@@ -198,6 +198,14 @@
     },
     {
       "tab": "tools",
+      "file": "tools/morse.html",
+      "name": "Morse Learn",
+      "hint": "Google Creative Lab Trainer",
+      "mark": "\u2022\u2212",
+      "color": "#ef4136"
+    },
+    {
+      "tab": "tools",
       "file": "tools/recorder.html",
       "name": "Recorder",
       "hint": "Mic memos, saved here",

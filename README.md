@@ -52,6 +52,24 @@ The custom Chromium kiosk shell runs native 800×480 with GPU hardware accelerat
   <img src="docs/screenshots/gb_pokemon_red_user_live.png" width="32%" alt="Pokemon Red on Car Thing" />
 </p>
 
+### 🔤 Morse Learn - Google Creative Lab Edition (Tools Tab)
+- **Visual Mnemonic Trainer:** Re-engineered specifically for the Car Thing's 800×480 display, featuring all 26 visual mnemonic cards from Google Creative Lab (*Archery, Banjo, Candy, Dog, etc.*).
+- **Physical Knob & Hardware Controls:**
+  - **🔘 Push Knob (Click Dial):** Types **DOT (`•`)**
+  - **Physical Back Button:** Types **DASH (`━`)**
+  - **🔄 Turn Knob:** Cycles through letters A–Z and words
+  - **Top Preset Buttons 1 & 2:** Also act as physical Dot and Dash keys
+- **3 Practice Modes:**
+  - **LEARN A-Z:** Interactive alphabet trainer with visual dot/dash lights and instant audio feedback.
+  - **WORDS:** Morse spelling practice using real vocabulary words.
+  - **TELEGRAPH DECODER:** Freeform telegraph mode decoding any tapped dots and dashes into English in real-time.
+- **Synthesized Audio:** Web Audio 750Hz Morse sidetone beeps for authentic auditory reinforcement.
+
+<p align="center">
+  <img src="docs/screenshots/tool_morse_learn_live.png" width="48%" alt="Morse Learn Archery on Car Thing" />
+  <img src="docs/screenshots/tool_morse_banjo_live.png" width="48%" alt="Morse Learn Banjo on Car Thing" />
+</p>
+
 ### 🏎️ Automotive HUD Clock & 🚗 Car Unit Converter (Tools Tab)
 - **HUD Dashboard Clock:** High-contrast digital clock with Cyber, Amber, and Night Vision Red HUD themes designed for automotive dashboard use. Fully integrated with physical controls: push the knob to start/stop the precision stopwatch and countdown timer; turn the knob to adjust minutes; press the physical Back button to reset.
 - **Car Unit Converter & Calculator:** Instant live conversions for automotive metrics: speed ($km/h \leftrightarrow mph$), tire pressure ($PSI \leftrightarrow Bar$), temperature ($^\circ C \leftrightarrow ^\circ F$), and fuel consumption ($MPG \leftrightarrow L/100km$).
