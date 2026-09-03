@@ -337,20 +337,21 @@ If your Car Thing already boots into Nocturne OS:
 ---
 
 ### Scenario B: Starting from a Stock or Bricked Car Thing
-Everything needed to revive a stock or bricked device is provided directly in this repository and our official release:
+If your device is stock or needs fresh firmware, install the base operating system from the official community maintainers first:
 
-1. **Download the Nocturne OS Image:**
-   - Download **[`nocturne_image_v4.1.3.zip`](https://github.com/Gilzone/carthing-apps/releases/tag/v1.0.0)** directly from the **[Releases](https://github.com/Gilzone/carthing-apps/releases/tag/v1.0.0)** page.
+1. **Download Official Nocturne OS Firmware:**
+   - Download the latest official Nocturne firmware release directly from the **[Nocturne Releases](https://github.com/usenocturne/nocturne/releases)** or **[usenocturne.com](https://usenocturne.com/)** (developed by Brandon Saldan & Dominic Frye, based on Joey Eamigh's `yocto-superbird`).
 2. **Install Bootloader Driver (Windows):**
    - Run `tools/flashing/install-driver.ps1` (or use Zadig) to install the WinUSB driver for Amlogic device `1B8E:C003`.
 3. **Flash the Firmware:**
    - Put your Car Thing into USB Burn Mode (hold buttons `1` + `4` while plugging into USB).
-   - Flash using the included `tools/flashing/flashthing-cli.exe` or the web flasher:
+   - Flash via Joey Eamigh's **[FlashThing Web Flasher](https://flasher.usenocturne.com/)** in any Chromium browser, or using Joey Eamigh's `flashthing-cli` ([JoeyEamigh/flashthing](https://github.com/JoeyEamigh/flashthing)):
      ```bash
-     tools\flashing\flashthing-cli.exe flash path\to\nocturne_image_v4.1.3.zip
+     tools\flashing\flashthing-cli.exe flash path\to\nocturne_image.zip
      ```
-4. **Deploy Apps:**
-   - Once the Car Thing reboots into Nocturne, double-click **`1-Click-Install.bat`** to deploy the complete launcher, games, and tools suite!
+4. **Deploy Apps Suite:**
+   - Once the Car Thing boots into Nocturne, double-click **`1-Click-Install.bat`** to deploy the complete launcher, games, and tools suite!
+
 
 ### Command Line Usage (`add_project.py`)
 ```bash
@@ -366,35 +367,42 @@ python add_project.py --list
 
 ---
 
-## 🙏 Credits & Acknowledgements
+## 🙏 Credits, Upstream Attribution & Open Source Licenses
 
-This project stands on the shoulders of the incredible open-source and retro-tech communities who fought to keep the Spotify Car Thing alive:
+This repository provides an application suite, 3D coverflow launcher, and offline tools designed to run on top of the Car Thing community's firmware ecosystem. We are deeply indebted to the original authors and maintainers whose foundational work made running custom software on the Spotify Car Thing (`superbird`) possible:
 
-- **Hardware & Flashing Pioneers:**
-  - **[frederic](https://github.com/frederic/superbird-bulkcmd)** — Groundbreaking reverse engineering work, u-boot commands, and memory dumps for the Spotify Car Thing (`superbird`).
-  - **[bishopdynamics (superbird-tool)](https://github.com/bishopdynamics/superbird-tool)** — The cross-platform Python hacking toolkit that made communicating with the Amlogic bootloader accessible.
-  - **[superna9999 (pyamlboot)](https://github.com/superna9999/pyamlboot)** — Open-source Amlogic USB boot protocol implementation.
-  - **[willsturgeon & Car Thing Community (flashthing-cli)](https://github.com/willsturgeon)** — Easy-to-use flashing utilities for community firmware images.
-  - **[Pete Batard / Akeo (Zadig)](https://zadig.akeo.ie/)** — WinUSB and libusb driver installer for Windows bootloader interfacing.
+### 🛠️ Flashing Infrastructure & Base Operating System
+- **[Joey Eamigh (@JoeyEamigh / joeyeamigh)](https://github.com/JoeyEamigh):**
+  - **[flashthing](https://github.com/JoeyEamigh/flashthing):** The core Rust flashing toolkit, CLI (`flashthing-cli`), Node bindings, and WebUSB browser flasher. Licensed under the MIT License ([tools/flashing/LICENSE-FLASHTHING.txt](tools/flashing/LICENSE-FLASHTHING.txt)).
+  - **[yocto-superbird](https://github.com/JoeyEamigh/yocto-superbird):** The foundational Yocto Board Support Package (BSP) and embedded Linux system image upon which modern Car Thing firmware distributions are based.
+  - **[bridgething](https://github.com/JoeyEamigh/bridgething)** & **[nixos-superbird](https://github.com/JoeyEamigh/nixos-superbird)**.
 
-- **Operating System & Runtime:**
-  - **[Nocturne OS Team & meraz9000](https://github.com/meraz9000)** — The custom embedded Linux kernel (`7.0.2-superbird`), Weston Wayland integration, and Chromium kiosk environment that gave Car Thing a true second life.
-  - **[ALSA Project](https://www.alsa-project.org/)** — Advanced Linux Sound Architecture enabling dual-link capture routing.
-  - **[Weston / Wayland](https://wayland.freedesktop.org/)** & **[Chromium Project](https://www.chromium.org/)** — Lightweight GPU-accelerated embedded display stack.
+### 🐧 Nocturne OS Firmware & System Architecture
+- **[Nocturne Team (Brandon Saldan & Dominic Frye)](https://github.com/usenocturne/nocturne):**
+  - Creators of **[Nocturne OS](https://usenocturne.com/)** ([usenocturne/nocturne](https://github.com/usenocturne/nocturne)), the custom firmware, background daemon (`nocturned`), Bluetooth iAP2/SPP stack, and Chromium Wayland kiosk environment that revived the Car Thing as an independent Bluetooth controller and smart display.
 
-- **Virtualization & Emulation:**
-  - **[Fabian Hemmer / copy (v86)](https://github.com/copy/v86)** — High-performance x86 PC hardware emulator written in WebAssembly and JavaScript.
-  - **[KolibriOS Project](https://kolibrios.org/)** — The astonishing 32-bit x86 graphical operating system written entirely in assembly language.
-  - **[SeaBIOS](https://www.seabios.org/)** & **VGABIOS** — Standard open-source x86 BIOS.
-  - **[Ruffle Team](https://ruffle.rs/)** — Open-source Flash Player emulator in Rust / WebAssembly.
+### 🔌 Hardware Reverse Engineering & Bootloader Toolchain
+- **[frederic (superbird-bulkcmd)](https://github.com/frederic/superbird-bulkcmd):** Groundbreaking reverse engineering of the Amlogic bootloader, u-boot commands, and initial memory dumps.
+- **[bishopdynamics (superbird-tool)](https://github.com/bishopdynamics/superbird-tool):** The foundational cross-platform Python hacking toolkit that established USB burn mode communication and partition dumping.
+- **[superna9999 (pyamlboot)](https://github.com/superna9999/pyamlboot):** Open-source Amlogic USB boot protocol implementation.
+- **[Pete Batard / Akeo (libwdi / Zadig)](https://github.com/pbatard/libwdi):** Automated Windows USB driver installation tools for the Amlogic WorldCup device.
 
-- **Game Developers & Preservationists:**
-  - **[Innersloth](https://www.innersloth.com/)** — Creators of the original *Among Us* (and the web preservation community for making touch-friendly portable ports).
-  - **[Gabriele Cirulli](https://github.com/gabrielecirulli/2048)** — Creator of the legendary open-source puzzle game *2048*.
-  - **[3kh0](https://github.com/3kh0)** & the Web Game preservation community — For curating and maintaining lightweight HTML5 game archives.
-  - All respective original creators of *Retro Bowl (New Star Games)*, *Crossy Road (Hipster Whale)*, *Chrome Dino (Google)*, *Fruit Ninja (Halfbrick)*, and *Doodle Jump (Lima Sky)*.
+### 🧩 Emulation, Machine Learning & Web Engines
+- **[Fabian Hemmer / copy (v86)](https://github.com/copy/v86):** Open-source x86 PC hardware emulator written in WebAssembly (BSD-2-Clause License).
+- **[KolibriOS Project](https://kolibrios.org/):** The 32-bit x86 graphical operating system written in assembly (GPLv2).
+- **[Google TensorFlow.js & Speech Commands](https://github.com/tensorflow/tfjs-models):** Deep learning speech recognition models running locally via WebGL shaders (Apache 2.0 License).
+- **[The Bergamot Project](https://browser.mt/):** Neural machine translation engine compiled to WebAssembly (MPL-2.0 / LGPLv3).
+- **[Binjgb / GameBoyCore](https://github.com/binji/binjgb):** Cycle-accurate Game Boy emulator in WebAssembly (MIT License).
+
+### 🎮 Games & Assets
+- **[Gabriele Cirulli](https://github.com/gabrielecirulli/2048):** Creator of the open-source puzzle game *2048* (MIT License).
+- **[3kh0](https://github.com/3kh0):** Open-source web game preservation and lightweight packaging.
+- Original game trademarks and copyrights belong to their respective creators (*Innersloth, Hipster Whale, Google, Halfbrick, Lima Sky, New Star Games*).
 
 ---
 
-## 📜 License
-This project is open-source under the **MIT License**. Created with passion for keeping discontinued hardware alive and out of landfills. All trademarks and copyrighted game assets remain property of their respective creators.
+## 📜 Open Source License Compliance & Disclaimer
+
+- **Car Thing Apps Scope:** The custom web applications, launcher code, scripts, and audio tools developed specifically for this repository are licensed under the **MIT License**.
+- **Upstream Firmware & Kernel:** This repository does NOT claim copyright or authorship over Nocturne OS, Joey Eamigh's `yocto-superbird` Linux kernel, or upstream system binaries. All upstream components retain their original licenses (GPLv2 for Linux kernel, MIT for `flashthing`, Apache-2.0 for Chromium). Source code for the underlying operating system and toolchains is available at the upstream repositories linked above.
+
