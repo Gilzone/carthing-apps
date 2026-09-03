@@ -321,6 +321,14 @@
       "hint": "Hands-Free Voice Tetris (Speak to Drop)",
       "mark": "TTR",
       "color": "#06b6d4"
+    },
+    {
+      "tab": "extras",
+      "file": "games/voicepawn.html",
+      "name": "Voice Pawn",
+      "hint": "Solo Pawn Chess Quest (Speak to Advance)",
+      "mark": "PWN",
+      "color": "#f59e0b"
     }
   ]
 }

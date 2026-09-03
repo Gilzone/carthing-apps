@@ -173,6 +173,24 @@ The custom Chromium kiosk shell runs native 800×480 with GPU hardware accelerat
   <img src="docs/screenshots/game_voicetetrix_live.png" width="70%" alt="Voice Tetrix Hands-Free Game on Car Thing" />
 </p>
 
+---
+
+### ♟️ Voice Pawn: Solo Pawn Chess Quest (Extras Tab)
+- **100% Hands-Free One-Pawn Chess:** Guide your lone White Pawn from square **B2** to the 8th rank to promote to Queen:
+  - **"UP!"** ➔ Step pawn forward 1 square
+  - **"GO!"** ➔ Initial 2-square pawn rush forward!
+  - **"LEFT!"** ➔ Capture diagonally forward-left (or shift left)
+  - **"RIGHT!"** ➔ Capture diagonally forward-right (or shift right)
+  - **"YES!"** ➔ Advance to next puzzle level or retry!
+- **5 Progressive Puzzle Levels:** Navigate around stationary blockers, dodge patrolling enemy knights and rooks, and reach promotion!
+- **Crisp GPU-Accelerated Vector Pieces:** Hand-crafted vector chess paths glowing with cyan and crimson neon on the Mali-G31 GPU.
+- **Physical Controls:** Spin the rotary dial to nudge left/right; push dial to step forward.
+
+<p align="center">
+  <img src="docs/screenshots/game_voicepawn_live.png" width="70%" alt="Voice Pawn Hands-Free Chess on Car Thing" />
+</p>
+
+
 
 
 

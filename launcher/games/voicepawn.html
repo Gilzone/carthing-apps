@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=800, height=480, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Voice Pawn</title>
+  <style>
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body {
+      margin: 0; padding: 0; width: 800px; height: 480px; overflow: hidden;
+      background: #080c18; color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      user-select: none; -webkit-user-select: none;
+    }
+    .main-container {
+      display: flex; width: 800px; height: 480px; padding: 12px 20px; align-items: center; justify-content: space-between;
+    }
+
+    /* Left Stats Box */
+    .left-panel {
+      width: 170px; display: flex; flex-direction: column; gap: 14px;
+    }
+    .stat-card {
+      background: #0f172a; border: 2px solid #1e293b; border-radius: 14px; padding: 12px 14px;
+    }
+    .stat-label { font-size: 11px; font-weight: 700; color: #38bdf8; text-transform: uppercase; letter-spacing: 1px; }
+    .stat-val { font-size: 24px; font-weight: 900; color: #fff; margin-top: 2px; }
+
+    /* Center Board */
+    .board-wrapper {
+      position: relative; width: 400px; height: 400px;
+      background: #1e293b; border: 4px solid #38bdf8; border-radius: 12px;
+      box-shadow: 0 0 30px rgba(56, 189, 248, 0.35); overflow: hidden;
+    }
+    #board-canvas { display: block; width: 400px; height: 400px; }
+
+    /* Right Voice HUD & Guide */
+    .right-panel {
+      width: 180px; display: flex; flex-direction: column; gap: 12px; justify-content: space-between; height: 400px;
+    }
+    .voice-box {
+      background: #0f172a; border: 2px solid #38bdf8; border-radius: 16px; padding: 12px;
+      text-align: center; box-shadow: 0 0 20px rgba(56,189,248,0.25); transition: all 0.15s ease;
+    }
+    .voice-box.lit {
+      border-color: #10b981; transform: scale(1.05); box-shadow: 0 0 25px rgba(16,185,129,0.6);
+    }
+    .voice-status {
+      font-size: 11px; font-weight: 800; color: #10b981; text-transform: uppercase; letter-spacing: 1px;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .voice-status .dot { width: 8px; height: 8px; border-radius: 50%; background: #10b981; }
+    .voice-word { font-size: 24px; font-weight: 900; color: #38bdf8; margin-top: 4px; min-height: 32px; }
+    .voice-conf { font-size: 11px; color: #94a3b8; font-weight: 700; }
+
+    .cmd-list {
+      background: #0f172a; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 10px;
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .cmd-item {
+      font-size: 11px; font-weight: 800; color: #cbd5e1; display: flex; justify-content: space-between;
+    }
+    .cmd-item span { color: #38bdf8; }
+
+    .btn {
+      background: #1e293b; color: #f8fafc; border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 20px; padding: 9px 14px; font-size: 13px; font-weight: 800;
+      cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .btn:active { background: #334155; }
+    .btn-exit { border-color: rgba(244,63,94,0.4); color: #fca5a5; }
+
+    /* Overlay */
+    .overlay {
+      position: absolute; inset: 0; background: rgba(8, 12, 24, 0.92); backdrop-filter: blur(8px);
+      display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+      padding: 24px; z-index: 50;
+    }
+    .overlay h1 {
+      font-size: 42px; font-weight: 900; margin: 0 0 6px 0;
+      background: linear-gradient(135deg, #38bdf8, #f59e0b); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      letter-spacing: 2px;
+    }
+    .overlay p { font-size: 15px; color: #94a3b8; margin: 0 0 20px 0; max-width: 500px; line-height: 1.4; }
+    .btn-play {
+      background: linear-gradient(135deg, #0284c7, #2563eb); color: #fff; border: 0; padding: 12px 34px;
+      border-radius: 30px; font-size: 17px; font-weight: 900; cursor: pointer; letter-spacing: 1px;
+      box-shadow: 0 0 25px rgba(2, 132, 199, 0.6);
+    }
+  </style>
+
+  <!-- Offline file:// fetch polyfill for TensorFlow.js Speech Commands -->
+  <script>
+    const _nativeFetch = window.fetch;
+    window.fetch = function(url, options) {
+      if (typeof url === 'string') {
+        let localPath = url;
+        if (url.includes('local-kws/')) {
+          localPath = '../tools/kws/' + url.split('local-kws/')[1];
+        }
+        if (localPath.startsWith('../tools/kws/') || localPath.startsWith('kws/') || localPath.startsWith('file://') || !localPath.startsWith('http')) {
+          return new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open('GET', localPath);
+            xhr.responseType = 'arraybuffer';
+            xhr.onload = () => {
+              if (xhr.status === 200 || xhr.status === 0) {
+                resolve(new Response(xhr.response, {
+                  status: 200,
+                  headers: { 'Content-Type': localPath.endsWith('.json') ? 'application/json' : 'application/octet-stream' }
+                }));
+              } else {
+                reject(new Error('XHR error ' + xhr.status + ' for ' + localPath));
+              }
+            };
+            xhr.onerror = () => reject(new Error('XHR network error for ' + localPath));
+            xhr.send();
+          });
+        }
+      }
+      return _nativeFetch.apply(this, arguments);
+    };
+  </script>
+
+  <!-- Local TensorFlow.js & Speech Commands -->
+  <script src="../tools/kws/tf.min.js"></script>
+  <script src="../tools/kws/speech-commands.min.js"></script>
+</head>
+<body>
+  <div class="main-container">
+    <!-- Left Stats -->
+    <div class="left-panel">
+      <div class="stat-card">
+        <div class="stat-label">LEVEL</div>
+        <div class="stat-val" id="hud-level">1 / 5</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">POSITION</div>
+        <div class="stat-val" id="hud-pos">B2</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">MOVES</div>
+        <div class="stat-val" id="hud-moves">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">SCORE</div>
+        <div class="stat-val" id="hud-score">0</div>
+      </div>
+    </div>
+
+    <!-- Center Board -->
+    <div class="board-wrapper">
+      <canvas id="board-canvas" width="400" height="400"></canvas>
+    </div>
+
+    <!-- Right Voice HUD -->
+    <div class="right-panel">
+      <div class="voice-box" id="voice-box">
+        <div class="voice-status">
+          <div class="dot"></div>
+          <span id="voice-status-text">VOICE ACTIVE</span>
+        </div>
+        <div class="voice-word" id="voice-word-text">READY</div>
+        <div class="voice-conf" id="voice-conf-text">Say a command...</div>
+      </div>
+
+      <div class="cmd-list">
+        <div class="cmd-item">MOVE 1 STEP <span>"UP"</span></div>
+        <div class="cmd-item">DOUBLE STEP <span>"GO"</span></div>
+        <div class="cmd-item">CAPTURE L <span>"LEFT"</span></div>
+        <div class="cmd-item">CAPTURE R <span>"RIGHT"</span></div>
+        <div class="cmd-item">PLAY AGAIN <span>"YES"</span></div>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <button class="btn btn-exit" id="btn-exit">← EXIT</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Start Screen -->
+  <div class="overlay" id="screen-start">
+    <h1>VOICE PAWN</h1>
+    <p>Guide your lone White Pawn from <b>B2</b> to the 8th rank to promote to Queen!<br>Dodge enemy guards and capture blocking pieces using your voice.</p>
+    <button class="btn-play" id="btn-start">START QUEST ♙</button>
+    <div style="font-size:12px; color:#64748b; margin-top:14px;">(Turn Dial to move left/right; Click dial to step forward)</div>
+  </div>
+
+  <!-- Victory / Promotion Screen -->
+  <div class="overlay" id="screen-win" style="display:none;">
+    <h1 style="background:linear-gradient(135deg,#10b981,#38bdf8); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">👑 QUEEN PROMOTION!</h1>
+    <p>Your pawn made it across the board and transformed into a Queen!</p>
+    <div style="display:flex; gap:20px; margin-bottom:20px;">
+      <div class="stat-card" style="min-width:130px; text-align:center;">
+        <div class="stat-label">TOTAL MOVES</div>
+        <div class="stat-val" id="win-moves">0</div>
+      </div>
+      <div class="stat-card" style="min-width:130px; text-align:center; border-color:#eab308;">
+        <div class="stat-label">SCORE</div>
+        <div class="stat-val" id="win-score" style="color:#eab308;">1000</div>
+      </div>
+    </div>
+    <button class="btn-play" id="btn-next-level">SAY "YES" FOR NEXT LEVEL ⚔️</button>
+  </div>
+
+  <!-- Game Over Screen -->
+  <div class="overlay" id="screen-gameover" style="display:none;">
+    <h1 style="background:linear-gradient(135deg,#f43f5e,#fb923c); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">PAWN CAPTURED</h1>
+    <p>An enemy piece eliminated your pawn.</p>
+    <button class="btn-play" id="btn-restart">SAY "YES" TO RETRY 🔄</button>
+  </div>
+
+  <script>
+    const HOME_URL = "file:///opt/nocturne/webapps/player/index.html#extras";
+    document.getElementById("btn-exit").onclick = () => { location.href = HOME_URL; };
+
+    // Procedural Chess Audio (Web Audio API)
+    let audioCtx = null;
+    function initAudio() {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === "suspended") audioCtx.resume();
+    }
+
+    function sfxMove() {
+      initAudio();
+      try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(320, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(140, audioCtx.currentTime + 0.08);
+        gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.08);
+      } catch(e) {}
+    }
+
+    function sfxCapture() {
+      initAudio();
+      try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = "triangle";
+        osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.15);
+        gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.15);
+      } catch(e) {}
+    }
+
+    function sfxWin() {
+      initAudio();
+      try {
+        [523, 659, 784, 1046].forEach((f, idx) => {
+          setTimeout(() => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = "triangle";
+            osc.frequency.setValueAtTime(f, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.3);
+          }, idx * 100);
+        });
+      } catch(e) {}
+    }
+
+    function sfxLose() {
+      initAudio();
+      try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = "sawtooth";
+        osc.frequency.setValueAtTime(220, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(90, audioCtx.currentTime + 0.35);
+        gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.35);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.35);
+      } catch(e) {}
+    }
+
+    // Board & Game State
+    const canvas = document.getElementById("board-canvas");
+    const ctx = canvas.getContext("2d");
+    const SQ = 50; // 50px per square (400x400)
+    const FILES = ["A", "B", "C", "D", "E", "F", "G", "H"];
+
+    let pawnCol = 1; // 0=A, 1=B
+    let pawnRow = 6; // 6 = rank 2 (since 7 = rank 1, 0 = rank 8)
+    let isPromoted = false;
+    let moves = 0;
+    let score = 0;
+    let level = 1;
+    let gameState = "start"; // start, play, win, gameover
+
+    // Enemy pieces on the board: { col, row, type: 'p'|'n'|'r'|'b' }
+    let enemies = [];
+
+    const LEVELS = [
+      {
+        level: 1,
+        startCol: 1, startRow: 6, // B2
+        enemies: [
+          { col: 1, row: 3, type: "♟" }, // Obstacle at B5
+          { col: 2, row: 4, type: "♞" }  // Knight at C4
+        ]
+      },
+      {
+        level: 2,
+        startCol: 4, startRow: 6, // E2
+        enemies: [
+          { col: 3, row: 4, type: "♟" },
+          { col: 5, row: 4, type: "♟" },
+          { col: 4, row: 2, type: "♜" }
+        ]
+      },
+      {
+        level: 3,
+        startCol: 2, startRow: 6, // C2
+        enemies: [
+          { col: 1, row: 4, type: "♟" },
+          { col: 3, row: 4, type: "♝" },
+          { col: 2, row: 3, type: "♞" },
+          { col: 2, row: 1, type: "♜" }
+        ]
+      },
+      {
+        level: 4,
+        startCol: 6, startRow: 6, // G2
+        enemies: [
+          { col: 5, row: 5, type: "♟" },
+          { col: 7, row: 4, type: "♞" },
+          { col: 6, row: 3, type: "♝" },
+          { col: 5, row: 2, type: "♞" }
+        ]
+      },
+      {
+        level: 5,
+        startCol: 3, startRow: 6, // D2
+        enemies: [
+          { col: 2, row: 5, type: "♟" },
+          { col: 4, row: 5, type: "♟" },
+          { col: 3, row: 4, type: "♜" },
+          { col: 2, row: 2, type: "♞" },
+          { col: 4, row: 2, type: "♝" },
+          { col: 3, row: 1, type: "♚" }
+        ]
+      }
+    ];
+
+    function loadLevel(lvl) {
+      level = lvl;
+      const data = LEVELS[(lvl - 1) % LEVELS.length];
+      pawnCol = data.startCol;
+      pawnRow = data.startRow;
+      enemies = JSON.parse(JSON.stringify(data.enemies));
+      isPromoted = false;
+      updateHUD();
+      draw();
+    }
+
+    function updateHUD() {
+      const squareName = FILES[pawnCol] + (8 - pawnRow);
+      document.getElementById("hud-level").textContent = `${level} / ${LEVELS.length}`;
+      document.getElementById("hud-pos").textContent = squareName;
+      document.getElementById("hud-moves").textContent = moves;
+      document.getElementById("hud-score").textContent = score;
+    }
+
+    function getEnemyAt(col, row) {
+      return enemies.find(e => e.col === col && e.row === row);
+    }
+
+    // Pawn Actions
+    function moveUp() {
+      if (gameState !== "play") return;
+      const nextRow = pawnRow - 1;
+      if (nextRow < 0) return;
+      // In chess, pawn cannot move forward into an enemy piece
+      if (getEnemyAt(pawnCol, nextRow)) {
+        playTone(180, "square", 0.1); // Blocked
+        return;
+      }
+      pawnRow = nextRow;
+      moves++;
+      score += 20;
+      sfxMove();
+      checkPromotion();
+      updateHUD();
+      draw();
+    }
+
+    function doubleStep() {
+      if (gameState !== "play") return;
+      // Pawn can only double step from initial rank (rank 2 = row 6)
+      if (pawnRow === 6) {
+        if (!getEnemyAt(pawnCol, 5) && !getEnemyAt(pawnCol, 4)) {
+          pawnRow = 4;
+          moves++;
+          score += 40;
+          sfxMove();
+          checkPromotion();
+          updateHUD();
+          draw();
+        } else {
+          moveUp(); // Fallback to single step if blocked
+        }
+      } else {
+        moveUp();
+      }
+    }
+
+    function captureLeft() {
+      if (gameState !== "play") return;
+      const targetCol = pawnCol - 1;
+      const targetRow = pawnRow - 1;
+      if (targetCol < 0 || targetRow < 0) return;
+
+      const enemy = getEnemyAt(targetCol, targetRow);
+      if (enemy) {
+        // Capture enemy piece!
+        enemies = enemies.filter(e => e !== enemy);
+        pawnCol = targetCol;
+        pawnRow = targetRow;
+        moves++;
+        score += 150;
+        sfxCapture();
+        checkPromotion();
+        updateHUD();
+        draw();
+      } else {
+        // Shift left if empty
+        if (!getEnemyAt(targetCol, pawnRow)) {
+          pawnCol = targetCol;
+          moves++;
+          sfxMove();
+          updateHUD();
+          draw();
+        }
+      }
+    }
+
+    function captureRight() {
+      if (gameState !== "play") return;
+      const targetCol = pawnCol + 1;
+      const targetRow = pawnRow - 1;
+      if (targetCol >= 8 || targetRow < 0) return;
+
+      const enemy = getEnemyAt(targetCol, targetRow);
+      if (enemy) {
+        // Capture enemy piece!
+        enemies = enemies.filter(e => e !== enemy);
+        pawnCol = targetCol;
+        pawnRow = targetRow;
+        moves++;
+        score += 150;
+        sfxCapture();
+        checkPromotion();
+        updateHUD();
+        draw();
+      } else {
+        // Shift right if empty
+        if (!getEnemyAt(targetCol, pawnRow)) {
+          pawnCol = targetCol;
+          moves++;
+          sfxMove();
+          updateHUD();
+          draw();
+        }
+      }
+    }
+
+    function checkPromotion() {
+      if (pawnRow === 0) {
+        // Reached 8th rank! PROMOTION TO QUEEN!
+        isPromoted = true;
+        score += 500;
+        sfxWin();
+        gameState = "win";
+        document.getElementById("screen-win").style.display = "flex";
+        document.getElementById("win-moves").textContent = moves;
+        document.getElementById("win-score").textContent = score;
+      }
+    }
+
+    // Drawing Vector Chess Pieces
+    function drawVectorPiece(c2d, cx, cy, isWhite, type) {
+      c2d.save();
+      c2d.translate(cx, cy);
+
+      const fillColor = isWhite ? "#f8fafc" : "#0f172a";
+      const strokeColor = isWhite ? "#38bdf8" : "#f43f5e";
+      const glowColor = isWhite ? "rgba(56, 189, 248, 0.7)" : "rgba(244, 63, 94, 0.7)";
+
+      c2d.shadowColor = glowColor;
+      c2d.shadowBlur = 12;
+      c2d.fillStyle = fillColor;
+      c2d.strokeStyle = strokeColor;
+      c2d.lineWidth = 2.5;
+
+      if (type === "Q") {
+        // Crown / Queen
+        c2d.beginPath();
+        c2d.moveTo(-16, 16);
+        c2d.lineTo(-14, 2);
+        c2d.lineTo(-7, 9);
+        c2d.lineTo(0, -14);
+        c2d.lineTo(7, 9);
+        c2d.lineTo(14, 2);
+        c2d.lineTo(16, 16);
+        c2d.closePath();
+        c2d.fill();
+        c2d.stroke();
+        [-14, 0, 14].forEach(jx => {
+          c2d.beginPath();
+          c2d.arc(jx, jx === 0 ? -16 : 0, 3, 0, Math.PI*2);
+          c2d.fillStyle = "#fbbf24";
+          c2d.fill();
+        });
+      } else if (type === "N") {
+        // Knight Horse
+        c2d.beginPath();
+        c2d.moveTo(-10, 16);
+        c2d.lineTo(12, 16);
+        c2d.lineTo(8, 6);
+        c2d.lineTo(12, -4);
+        c2d.lineTo(6, -14);
+        c2d.lineTo(-2, -14);
+        c2d.lineTo(-12, -4);
+        c2d.lineTo(-6, 2);
+        c2d.closePath();
+        c2d.fill();
+        c2d.stroke();
+      } else if (type === "R") {
+        // Rook Castle Tower
+        c2d.beginPath();
+        c2d.moveTo(-12, 16);
+        c2d.lineTo(12, 16);
+        c2d.lineTo(9, 6);
+        c2d.lineTo(12, 6);
+        c2d.lineTo(12, -12);
+        c2d.lineTo(7, -12);
+        c2d.lineTo(7, -7);
+        c2d.lineTo(3, -7);
+        c2d.lineTo(3, -12);
+        c2d.lineTo(-3, -12);
+        c2d.lineTo(-3, -7);
+        c2d.lineTo(-7, -7);
+        c2d.lineTo(-7, -12);
+        c2d.lineTo(-12, -12);
+        c2d.lineTo(-12, 6);
+        c2d.lineTo(-9, 6);
+        c2d.closePath();
+        c2d.fill();
+        c2d.stroke();
+      } else {
+        // Pawn
+        // Base
+        c2d.beginPath();
+        c2d.ellipse(0, 14, 13, 4, 0, 0, Math.PI * 2);
+        c2d.fill();
+        c2d.stroke();
+        // Body
+        c2d.beginPath();
+        c2d.moveTo(-9, 13);
+        c2d.quadraticCurveTo(-3, 2, -4, -3);
+        c2d.lineTo(4, -3);
+        c2d.quadraticCurveTo(3, 2, 9, 13);
+        c2d.closePath();
+        c2d.fill();
+        c2d.stroke();
+        // Collar
+        c2d.beginPath();
+        c2d.ellipse(0, -4, 6, 2.5, 0, 0, Math.PI * 2);
+        c2d.fill();
+        c2d.stroke();
+        // Head
+        c2d.beginPath();
+        c2d.arc(0, -11, 6.5, 0, Math.PI * 2);
+        c2d.fill();
+        c2d.stroke();
+      }
+      c2d.restore();
+    }
+
+    // Drawing Board & Pieces
+    function draw() {
+      ctx.clearRect(0, 0, 400, 400);
+
+      // 1. Draw 8x8 Chess Squares
+      for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+          const isLight = (r + c) % 2 === 0;
+          ctx.fillStyle = isLight ? "#cbd5e1" : "#475569";
+          ctx.fillRect(c * SQ, r * SQ, SQ, SQ);
+
+          // Coordinate Labels
+          if (c === 0) {
+            ctx.fillStyle = isLight ? "#475569" : "#cbd5e1";
+            ctx.font = "bold 10px monospace";
+            ctx.fillText(8 - r, 4, r * SQ + 14);
+          }
+          if (r === 7) {
+            ctx.fillStyle = isLight ? "#475569" : "#cbd5e1";
+            ctx.font = "bold 10px monospace";
+            ctx.fillText(FILES[c], c * SQ + SQ - 12, 394);
+          }
+        }
+      }
+
+      // 2. Promotion Zone Highlight (Rank 8 = row 0)
+      ctx.fillStyle = "rgba(16, 185, 129, 0.25)";
+      ctx.fillRect(0, 0, 400, SQ);
+
+      // 3. Legal Move Indicators
+      // Step up dot
+      if (pawnRow > 0 && !getEnemyAt(pawnCol, pawnRow - 1)) {
+        ctx.fillStyle = "rgba(56, 189, 248, 0.7)";
+        ctx.beginPath();
+        ctx.arc(pawnCol * SQ + SQ/2, (pawnRow - 1) * SQ + SQ/2, 7, 0, Math.PI * 2);
+        ctx.fill();
+        // Double step dot
+        if (pawnRow === 6 && !getEnemyAt(pawnCol, 4)) {
+          ctx.beginPath();
+          ctx.arc(pawnCol * SQ + SQ/2, 4 * SQ + SQ/2, 7, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+      // Diagonal Capture Target Squares
+      if (pawnRow > 0) {
+        if (getEnemyAt(pawnCol - 1, pawnRow - 1)) {
+          ctx.strokeStyle = "#f43f5e";
+          ctx.lineWidth = 3;
+          ctx.strokeRect((pawnCol - 1) * SQ + 3, (pawnRow - 1) * SQ + 3, SQ - 6, SQ - 6);
+        }
+        if (getEnemyAt(pawnCol + 1, pawnRow - 1)) {
+          ctx.strokeStyle = "#f43f5e";
+          ctx.lineWidth = 3;
+          ctx.strokeRect((pawnCol + 1) * SQ + 3, (pawnRow - 1) * SQ + 3, SQ - 6, SQ - 6);
+        }
+      }
+
+      // 4. Draw Enemies (Vector)
+      enemies.forEach(e => {
+        const pieceType = e.type === "♞" ? "N" : (e.type === "♜" ? "R" : "P");
+        drawVectorPiece(ctx, e.col * SQ + SQ/2, e.row * SQ + SQ/2, false, pieceType);
+      });
+
+      // 5. Draw Player Pawn (or Queen if promoted)
+      const playerType = isPromoted ? "Q" : "P";
+      drawVectorPiece(ctx, pawnCol * SQ + SQ/2, pawnRow * SQ + SQ/2, true, playerType);
+    }
+
+
+    // Game Actions
+    function startGame() {
+      moves = 0;
+      score = 0;
+      gameState = "play";
+      document.getElementById("screen-start").style.display = "none";
+      document.getElementById("screen-win").style.display = "none";
+      document.getElementById("screen-gameover").style.display = "none";
+      loadLevel(1);
+    }
+
+    function nextLevel() {
+      level++;
+      gameState = "play";
+      document.getElementById("screen-win").style.display = "none";
+      loadLevel(level);
+    }
+
+    document.getElementById("btn-start").onclick = startGame;
+    document.getElementById("btn-next-level").onclick = nextLevel;
+    document.getElementById("btn-restart").onclick = () => { loadLevel(level); gameState = "play"; document.getElementById("screen-gameover").style.display = "none"; };
+
+    // Hardware Rotary Dial and Keyboard Fallback
+    window.addEventListener("wheel", (e) => {
+      e.preventDefault();
+      if (e.deltaY > 0) captureRight();
+      else if (e.deltaY < 0) captureLeft();
+    }, { passive: false });
+
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowUp") moveUp();
+      else if (e.key === "ArrowLeft") captureLeft();
+      else if (e.key === "ArrowRight") captureRight();
+      else if (e.key === " " || e.key === "Enter") {
+        if (gameState === "start") startGame();
+        else if (gameState === "win") nextLevel();
+        else if (gameState === "gameover") startGame();
+        else doubleStep();
+      }
+    });
+
+    // Touch controls on canvas
+    canvas.addEventListener("pointerdown", (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const clickCol = Math.floor((e.clientX - rect.left) / SQ);
+      const clickRow = Math.floor((e.clientY - rect.top) / SQ);
+      if (gameState !== "play") return;
+      if (clickCol === pawnCol && clickRow === pawnRow - 1) moveUp();
+      else if (clickCol === pawnCol && clickRow === pawnRow - 2) doubleStep();
+      else if (clickCol === pawnCol - 1) captureLeft();
+      else if (clickCol === pawnCol + 1) captureRight();
+      else moveUp();
+    });
+
+    // Neural Voice Recognition Integration
+    const voiceBox = document.getElementById("voice-box");
+    const voiceWordText = document.getElementById("voice-word-text");
+    const voiceConfText = document.getElementById("voice-conf-text");
+    let recognizer = null;
+
+    async function initVoice() {
+      try {
+        voiceWordText.textContent = "LOADING...";
+        recognizer = speechCommands.create(
+          "BROWSER_FFT",
+          undefined,
+          "https://local-kws/model.json",
+          "https://local-kws/metadata.json"
+        );
+        await recognizer.ensureModelLoaded();
+        voiceWordText.textContent = "READY 🎙️";
+        voiceConfText.textContent = "Say 'UP' to move";
+        startVoiceListening();
+      } catch (err) {
+        console.error("Voice load error:", err);
+        voiceWordText.textContent = "MANUAL";
+        voiceConfText.textContent = "Use Dial or Touch";
+      }
+    }
+
+    function startVoiceListening() {
+      if (!recognizer) return;
+      recognizer.listen(result => {
+        const words = recognizer.wordLabels();
+        const scores = result.scores;
+        let maxScore = -1, bestWord = "";
+        for (let i = 0; i < scores.length; i++) {
+          if (words[i] === "_background_noise_" || words[i] === "_unknown_") continue;
+          if (scores[i] > maxScore) {
+            maxScore = scores[i];
+            bestWord = words[i];
+          }
+        }
+        if (maxScore > 0.65 && bestWord) {
+          onVoiceCommand(bestWord, maxScore);
+        }
+      }, {
+        includeSpectrogram: false,
+        probabilityThreshold: 0.65,
+        invokeCallbackOnNoiseAndUnknown: false,
+        overlapFactor: 0.5
+      });
+    }
+
+    function onVoiceCommand(word, score) {
+      voiceWordText.textContent = word.toUpperCase() + "!";
+      voiceConfText.textContent = `${(score * 100).toFixed(0)}% confidence`;
+      voiceBox.classList.add("lit");
+      setTimeout(() => voiceBox.classList.remove("lit"), 600);
+
+      if (gameState === "start") {
+        if (word === "go" || word === "yes" || word === "up") startGame();
+        return;
+      }
+      if (gameState === "win") {
+        if (word === "yes" || word === "go" || word === "up") nextLevel();
+        return;
+      }
+      if (gameState === "gameover") {
+        if (word === "yes" || word === "go") startGame();
+        return;
+      }
+
+      if (word === "up") {
+        moveUp();
+      } else if (word === "go") {
+        doubleStep();
+      } else if (word === "left") {
+        captureLeft();
+      } else if (word === "right") {
+        captureRight();
+      }
+    }
+
+    window.onload = () => {
+      loadLevel(1);
+      initVoice();
+    };
+  </script>
+</body>
+</html>
