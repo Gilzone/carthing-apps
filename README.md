@@ -431,7 +431,8 @@ This project is organized as a multi-licensed repository. The table below deline
 | **gbajs** | Jeffrey Pfau (`endrift`) | **BSD-2-Clause** | [endrift/gbajs](https://github.com/endrift/gbajs) |
 | **2048 Game** | Gabriele Cirulli | **MIT License** | [gabrielecirulli/2048](https://github.com/gabrielecirulli/2048) |
 | **Chrome Dino** | The Chromium Authors | **BSD-3-Clause** | [chromium](https://chromium.googlesource.com/chromium/src) |
-| **Homebrew ROMs (Celeste, Anguna)** | Community Authors | **Open Source / Permissive** | Open-source homebrew; zero commercial ROMs bundled |
+| **Homebrew & User ROMs** | Community Authors / User | **No license — user-supplied ROMs only** | Open-source homebrew included; zero commercial ROMs bundled |
+
 
 > **⚠️ ROM & Asset Distribution Policy:** This repository does **not** distribute or host any commercial Nintendo ROMs (e.g. Pokémon, Zelda, Kirby, Tetris) or proprietary studio game assets. Users must provide their own legally owned ROM files locally on their own devices.
 >
