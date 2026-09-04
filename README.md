@@ -43,17 +43,12 @@ The custom Chromium kiosk shell runs native 800×480 with GPU hardware accelerat
   - **🔴 Dedicated Thumb Button:** Large 82px Coral Red **Button B** (Cancel, Run, Inhale) comfortably positioned for your right thumb.
   - **Physical Back Button:** Also wired directly to **Button B**.
   - **Tactile D-Pad & Top Buttons:** Full capacitive 4-way cross pad on the left, with Top Button `2` for **SELECT** and Top Button `3` for **START**.
-- **Pre-Loaded Classics:**
-  - 🗡️ **The Legend of Zelda: Link's Awakening:** Classic top-down dungeon crawler and island adventure.
-  - ⭐ **Kirby's Dream Land 2:** Iconic platforming with Rick, Kine, and Coo.
-  - 🔴 **Pokémon Red Version:** The definitive original monster-catching RPG.
-  - ➕ **Custom ROMs:** Tap `📂 ROM` to load any `.gb` or `.gbc` file directly from device storage.
+- **Pre-Loaded Homebrew Titles & Load Your Own ROMs:**
+  - 🎮 **2048 Game Boy Edition:** Open-source, cycle-accurate puzzle port running directly in GameBoyCore.
+  - 🗡️ **Anguna: Warriors of Virtue:** Acclaimed open-source action-adventure homebrew by Nathan Tolbert.
+  - 🧱 **Advancetris:** High-speed competitive block-stacking homebrew.
+  - 📂 **Bring Your Own ROMs (BYO ROMs):** Tap `📂 ROM` to load your own legally owned `.gb`, `.gbc`, or `.gba` files directly from your personal storage.
 
-<p align="center">
-  <img src="docs/screenshots/gb_zelda_user_live.png" width="32%" alt="Zelda Link's Awakening on Car Thing" />
-  <img src="docs/screenshots/gb_kirby_user_live.png" width="32%" alt="Kirby's Dream Land 2 on Car Thing" />
-  <img src="docs/screenshots/gb_pokemon_red_user_live.png" width="32%" alt="Pokemon Red on Car Thing" />
-</p>
 
 ### 🔤 Morse Learn - Google Creative Lab Edition (Tools Tab)
 - **Visual Mnemonic Trainer:** Re-engineered specifically for the Car Thing's 800×480 display, featuring all 26 visual mnemonic cards from Google Creative Lab (*Archery, Banjo, Candy, Dog, etc.*).
@@ -76,7 +71,8 @@ The custom Chromium kiosk shell runs native 800×480 with GPU hardware accelerat
 ### 🏎️ Automotive HUD Clock & 🚗 Car Unit Converter (Tools Tab)
 - **HUD Dashboard Clock:** High-contrast digital clock with Cyber, Amber, and Night Vision Red HUD themes designed for automotive dashboard use. Fully integrated with physical controls: push the knob to start/stop the precision stopwatch and countdown timer; turn the knob to adjust minutes; press the physical Back button to reset.
 - **Car Unit Converter & Calculator:** Instant live conversions for automotive metrics: speed ($km/h \leftrightarrow mph$), tire pressure ($PSI \leftrightarrow Bar$), temperature ($^\circ C \leftrightarrow ^\circ F$), and fuel consumption ($MPG \leftrightarrow L/100km$).
-- **Game Boy Battery Auto-Save:** Cycle-accurate cartridge battery SRAM saves (Zelda, Pokémon Red, Kirby) auto-saved to persistent local storage every 12 seconds and restored on boot with dedicated `[ 💾 Save ]` controls.
+- **Game Boy Battery Auto-Save:** Cycle-accurate cartridge battery SRAM saves auto-saved to persistent local storage every 12 seconds and restored on boot with dedicated `[ 💾 Save ]` controls.
+
 
 <p align="center">
   <img src="docs/screenshots/tool_hud_clock_live.png" width="48%" alt="Automotive HUD Clock on Car Thing" />

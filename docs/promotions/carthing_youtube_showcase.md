@@ -73,7 +73,7 @@ We are putting together a full, in-depth YouTube video breakdown covering:
 ```text
 Spotify said the Car Thing was dead... so we turned it into a retro console and offline Edge AI device! 🚗🕹️
 
-✅ Dedicated Game Boy (Zelda, Pokémon Red, Kirby) using the rotary dial click as Button A!
+✅ Dedicated Game Boy & GBA Player (2048, Celeste, Anguna + BYO ROMs) using the rotary dial click as Button A!
 ✅ 100% Offline Neural Machine Translation (no internet needed)
 ✅ x86 PC Emulation & Dial E-Reader
 
@@ -86,7 +86,8 @@ Full build video and tutorial coming soon! Subscribe to GIL STUDIO so you don't 
 Title: Don't throw away your Spotify Car Thing — we turned it into a standalone Game Boy console & Offline Edge AI device!
 
 Spotify officially deprecated the Car Thing, but the hardware is too good to scrap. We converted it into a dedicated handheld running:
-1. Cycle-accurate Game Boy (Link's Awakening, Pokémon Red, Kirby 2) where clicking the physical rotary dial acts as Button A, with a dedicated tactile B button and top preset buttons for Select/Start.
+1. Cycle-accurate Game Boy & GBA (2048, Celeste, Anguna, plus Bring Your Own ROMs) where clicking the physical rotary dial acts as Button A, with a dedicated tactile B button and top preset buttons for Select/Start.
+
 2. 100% on-device Neural Translation running quantized Marian NMT models over WebAssembly (zero cloud/WiFi).
 3. KolibriOS 32-bit x86 PC emulation with touch trackpad.
 4. Dial-controlled e-reader.

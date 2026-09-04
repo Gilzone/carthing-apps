@@ -402,11 +402,12 @@
         <canvas id="screen" width="160" height="144"></canvas>
       </div>
       <div class="rom-carousel">
-        <button class="rom-pill active" id="pill-zelda" type="button">🗡️ Zelda</button>
-        <button class="rom-pill" id="pill-kirby" type="button">⭐ Kirby 2</button>
-        <button class="rom-pill" id="pill-pokemon" type="button">🔴 Pokémon Red</button>
-        <button class="rom-pill" id="pill-custom" type="button">➕ Custom...</button>
+        <button class="rom-pill active" id="pill-homebrew" type="button">🎮 2048 GB</button>
+        <button class="rom-pill" id="pill-advancetris" type="button">🧱 Advancetris</button>
+        <button class="rom-pill" id="pill-anguna" type="button">🗡️ Anguna</button>
+        <button class="rom-pill" id="pill-custom" type="button">📂 Load ROM...</button>
       </div>
+
     </div>
 
     <!-- Right Controls: Big B Button, Knob Push A Hint, START -->
@@ -683,20 +684,21 @@
       if (el) el.classList.add('active');
     }
 
-    document.getElementById('pill-zelda').addEventListener('pointerdown', () => {
-      setActivePill('pill-zelda');
-      loadRomByPath('roms/zelda_awakening.gb', "Zelda: Link's Awakening");
+    document.getElementById('pill-homebrew').addEventListener('pointerdown', () => {
+      setActivePill('pill-homebrew');
+      loadRomByPath('roms/2048.gb', "2048 Game Boy");
     });
 
-    document.getElementById('pill-kirby').addEventListener('pointerdown', () => {
-      setActivePill('pill-kirby');
-      loadRomByPath('roms/kirby2.gb', "Kirby's Dream Land 2");
+    document.getElementById('pill-advancetris').addEventListener('pointerdown', () => {
+      setActivePill('pill-advancetris');
+      loadRomByPath('roms/advancetris.gba', "Advancetris Homebrew");
     });
 
-    document.getElementById('pill-pokemon').addEventListener('pointerdown', () => {
-      setActivePill('pill-pokemon');
-      loadRomByPath('roms/pokemon_red.gb', "Pokémon Red");
+    document.getElementById('pill-anguna').addEventListener('pointerdown', () => {
+      setActivePill('pill-anguna');
+      loadRomByPath('roms/anguna.gba', "Anguna Homebrew");
     });
+
 
     // Custom ROM Picker (.gb, .gbc)
     const fileInput = document.getElementById('file-input');
@@ -729,12 +731,13 @@
       window.location.href = '../index.html#tools';
     });
 
-    // Default boot: The Legend of Zelda: Link's Awakening
+    // Default boot: 2048 Game Boy Homebrew
     window.addEventListener('load', () => {
       setTimeout(() => {
-        loadRomByPath('roms/zelda_awakening.gb', "Zelda: Link's Awakening");
+        loadRomByPath('roms/2048.gb', "2048 Game Boy");
       }, 150);
     });
+
   </script>
 </body>
 </html>
