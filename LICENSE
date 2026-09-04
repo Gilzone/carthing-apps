@@ -56,8 +56,12 @@ software and community preservation projects, each governed by its own license:
    - Website: https://decimen.app
    - License: GNU Affero General Public License v3.0 or later (AGPL-3.0-or-later)
    - Portions: MIT License, Copyright (c) 2026 Steve Dakh; Emscripten
+   - Architecture Isolation Note: Decimen Optical Transfer operates as an independent,
+     sandboxed client-side web application loaded via browser navigation. It does not
+     link with or form a derivative work with the parent MIT launcher interface.
 
 6. Morse Typing Trainer (launcher/tools/morse.html)
+
    - Project: Google Creative Lab & Hello Monday (https://github.com/googlecreativelab/morse-typing-trainer)
    - License: Apache License 2.0
    - Copyright (c) Google LLC
@@ -115,15 +119,14 @@ software and community preservation projects, each governed by its own license:
     - Authors: Frederic (superbird-bulkcmd), Bishop Dynamics (superbird-tool), Superna9999 (pyamlboot)
     - Licenses: MIT / GPLv2 / LGPL-2.1
 
-18. Third-Party Game Preservation Assets
-    - Original trademarks, game titles, and character designs remain the exclusive
-      property of their respective copyright holders:
-      * Among Us: Innersloth LLC
-      * Crossy Road: Hipster Whale
-      * Fruit Ninja: Halfbrick Studios
-      * Doodle Jump: Lima Sky LLC
-      * Retro Bowl: New Star Games
-      * Paper.io 2 / Helix Jump / Draw Climber: Voodoo
-      * Stack: Ketchapp
-      * Tiny Fishing: Mad Buffer
-      * Age of War: Louissi / Armor Games
+18. Homebrew & User-Supplied Game ROMs (No Commercial ROMs Bundled)
+    - All retro titles bundled in this repository (e.g. Celeste Classic GBA port,
+      Anguna: Warriors of Virtue, Advancetris) are verified open-source or permissive
+      homebrew games created by community authors.
+    - This repository does NOT bundle, host, or distribute proprietary commercial
+      Nintendo ROMs (such as Pokémon, The Legend of Zelda, Kirby, or Tetris) or
+      proprietary commercial studio game assets (such as Innersloth's Among Us).
+    - Commercial trademarks and copyrighted game data belong exclusively to their
+      respective copyright holders. Users must legally dump and supply their own ROMs
+      to their private local devices.
+

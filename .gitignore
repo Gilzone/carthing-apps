@@ -8,5 +8,11 @@ launcher/tools/roms/*.gb
 launcher/tools/roms/*.gbc
 launcher/tools/roms/*Pokemon*
 launcher/tools/roms/*Kirby*
+launcher/tools/roms/*Zelda*
+launcher/tools/roms/*Tetris*
+launcher/tools/roms/*.zip
+launcher/games/amongus/
+launcher/games/amongus.html
+
 
 

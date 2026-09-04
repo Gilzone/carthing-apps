@@ -431,9 +431,14 @@ This project is organized as a multi-licensed repository. The table below deline
 | **gbajs** | Jeffrey Pfau (`endrift`) | **BSD-2-Clause** | [endrift/gbajs](https://github.com/endrift/gbajs) |
 | **2048 Game** | Gabriele Cirulli | **MIT License** | [gabrielecirulli/2048](https://github.com/gabrielecirulli/2048) |
 | **Chrome Dino** | The Chromium Authors | **BSD-3-Clause** | [chromium](https://chromium.googlesource.com/chromium/src) |
-| **Game Preservation Assets** | Respective Original Studios | **Fair Use / Preservation** | All trademarks belong to original creators |
+| **Homebrew ROMs (Celeste, Anguna)** | Community Authors | **Open Source / Permissive** | Open-source homebrew; zero commercial ROMs bundled |
+
+> **⚠️ ROM & Asset Distribution Policy:** This repository does **not** distribute or host any commercial Nintendo ROMs (e.g. Pokémon, Zelda, Kirby, Tetris) or proprietary studio game assets. Users must provide their own legally owned ROM files locally on their own devices.
+>
+> **ℹ️ Architectural Boundary Note:** Standalone tools such as Decimen Optical Transfer (AGPL-3.0-or-later) execute as isolated client-side web applications loaded via standard browser navigation and do not form derivative works with the parent MIT launcher.
 
 See the complete [LICENSE](LICENSE) file in the root directory for full legal notices.
+
 
 
 

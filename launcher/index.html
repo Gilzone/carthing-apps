@@ -131,17 +131,106 @@
     }
     footer b { color: #e5e7eb; font-weight: 700; }
     .dot { width: 4px; height: 4px; border-radius: 50%; background: #4b5563; }
+
+    /* Tropical Starting Screen (Car Thing Revive) */
+    .splash-overlay {
+      position: fixed;
+      inset: 0;
+      width: 800px;
+      height: 480px;
+      z-index: 999999;
+      background: #c8f7a6;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      opacity: 1;
+      transform: scale(1);
+      transition: opacity 0.45s cubic-bezier(0.4, 0, 0.2, 1), transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .splash-overlay.hidden {
+      opacity: 0;
+      transform: scale(1.03);
+      pointer-events: none;
+    }
+    .splash-img {
+      width: 800px;
+      height: 480px;
+      object-fit: cover;
+      display: block;
+      animation: splashZoom 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes splashZoom {
+      0% { transform: scale(0.94); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .splash-footer {
+      position: absolute;
+      bottom: 22px;
+      left: 0;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 7px;
+    }
+    .splash-loader-bar {
+      width: 260px;
+      height: 5px;
+      background: rgba(6, 78, 59, 0.22);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .splash-loader-fill {
+      height: 100%;
+      width: 0%;
+      background: #064e3b;
+      border-radius: 999px;
+      animation: loadProg 2.4s ease forwards;
+    }
+    @keyframes loadProg {
+      0% { width: 0%; }
+      50% { width: 70%; }
+      100% { width: 100%; }
+    }
+    .splash-hint {
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.18em;
+      color: #064e3b;
+      text-transform: uppercase;
+      opacity: 0.85;
+      animation: pulseHint 1.4s ease-in-out infinite alternate;
+    }
+    @keyframes pulseHint {
+      0% { opacity: 0.5; }
+      100% { opacity: 0.95; }
+    }
   </style>
 </head>
+
 <body>
+  <!-- Tropical Starting Screen (New, Car Thing Revive) -->
+  <div id="splash-screen" class="splash-overlay">
+    <img src="splash_revive.jpg" alt="Car Thing Revive" class="splash-img">
+    <div class="splash-footer">
+      <div class="splash-loader-bar">
+        <div class="splash-loader-fill"></div>
+      </div>
+      <div class="splash-hint">TURN WHEEL OR TAP TO ENTER</div>
+    </div>
+  </div>
+
   <header>
-    <div class="brand">
-      <small>CAR THING</small>
+    <div class="brand" onclick="showSplash()" style="cursor: pointer;" title="Show Tropical Starting Screen">
+      <small>CAR THING REVIVE</small>
       <h1 id="heading">Games</h1>
     </div>
     <div class="tabs" id="tabs"></div>
     <div class="count" id="count"></div>
   </header>
+
   <div class="stage" id="stage"></div>
   <footer>
     <span>Turn <b>wheel</b> to select</span>
@@ -268,7 +357,41 @@
       location.href = list[i].file;
     }
 
+    // Splash Screen Handlers
+    var splash = document.getElementById("splash-screen");
+    var splashDismissed = false;
+    function dismissSplash() {
+      if (splashDismissed || !splash) return;
+      splashDismissed = true;
+      splash.classList.add("hidden");
+      setTimeout(function() {
+        if (splash && splash.classList.contains("hidden")) {
+          splash.style.display = "none";
+        }
+      }, 500);
+    }
+    function showSplash() {
+      if (!splash) return;
+      splashDismissed = false;
+      splash.style.display = "flex";
+      splash.offsetHeight;
+      splash.classList.remove("hidden");
+      var fill = splash.querySelector(".splash-loader-fill");
+      if (fill) {
+        fill.style.animation = "none";
+        fill.offsetHeight;
+        fill.style.animation = "loadProg 2.4s ease forwards";
+      }
+      setTimeout(dismissSplash, 2600);
+    }
+    if (splash) {
+      splash.addEventListener("click", dismissSplash);
+      splash.addEventListener("touchstart", dismissSplash, { passive: true });
+      setTimeout(dismissSplash, 2600);
+    }
+
     window.addEventListener("wheel", function (e) {
+      dismissSplash();
       e.preventDefault();
       var d = e.deltaX || e.deltaY;
       acc += d;
@@ -277,6 +400,7 @@
     }, { passive: false });
 
     window.addEventListener("keydown", function (e) {
+      dismissSplash();
       var k = e.key;
       if (k === "ArrowRight" || k === "ArrowDown" || k === "PageDown") { e.preventDefault(); step(1); }
       else if (k === "ArrowLeft" || k === "ArrowUp" || k === "PageUp") { e.preventDefault(); step(-1); }
@@ -292,6 +416,7 @@
         if (n < items().length) { i = n; render(); }
       }
     });
+
 
     function loadUserApps() {
       return new Promise(function (resolve) {

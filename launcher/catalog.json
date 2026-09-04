@@ -26,14 +26,7 @@
     }
   ],
   "items": [
-    {
-      "tab": "games",
-      "file": "games/amongus/index.html",
-      "name": "Among Us",
-      "hint": "Find the impostor",
-      "mark": "AU",
-      "color": "#c51111"
-    },
+
     {
       "tab": "games",
       "file": "games/retrobowl.html",
