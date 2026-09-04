@@ -49,6 +49,10 @@ The custom Chromium kiosk shell runs native 800×480 with GPU hardware accelerat
   - 🧱 **Advancetris:** High-speed competitive block-stacking homebrew.
   - 📂 **Bring Your Own ROMs (BYO ROMs):** Tap `📂 ROM` to load your own legally owned `.gb`, `.gbc`, or `.gba` files directly from your personal storage.
 
+<p align="center">
+  <img src="docs/screenshots/gb_2048_homebrew_live.png" width="65%" alt="2048 Game Boy Homebrew running live on Spotify Car Thing" />
+</p>
+
 
 ### 🔤 Morse Learn - Google Creative Lab Edition (Tools Tab)
 - **Visual Mnemonic Trainer:** Re-engineered specifically for the Car Thing's 800×480 display, featuring all 26 visual mnemonic cards from Google Creative Lab (*Archery, Banjo, Candy, Dog, etc.*).
